@@ -1,0 +1,61 @@
+services:
+  backend:
+    image: phcauto-backend:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-phcauto}
+      POSTGRES_USER: ${POSTGRES_USER:-phcauto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-phcauto_local}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE: ${REDIS_DATABASE:-0}
+      REDIS_CACHE_TTL: ${REDIS_CACHE_TTL:-10m}
+      REDIS_CACHE_PREFIX: ${REDIS_CACHE_PREFIX:-phcauto:cache:}
+      DOCKER_COMPOSE_ENABLED: "false"
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-phcauto}
+      POSTGRES_USER: ${POSTGRES_USER:-phcauto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-phcauto_local}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7.4
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:

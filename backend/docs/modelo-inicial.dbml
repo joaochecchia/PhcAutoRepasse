@@ -1,0 +1,373 @@
+Project PHC_Auto {
+  database_type: 'PostgreSQL'
+  Note: 'Modelo inicial. As regras e os valores dos planos ainda serao definidos.'
+}
+
+Enum identidade.tipo_pessoa {
+  PF
+  PJ
+}
+
+Enum identidade.papel_usuario {
+  CLIENTE
+  ANUNCIANTE
+  OPERADOR
+  ADMIN
+}
+
+Enum assinaturas.status_assinatura {
+  PENDENTE
+  ATIVA
+  SUSPENSA
+  CANCELADA
+  EXPIRADA
+}
+
+Enum catalogo.tipo_veiculo {
+  CARRO
+  MOTO
+  CAMINHAO
+  CAMINHONETE
+  BARCO
+  LINHA_AMARELA
+}
+
+Enum catalogo.tipo_preco {
+  FIXO
+  SOB_CONSULTA
+}
+
+Enum catalogo.status_anuncio {
+  RASCUNHO
+  PUBLICADO
+  PAUSADO
+  RESERVADO
+  VENDIDO
+  ARQUIVADO
+}
+
+Enum vendas.status_compra {
+  AGUARDANDO_PAGAMENTO
+  PAGO
+  CANCELADO
+  EXPIRADO
+  REEMBOLSADO
+}
+
+Enum vendas.metodo_pagamento {
+  PIX
+  BOLETO
+}
+
+Enum vendas.status_pagamento {
+  PENDENTE
+  CONFIRMADO
+  FALHOU
+  CANCELADO
+  EXPIRADO
+  ESTORNADO
+}
+
+Table identidade.usuarios {
+  id uuid [pk]
+  nome varchar(160) [not null]
+  email varchar(254) [not null, unique]
+  senha_hash text [not null]
+  tipo_pessoa identidade.tipo_pessoa [not null]
+  papel identidade.papel_usuario [not null]
+  ativo boolean [not null, default: true]
+  criado_em timestamptz [not null]
+  atualizado_em timestamptz [not null]
+
+  Note: 'Cada usuario deve ter exatamente um perfil PF ou PJ.'
+}
+
+Table identidade.usuarios_pf {
+  usuario_id uuid [pk]
+  cpf char(11) [not null, unique]
+  data_nascimento date
+}
+
+Table identidade.usuarios_pj {
+  usuario_id uuid [pk]
+  cnpj char(14) [not null, unique]
+  razao_social varchar(200) [not null]
+  nome_fantasia varchar(200)
+}
+
+Table assinaturas.planos {
+  id uuid [pk]
+  nome varchar(100) [not null, unique]
+  valor_centavos bigint [note: 'A definir']
+  periodo_meses smallint [note: 'A definir']
+  limite_anuncios integer [note: 'A definir']
+  ativo boolean [not null, default: false]
+  criado_em timestamptz [not null]
+
+  Note: 'Planos para publicar anuncios de veiculos.'
+}
+
+Table assinaturas.assinaturas {
+  id uuid [pk]
+  usuario_id uuid [not null]
+  plano_id uuid [not null]
+  valor_contratado_centavos bigint [not null]
+  status assinaturas.status_assinatura [not null]
+  inicio_em timestamptz
+  fim_em timestamptz
+  criado_em timestamptz [not null]
+
+  Note: 'Guarda o historico de planos contratados pelo anunciante.'
+}
+
+Table catalogo.veiculos {
+  id uuid [pk]
+  proprietario_id uuid [not null]
+  tipo catalogo.tipo_veiculo [not null]
+  fabricante varchar(100) [not null]
+  modelo varchar(120) [not null]
+  versao varchar(180)
+  ano_fabricacao smallint
+  ano_modelo smallint
+  cor varchar(60)
+  identificador_publico varchar(80)
+  criado_em timestamptz [not null]
+  atualizado_em timestamptz [not null]
+
+  Note: 'Dados comuns. Cada veiculo possui detalhes na tabela correspondente ao seu tipo.'
+}
+
+Table catalogo.carros {
+  veiculo_id uuid [pk]
+  quilometragem integer
+  carroceria varchar(60)
+  cambio varchar(60)
+  combustivel varchar(60)
+  tracao varchar(40)
+  motorizacao varchar(100)
+  numero_portas smallint
+  numero_lugares smallint
+  final_placa char(1)
+  unico_dono boolean
+  ipva_pago boolean
+  licenciado boolean
+  blindado boolean
+}
+
+Table catalogo.motos {
+  veiculo_id uuid [pk]
+  quilometragem integer
+  cilindradas integer
+  categoria varchar(60)
+  partida varchar(40)
+  refrigeracao varchar(40)
+  cambio varchar(60)
+  combustivel varchar(60)
+  final_placa char(1)
+  ipva_pago boolean
+  licenciado boolean
+}
+
+Table catalogo.caminhoes {
+  veiculo_id uuid [pk]
+  quilometragem integer
+  configuracao varchar(80)
+  carroceria varchar(80)
+  cambio varchar(60)
+  combustivel varchar(60)
+  tracao varchar(40)
+  numero_eixos smallint
+  capacidade_carga_kg integer
+  peso_bruto_total_kg integer
+  implemento varchar(100)
+  final_placa char(1)
+  ipva_pago boolean
+  licenciado boolean
+}
+
+Table catalogo.caminhonetes {
+  veiculo_id uuid [pk]
+  quilometragem integer
+  tipo_cabine varchar(50)
+  carroceria varchar(60)
+  cambio varchar(60)
+  combustivel varchar(60)
+  tracao varchar(40)
+  motorizacao varchar(100)
+  capacidade_carga_kg integer
+  numero_portas smallint
+  final_placa char(1)
+  unico_dono boolean
+  ipva_pago boolean
+  licenciado boolean
+}
+
+Table catalogo.barcos {
+  veiculo_id uuid [pk]
+  tamanho_pes decimal(7,2)
+  estilo varchar(80)
+  material_casco varchar(80)
+  capacidade_pessoas smallint
+  numero_cabines smallint
+  horas_uso integer
+  registro_maritimo varchar(80)
+
+  Note: 'As horas individuais e os dados de cada motor ficam em motores_barco.'
+}
+
+Table catalogo.motores_barco {
+  id uuid [pk]
+  barco_id uuid [not null]
+  posicao smallint [not null]
+  fabricante varchar(100)
+  modelo varchar(120)
+  potencia_hp decimal(8,2)
+  ano smallint
+  horas_uso integer
+  horas_desde_revisao integer
+  combustivel varchar(60)
+
+  indexes {
+    (barco_id, posicao) [unique]
+  }
+}
+
+Table catalogo.linha_amarela {
+  veiculo_id uuid [pk]
+  tipo_maquina varchar(80)
+  horimetro integer
+  peso_operacional_kg integer
+  potencia_hp decimal(8,2)
+  tipo_esteira_ou_pneu varchar(30)
+  capacidade_cacamba_m3 decimal(8,3)
+  numero_serie varchar(100)
+}
+
+Table catalogo.caracteristicas {
+  id uuid [pk]
+  tipo_veiculo catalogo.tipo_veiculo [not null]
+  nome varchar(100) [not null]
+  grupo varchar(60)
+
+  indexes {
+    (tipo_veiculo, nome) [unique]
+  }
+
+  Note: 'Opcionais e equipamentos, como estabilizador ou dessalinizador.'
+}
+
+Table catalogo.veiculo_caracteristicas {
+  veiculo_id uuid [not null]
+  caracteristica_id uuid [not null]
+  observacao varchar(200)
+
+  indexes {
+    (veiculo_id, caracteristica_id) [pk]
+  }
+}
+
+Table catalogo.anuncios {
+  id uuid [pk]
+  veiculo_id uuid [not null]
+  anunciante_id uuid [not null]
+  titulo varchar(180) [not null]
+  descricao text
+  tipo_preco catalogo.tipo_preco [not null]
+  preco_centavos bigint [note: 'Obrigatorio se FIXO; vazio se SOB_CONSULTA']
+  aceita_troca boolean
+  cidade varchar(120) [not null]
+  uf char(2) [not null]
+  status catalogo.status_anuncio [not null]
+  publicado_em timestamptz
+  criado_em timestamptz [not null]
+  atualizado_em timestamptz [not null]
+  versao integer [not null, default: 0]
+
+  Note: 'Preco, troca, local e descricao pertencem a oferta. Plano obrigatorio para publicar ainda depende de regra comercial.'
+}
+
+Table catalogo.fotos {
+  id uuid [pk]
+  anuncio_id uuid [not null]
+  chave_arquivo text [not null, unique]
+  posicao smallint [not null]
+  texto_alternativo varchar(180)
+
+  indexes {
+    (anuncio_id, posicao) [unique]
+  }
+}
+
+Table vendas.compras {
+  id uuid [pk]
+  anuncio_id uuid [not null]
+  comprador_id uuid [not null]
+  vendedor_id uuid [not null]
+  valor_centavos bigint [not null]
+  titulo_veiculo_snapshot varchar(250) [not null]
+  status vendas.status_compra [not null]
+  criado_em timestamptz [not null]
+  pago_em timestamptz
+
+  Note: 'Compra do veiculo. Confirmar se a venda sera concluida dentro do site.'
+}
+
+Table vendas.pagamentos {
+  id uuid [pk]
+  compra_id uuid [not null]
+  provedor varchar(50) [not null]
+  referencia_externa varchar(180)
+  metodo vendas.metodo_pagamento [not null]
+  status vendas.status_pagamento [not null]
+  valor_centavos bigint [not null]
+  vence_em timestamptz
+  confirmado_em timestamptz
+  criado_em timestamptz [not null]
+
+  indexes {
+    (provedor, referencia_externa) [unique]
+  }
+}
+
+Table vendas.eventos_gateway {
+  id bigint [pk, increment]
+  provedor varchar(50) [not null]
+  evento_externo_id varchar(180) [not null]
+  pagamento_id uuid
+  recebido_em timestamptz [not null]
+  processado_em timestamptz
+
+  indexes {
+    (provedor, evento_externo_id) [unique]
+  }
+
+  Note: 'Evita processar duas vezes o mesmo evento do gateway.'
+}
+
+Ref: identidade.usuarios.id - identidade.usuarios_pf.usuario_id
+Ref: identidade.usuarios.id - identidade.usuarios_pj.usuario_id
+
+Ref: identidade.usuarios.id < assinaturas.assinaturas.usuario_id
+Ref: assinaturas.planos.id < assinaturas.assinaturas.plano_id
+
+Ref: identidade.usuarios.id < catalogo.veiculos.proprietario_id
+Ref: catalogo.veiculos.id - catalogo.carros.veiculo_id
+Ref: catalogo.veiculos.id - catalogo.motos.veiculo_id
+Ref: catalogo.veiculos.id - catalogo.caminhoes.veiculo_id
+Ref: catalogo.veiculos.id - catalogo.caminhonetes.veiculo_id
+Ref: catalogo.veiculos.id - catalogo.barcos.veiculo_id
+Ref: catalogo.veiculos.id - catalogo.linha_amarela.veiculo_id
+Ref: catalogo.barcos.veiculo_id < catalogo.motores_barco.barco_id
+
+Ref: catalogo.veiculos.id < catalogo.veiculo_caracteristicas.veiculo_id
+Ref: catalogo.caracteristicas.id < catalogo.veiculo_caracteristicas.caracteristica_id
+
+Ref: identidade.usuarios.id < catalogo.anuncios.anunciante_id
+Ref: catalogo.veiculos.id < catalogo.anuncios.veiculo_id
+Ref: catalogo.anuncios.id < catalogo.fotos.anuncio_id
+
+Ref: catalogo.anuncios.id < vendas.compras.anuncio_id
+Ref: identidade.usuarios.id < vendas.compras.comprador_id
+Ref: identidade.usuarios.id < vendas.compras.vendedor_id
+Ref: vendas.compras.id < vendas.pagamentos.compra_id
+Ref: vendas.pagamentos.id < vendas.eventos_gateway.pagamento_id

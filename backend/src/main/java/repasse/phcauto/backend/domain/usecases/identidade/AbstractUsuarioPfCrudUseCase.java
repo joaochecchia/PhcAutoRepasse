@@ -1,0 +1,39 @@
+package repasse.phcauto.backend.domain.usecases.identidade;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import repasse.phcauto.backend.domain.model.identidade.UsuarioPf;
+import repasse.phcauto.backend.domain.usecases.crud.AtualizarUseCase;
+import repasse.phcauto.backend.domain.usecases.crud.BuscarPorIdUseCase;
+import repasse.phcauto.backend.domain.usecases.crud.CriarUseCase;
+import repasse.phcauto.backend.domain.usecases.crud.ExcluirUseCase;
+import repasse.phcauto.backend.domain.usecases.crud.ListarUseCase;
+
+/**
+ * Base abstrata das operações CRUD de UsuarioPf.
+ * Não contém persistência nem regras concretas; subclasses cumprem os contratos das interfaces.
+ * Consumidores devem depender apenas da interface da operação de que necessitam.
+ */
+public abstract class AbstractUsuarioPfCrudUseCase implements
+        CriarUseCase<UsuarioPf>,
+        BuscarPorIdUseCase<UsuarioPf, UUID>,
+        AtualizarUseCase<UsuarioPf, UUID>,
+        ExcluirUseCase<UUID>,
+        ListarUseCase<UsuarioPf> {
+
+    @Override
+    public abstract UsuarioPf criar(UsuarioPf dados);
+
+    @Override
+    public abstract Optional<UsuarioPf> buscarPorId(UUID id);
+
+    @Override
+    public abstract UsuarioPf atualizar(UUID id, UsuarioPf dados);
+
+    @Override
+    public abstract boolean excluirPorId(UUID id);
+
+    @Override
+    public abstract List<UsuarioPf> listar(int offset, int limite);
+}
