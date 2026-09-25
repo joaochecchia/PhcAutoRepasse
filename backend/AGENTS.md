@@ -193,20 +193,20 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - API pública na raiz `usuarios`; core Java puro em `usuarios/internal/core`; entidades, repositories read/write e adaptadores em `usuarios/internal/infrastructure`.
 - `CriarUsuarioUseCase.execute` é implementado por `CriarUsuario`. `UsuariosFacade` delimita a transação write; `JpaUsuarioGateway` grava usuário, PF ou PJ e endereço. Consultas de unicidade usam write. Concorrência também é protegida por constraints.
 - O caso de uso publica por `PublicarUsuarioCriadoGateway`; o adaptador usa ApplicationEventPublisher. Não importar Spring no core.
-- POST `/api/v1/usuarios` e alias `/api/v1/identidade/usuarios` retornam UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como PBKDF2; papel fixo CLIENTE.
+- POST `/api/v1/usuarios` retorna UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como PBKDF2; papel fixo CLIENTE.
 - Evento público `usuarios.UsuarioCriado` e RowChanged são publicados na transação. A recuperação aceita ambos e UsuarioAlterado. Não publicar UsuarioAlterado(CADASTRADO) adicionalmente no novo fluxo.
 - Login local de verificação de credenciais está implementado; sessão/token, OAuth, atualização, exclusão e efeitos posteriores continuam pendentes. Não criar listeners vazios nem registros essenciais de cadastro de forma assíncrona.
 - `USUARIOS_INTEGRATION_TEST=true` habilita integração real de cadastro; usar bancos isolados. Nenhuma migration foi alterada para mover as entidades.
 
 ## Agregado de usuário
 
-- Consulte `docs/agregado-usuario.md`. Usuário é a única raiz HTTP: POST, GET, PATCH e DELETE em `/api/v1/usuarios` e no alias `/api/v1/identidade/usuarios`.
+- Consulte `docs/agregado-usuario.md`. Usuário é a única raiz HTTP: POST, GET, PATCH e DELETE somente em `/api/v1/usuarios`; não criar aliases duplicados.
 - PF, PJ e endereço não possuem controllers próprios. Toda mutação ocorre pelos casos de uso do agregado e na mesma transação write.
 - PATCH altera apenas campos enviados, não permite trocar PF/PJ e mantém nome/nome_fantasia de PJ coerentes. Campos nulos ficam inalterados; string vazia limpa somente número/complemento.
 - DELETE remove endereço e perfil antes de usuário. Qualquer FK externa bloqueia e reverte tudo; não há exclusão parcial.
 - JPA publica `RowChanged` somente para linhas efetivamente alteradas; a projeção read converge após commit. GET agregado usa write para consistência imediata.
 - Casos de uso e gateways de buscar, atualizar e excluir são segregados no core. `JpaUsuarioAggregateGateway` é o adaptador interno.
-- Os quatro controllers provisórios Usuario/PF/PJ/Endereco foram removidos. Os demais CRUDs provisórios continuam sem mudança.
+- Os quatro controllers provisórios Usuario/PF/PJ/Endereco foram removidos. Os 20 CRUDs provisórios restantes estão marcados com `@Hidden`: continuam no código, mas não aparecem no Swagger. Remova `@Hidden` apenas quando o respectivo fluxo de negócio estiver implementado e aprovado.
 
 ## Login local
 

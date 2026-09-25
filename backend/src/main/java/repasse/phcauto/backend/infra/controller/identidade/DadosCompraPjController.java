@@ -1,5 +1,6 @@
 package repasse.phcauto.backend.infra.controller.identidade;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashMap;
 import java.util.UUID;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import repasse.phcauto.backend.infra.controller.support.CrudHttpResponseFactory;
 
 /** CRUD HTTP provisório, ainda sem conexão com casos de uso ou gateways. */
+@Hidden
 @RestController
 @RequestMapping("/api/v1/identidade/dados-compra-pj")
 @Tag(name = "Dados de compra da pessoa jurídica")

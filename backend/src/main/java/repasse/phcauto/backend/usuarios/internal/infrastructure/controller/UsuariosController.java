@@ -12,7 +12,7 @@ import repasse.phcauto.backend.usuarios.request.AtualizarUsuarioRequest;
 import repasse.phcauto.backend.usuarios.response.UsuarioDetalhadoResponse;
 
 @RestController
-@RequestMapping({"/api/v1/usuarios", "/api/v1/identidade/usuarios"})
+@RequestMapping("/api/v1/usuarios")
 public class UsuariosController {
     private final UsuariosFacade usuarios;
 

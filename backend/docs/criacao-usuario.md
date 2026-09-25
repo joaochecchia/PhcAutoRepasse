@@ -47,7 +47,7 @@ Os demais módulos ainda têm estrutura transitória. O sincronizador compartilh
 
 ## Endpoint
 
-`POST /api/v1/usuarios`, também disponível em `POST /api/v1/identidade/usuarios` substituindo a criação provisória. O novo contrato é tipado e retorna `UsuarioResponse`, sem o envelope HashMap anterior. As outras operações provisórias não passaram a persistir dados.
+`POST /api/v1/usuarios` substitui a criação provisória e é a única rota de cadastro. O novo contrato é tipado e retorna `UsuarioResponse`, sem o envelope HashMap anterior. As outras operações provisórias não passaram a persistir dados.
 
 Exemplo PF:
 

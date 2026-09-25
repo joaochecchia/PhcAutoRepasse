@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +48,7 @@ class CrudControllersTests {
         for (var nome : CONTROLLERS) {
             var type = Class.forName("repasse.phcauto.backend.infra.controller." + nome);
             assertNotNull(type.getAnnotation(RestController.class), nome);
+            assertNotNull(type.getAnnotation(Hidden.class), nome + " deve permanecer fora do Swagger");
             assertNotNull(type.getAnnotation(RequestMapping.class), nome);
             var methods = Arrays.asList(type.getDeclaredMethods());
             assertEquals(1, methods.stream().filter(m -> m.isAnnotationPresent(PostMapping.class)).count(), nome);

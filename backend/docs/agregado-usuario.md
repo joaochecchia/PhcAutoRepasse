@@ -13,7 +13,7 @@ API.
 | PATCH | `/api/v1/usuarios/{id}` | Altera apenas os campos/blocos enviados |
 | DELETE | `/api/v1/usuarios/{id}` | Remove endereço, perfil e usuário atomicamente |
 
-O alias `/api/v1/identidade/usuarios` permanece disponível. Não existem rotas HTTP para
+Não existem rotas HTTP para
 `usuarios-pf`, `usuarios-pj` e `enderecos`.
 
 ## PATCH

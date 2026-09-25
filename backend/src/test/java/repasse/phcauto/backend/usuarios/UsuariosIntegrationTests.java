@@ -101,7 +101,7 @@ class UsuariosIntegrationTests {
                     " p on p.usuario_id=u.id join identidade.enderecos_usuario e on e.usuario_id=u.id where u.id=?", Integer.class, id) == 1);
             await(() -> receptor.recebeu(id));
             assertEquals(tipo, receptor.evento(id).tipoPessoa());
-            mvc.perform(post("/api/v1/identidade/usuarios").contentType("application/json").content(payload(request)))
+            mvc.perform(post("/api/v1/usuarios").contentType("application/json").content(payload(request)))
                     .andExpect(status().isConflict());
         }
     }

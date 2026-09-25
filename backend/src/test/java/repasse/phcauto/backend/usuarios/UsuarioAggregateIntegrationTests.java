@@ -53,7 +53,7 @@ class UsuarioAggregateIntegrationTests {
                 .andExpect(jsonPath("senha").doesNotExist())
                 .andExpect(jsonPath("senhaHash").doesNotExist());
 
-        mvc.perform(get("/api/v1/identidade/usuarios/{id}", id))
+        mvc.perform(get("/api/v1/usuarios/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("tipoPessoa").value("PF"))
                 .andExpect(jsonPath("endereco.cidade").value("Campinas"));
