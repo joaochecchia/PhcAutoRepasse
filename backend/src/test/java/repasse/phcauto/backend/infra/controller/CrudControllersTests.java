@@ -20,10 +20,6 @@ import repasse.phcauto.backend.infra.controller.support.CrudHttpResponseFactory;
 
 class CrudControllersTests {
     private static final List<String> CONTROLLERS = List.of(
-            "identidade.UsuarioController",
-            "identidade.UsuarioPfController",
-            "identidade.UsuarioPjController",
-            "identidade.EnderecoUsuarioController",
             "identidade.DadosCompraPfController",
             "identidade.DadosCompraPjController",
             "identidade.IdentidadeExternaController",
@@ -47,7 +43,7 @@ class CrudControllersTests {
 
     @Test
     void todosOsModelosPersistentesPossuemControllerCrudProvisorio() throws Exception {
-        assertEquals(24, CONTROLLERS.size());
+        assertEquals(20, CONTROLLERS.size());
         for (var nome : CONTROLLERS) {
             var type = Class.forName("repasse.phcauto.backend.infra.controller." + nome);
             assertNotNull(type.getAnnotation(RestController.class), nome);

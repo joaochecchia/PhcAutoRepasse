@@ -13,7 +13,7 @@ Comunique-se com o usuário em português brasileiro.
 
 A arquitetura definida pelo usuário é Clean Architecture, com princípios SOLID e monólito modular. Preserve essa direção nas implementações.
 
-Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 24 entidades JPA, repositories separados de leitura/escrita e 24 controllers CRUD provisórios na infraestrutura. Os controllers ainda não chamam casos de uso, gateways ou repositories e não representam operações persistidas. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
+Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 24 entidades JPA, repositories separados de leitura/escrita e 24 controllers CRUD provisórios na infraestrutura. A criação real agora está em `usuarios`, com contratos, fachada e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
 
 Pacote base: `repasse.phcauto.backend`.
 
@@ -119,7 +119,7 @@ O teste de contexto usa `@SpringBootTest` e requer write e read acessíveis. `PE
 
 Swagger UI: `http://localhost:8080/swagger-ui.html`.
 OpenAPI JSON: `http://localhost:8080/v3/api-docs`.
-Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe os CRUDs HTTP provisórios, ainda sem execução de regras ou persistência.
+Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe o cadastro real em POST /api/v1/usuarios e os demais CRUDs provisórios.
 
 ## Separação de leitura e escrita via Spring Modulith
 
@@ -155,9 +155,9 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Implementações de gateway ficam na infraestrutura e podem usar repositories Spring Data. Não expor `JpaRepository`, entidades JPA ou detalhes de read/write aos casos de uso.
 - Não criar `BaseGateway` CRUD por antecedência. Extrações compartilhadas só devem ocorrer quando existir repetição técnica real, estável e sem regras de negócio.
 - O CRUD abstrato existente é provisório. Ao implementar fluxos reais, preferir contratos menores e remover operações que não sejam justificadas pelo negócio.
-- Existem 24 controllers CRUD provisórios, um por modelo persistente, com cadastrar, buscar, listar, editar e deletar. Eles retornam apenas um envelope `HashMap` com as chaves `menssage` e `Body`; não injetam casos de uso, gateways ou repositories. Não interpretar suas mensagens de sucesso como persistência concluída.
+- Os controllers legados provisórios restantes retornam apenas um envelope `HashMap` com as chaves `menssage` e `Body`; não injetam casos de uso, gateways ou repositories. O controller legado de usuário e os endpoints diretos de PF, PJ e endereço foram removidos; essas operações passam pelo agregado exposto por `UsuariosController` em `usuarios/internal/infrastructure/controller`. Não interpretar as mensagens dos controllers legados como persistência concluída.
 - `CrudHttpResponseFactory` centraliza apenas a montagem técnica do envelope e remove senha, hashes, tokens e segredos do corpo devolvido. Ele não é um `BaseController` e não contém regras de negócio.
-- A aplicação usa `@Modulithic` e detecção `explicitly-annotated`. Os pacotes dos controllers declaram os módulos transitórios `identidade`, `assinaturas`, `catalogo` e `vendas`. Atualmente esses módulos delimitam a superfície HTTP; a organização completa por capacidade ainda exigirá evolução dos pacotes de domínio e infraestrutura.
+- A aplicação usa `@Modulithic` e detecção `explicitly-annotated`. Os pacotes dos controllers declaram os módulos transitórios `identidade`, `assinaturas`, `catalogo` e `vendas`. Esses quatro módulos delimitam a superfície HTTP; `usuarios` já possui organização por capacidade com implementação de cadastro; a organização completa por capacidade ainda exigirá evolução dos pacotes de domínio e infraestrutura.
 
 ## Orientações de manutenção
 
@@ -174,8 +174,44 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - `usuarios.telefone` representa celular da PF ou número de contato da PJ. Senhas locais são hashes em `senha_hash`, nunca texto puro.
 - `enderecos_usuario` armazena um endereço por usuário (PF ou PJ): CEP, cidade, bairro, rua, número, complemento e UF.
 - `dados_compra_pf` contém RG, nome do pai, nome da mãe, naturalidade e gênero. `dados_compra_pj` contém inscrição estadual e regime tributário. São complementos opcionais do perfil, preenchidos na etapa de compra; não são snapshots de transações.
-- Campos adicionados aceitam ausência para preservar usuários existentes e permitir preenchimento gradual. Isso não define todos como opcionais no formulário: a validação de cadastro completo e da etapa de compra deverá ficar nos futuros casos de uso. Complemento, filiação desconhecida e inscrição isenta precisam de tratamento adequado, sem dados fictícios.
+- Campos adicionados aceitam ausência para preservar usuários existentes e permitir preenchimento gradual. Isso não define todos como opcionais no formulário: o cadastro local completo já é validado no core de `usuarios`; a etapa de compra continua pendente. Complemento, filiação desconhecida e inscrição isenta precisam de tratamento adequado, sem dados fictícios.
 - `identidades_externas` permite Google e Facebook no mesmo usuário, com unicidade de `(provedor, identificador_externo)` no write. A senha local pode ser nula. Nenhum token OAuth é persistido. O identificador deve vir de uma resposta autenticada do provedor; não vincular contas automaticamente pela coincidência de email.
-- Esta entrega prepara a persistência, mas não implementa login OAuth, callbacks, credenciais dos provedores, endpoints ou casos de uso de cadastro/compra. O futuro fluxo deve exigir senha local válida ou identidade externa verificada, coletar email se o provedor não o fornecer e completar CPF/CNPJ/endereço antes da etapa que os exige. A criação dos vínculos deve ocorrer na mesma transação do usuário.
+- O cadastro local PF/PJ está implementado no módulo `usuarios`; login OAuth, callbacks, credenciais dos provedores e fluxos de compra permanecem pendentes. O futuro fluxo deve exigir senha local válida ou identidade externa verificada, coletar email se o provedor não o fornecer e completar CPF/CNPJ/endereço antes da etapa que os exige. A criação dos vínculos deve ocorrer na mesma transação do usuário.
 - V3 comum adiciona os campos e as quatro tabelas, preservando V1/V2. V4 exclusiva do write aplica FKs e unicidade; o read mantém a projeção assíncrona sem essas restrições. Próximas migrations comuns devem usar V5 ou superior.
-- Os quatro novos modelos têm contratos de domínio, entidades JPA, repositories read/write e sincronização Modulith. Os casos de uso desses modelos são interfaces específicas em `domain/usecases/identidade`: salvar e consultar endereço/complementos por usuário, vincular identidade externa verificada e consultar por provedor/identificador. Não há implementações concretas nem CRUD completo para esses modelos. `domain` corresponde ao core da arquitetura, sem frameworks.
+- Os quatro novos modelos têm contratos de domínio, entidades JPA, repositories read/write e sincronização Modulith. Os casos de uso desses modelos são interfaces específicas em `domain/usecases/identidade`: salvar e consultar endereço/complementos por usuário, vincular identidade externa verificada e consultar por provedor/identificador. O endereço participa da criação concreta de usuário; não há CRUD completo nem fluxos concretos de compra/vínculo externo para esses modelos. `domain` corresponde ao core da arquitetura, sem frameworks.
+
+## Preparação de eventos do CRUD de usuário
+
+- Consulte `docs/eventos-usuario.md`. `UsuarioAlterado` e `PublicarEventoUsuarioGateway` são contratos Java puros; o adaptador Spring exige transação write existente e gravável.
+- Cadastro completo deve salvar usuário + PF **ou** PJ + endereço na mesma transação, com identidade externa quando aplicável. Não criar esses registros essenciais em listeners assíncronos.
+- `UsuarioAlterado` sinaliza CADASTRADO, ATUALIZADO ou EXCLUIDO após a operação lógica; publicar antes do commit via porta interna. RowChanged continua responsável pela projeção das linhas.
+- O cadastro local já está conectado no módulo `usuarios`; não existem consumidores de negócio em produção para UsuarioCriado. O registro Modulith só persiste entregas para listeners transacionais existentes; não usar eventos como armazenamento para consumidores futuros.
+- A recuperação inclui RowChanged e UsuarioAlterado. Listeners futuros precisam de identificadores estáveis e idempotência. Workers e capacidade da fila são configuráveis por MODULITH_EVENT_WORKERS e MODULITH_EVENT_QUEUE_CAPACITY.
+
+## Criação concreta no módulo usuarios
+
+- API pública na raiz `usuarios`; core Java puro em `usuarios/internal/core`; entidades, repositories read/write e adaptadores em `usuarios/internal/infrastructure`.
+- `CriarUsuarioUseCase.execute` é implementado por `CriarUsuario`. `UsuariosFacade` delimita a transação write; `JpaUsuarioGateway` grava usuário, PF ou PJ e endereço. Consultas de unicidade usam write. Concorrência também é protegida por constraints.
+- O caso de uso publica por `PublicarUsuarioCriadoGateway`; o adaptador usa ApplicationEventPublisher. Não importar Spring no core.
+- POST `/api/v1/usuarios` e alias `/api/v1/identidade/usuarios` retornam UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como PBKDF2; papel fixo CLIENTE.
+- Evento público `usuarios.UsuarioCriado` e RowChanged são publicados na transação. A recuperação aceita ambos e UsuarioAlterado. Não publicar UsuarioAlterado(CADASTRADO) adicionalmente no novo fluxo.
+- Login local de verificação de credenciais está implementado; sessão/token, OAuth, atualização, exclusão e efeitos posteriores continuam pendentes. Não criar listeners vazios nem registros essenciais de cadastro de forma assíncrona.
+- `USUARIOS_INTEGRATION_TEST=true` habilita integração real de cadastro; usar bancos isolados. Nenhuma migration foi alterada para mover as entidades.
+
+## Agregado de usuário
+
+- Consulte `docs/agregado-usuario.md`. Usuário é a única raiz HTTP: POST, GET, PATCH e DELETE em `/api/v1/usuarios` e no alias `/api/v1/identidade/usuarios`.
+- PF, PJ e endereço não possuem controllers próprios. Toda mutação ocorre pelos casos de uso do agregado e na mesma transação write.
+- PATCH altera apenas campos enviados, não permite trocar PF/PJ e mantém nome/nome_fantasia de PJ coerentes. Campos nulos ficam inalterados; string vazia limpa somente número/complemento.
+- DELETE remove endereço e perfil antes de usuário. Qualquer FK externa bloqueia e reverte tudo; não há exclusão parcial.
+- JPA publica `RowChanged` somente para linhas efetivamente alteradas; a projeção read converge após commit. GET agregado usa write para consistência imediata.
+- Casos de uso e gateways de buscar, atualizar e excluir são segregados no core. `JpaUsuarioAggregateGateway` é o adaptador interno.
+- Os quatro controllers provisórios Usuario/PF/PJ/Endereco foram removidos. Os demais CRUDs provisórios continuam sem mudança.
+
+## Login local
+
+- POST `/api/v1/usuarios/login` recebe `usuarios.request.LoginRequest` e retorna `usuarios.response.LoginResponse` somente com mensagem, HTTP 200. Request/response são NamedInterfaces públicas.
+- `LoginUseCase.execute(LoginRequest)` é implementado por `Login`, com dependência injetada exclusivamente em `AutenticacaoGateway`; o core não importa Spring/JPA.
+- `DatabaseAutenticacaoGateway` consulta write em transação read-only e valida hash/status; não consultar a projeção para autenticação. Senha nunca é comparada como texto puro.
+- PasswordEncoder compartilhado mantém PBKDF2 e aceita BCrypt identificado. Conta inexistente/inativa/sem senha local, hash inválido e email ambíguo retornam a mesma CredenciaisInvalidasException (401).
+- O sucesso não estabelece sessão ou token. OAuth2 e Spring Security HTTP continuam pendentes; ver `docs/login.md`.

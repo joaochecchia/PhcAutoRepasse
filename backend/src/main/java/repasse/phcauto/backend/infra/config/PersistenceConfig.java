@@ -98,7 +98,8 @@ public class PersistenceConfig {
         var factory = new LocalContainerEntityManagerFactoryBean();
         factory.setDataSource(source);
         factory.setPersistenceUnitName(unit);
-        factory.setPackagesToScan("repasse.phcauto.backend.infra.database.entity");
+        factory.setPackagesToScan("repasse.phcauto.backend.infra.database.entity",
+                "repasse.phcauto.backend.usuarios.internal.infrastructure.entity");
         factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of(
                 "hibernate.hbm2ddl.auto", "validate",

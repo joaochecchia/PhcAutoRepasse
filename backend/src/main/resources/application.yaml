@@ -39,6 +39,9 @@ spring:
         resubmitted: 2m
 
 app:
+  events:
+    workers: ${MODULITH_EVENT_WORKERS:2}
+    queue-capacity: ${MODULITH_EVENT_QUEUE_CAPACITY:1000}
   datasource:
     write:
       jdbc-url: ${WRITE_DATABASE_URL:${DATABASE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:phcauto}}}

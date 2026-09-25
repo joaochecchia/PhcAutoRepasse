@@ -25,9 +25,9 @@ import repasse.phcauto.backend.domain.model.identidade.*;
 import repasse.phcauto.backend.domain.model.assinaturas.*;
 import repasse.phcauto.backend.domain.model.catalogo.*;
 import repasse.phcauto.backend.domain.model.vendas.*;
-import repasse.phcauto.backend.infra.database.entity.identidade.UsuarioEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.UsuarioEntity;
 import repasse.phcauto.backend.infra.database.repository.read.ReadOnlyRepository;
-import repasse.phcauto.backend.infra.database.repository.write.identidade.UsuarioWriteRepository;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.repository.write.UsuarioWriteRepository;
 
 import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.*;
@@ -260,6 +260,9 @@ class PersistenceIntegrationTests {
     private Saved save(Fixture fixture) {
         try {
             String entityName = fixture.type().getName().replace("domain.model", "infra.database.entity") + "Entity";
+            if (Set.of(Usuario.class, UsuarioPf.class, UsuarioPj.class, EnderecoUsuario.class).contains(fixture.type())) {
+                entityName = "repasse.phcauto.backend.usuarios.internal.infrastructure.entity." + fixture.type().getSimpleName() + "Entity";
+            }
             var entity = Class.forName(entityName).getMethod("criar", fixture.type()).invoke(null, model(fixture.type(), fixture.values()));
             Object saved = writeRepository(fixture.type()).saveAndFlush(entity);
             Object key;

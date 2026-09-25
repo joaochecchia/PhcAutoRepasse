@@ -20,7 +20,7 @@ O domínio permanece em Java puro. Os eventos desta implementação são eventos
 
 ## Entidades e repositories
 
-As 24 entidades em `infra/database/entity/<area>` estendem os modelos abstratos do domínio. As anotações JPA ficam na infraestrutura. O mesmo mapeamento de colunas é usado pelas duas unidades JPA.
+As 24 entidades estendem os modelos abstratos do domínio. Usuário, PF, PJ e endereço ficam em `usuarios/internal/infrastructure/entity`, com repositories read/write internos ao módulo; as demais continuam em `infra/database/entity/<area>`. As anotações JPA ficam na infraestrutura. O mesmo mapeamento de colunas é usado pelas duas unidades JPA.
 
 - `*WriteRepository`: operações JPA na origem. Também deve ser usado para consultas que exigem leitura consistente logo após uma gravação.
 - `*ReadRepository`: busca por ID, existência, contagem e listagem paginada no banco de leitura. Não expõe `save` ou `delete`.
@@ -143,3 +143,7 @@ Referência: [Eventos e registro persistente do Spring Modulith](https://docs.sp
 - Esta entrega prepara a persistência, mas não implementa login OAuth, callbacks, credenciais dos provedores, endpoints ou casos de uso de cadastro/compra. O futuro fluxo deve exigir senha local válida ou identidade externa verificada, coletar email se o provedor não o fornecer e completar CPF/CNPJ/endereço antes da etapa que os exige. A criação dos vínculos deve ocorrer na mesma transação do usuário.
 - V3 comum adiciona os campos e as quatro tabelas, preservando V1/V2. V4 exclusiva do write aplica FKs e unicidade; o read mantém a projeção assíncrona sem essas restrições. Próximas migrations comuns devem usar V5 ou superior.
 - Os quatro novos modelos têm contratos de domínio, entidades JPA, repositories read/write e sincronização Modulith. Os casos de uso desses modelos são interfaces específicas em `domain/usecases/identidade`: salvar e consultar endereço/complementos por usuário, vincular identidade externa verificada e consultar por provedor/identificador. Não há implementações concretas nem CRUD completo para esses modelos. `domain` corresponde ao core da arquitetura, sem frameworks.
+
+## Cadastro local
+
+A criação atômica e o evento de negócio UsuarioCriado estão descritos em [criacao-usuario.md](criacao-usuario.md). PATCH, consulta e exclusão coordenada estão em [agregado-usuario.md](agregado-usuario.md). As duas unidades JPA também escaneiam as entidades internas de usuarios; ProjectionTable preserva as mesmas tabelas e chaves. O registro de falhas inclui UsuarioCriado.
