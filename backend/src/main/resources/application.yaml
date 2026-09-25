@@ -25,6 +25,7 @@ spring:
   cache:
     type: redis
   modulith:
+    detection-strategy: explicitly-annotated
     events:
       jdbc:
         schema-initialization:

@@ -13,7 +13,7 @@ Comunique-se com o usuário em português brasileiro.
 
 A arquitetura definida pelo usuário é Clean Architecture, com princípios SOLID e monólito modular. Preserve essa direção nas implementações.
 
-Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 24 entidades JPA na infraestrutura e repositories separados de leitura/escrita, mas ainda não há implementações concretas de casos de uso ou endpoints de negócio. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
+Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 24 entidades JPA, repositories separados de leitura/escrita e 24 controllers CRUD provisórios na infraestrutura. Os controllers ainda não chamam casos de uso, gateways ou repositories e não representam operações persistidas. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
 
 Pacote base: `repasse.phcauto.backend`.
 
@@ -119,7 +119,7 @@ O teste de contexto usa `@SpringBootTest` e requer write e read acessíveis. `PE
 
 Swagger UI: `http://localhost:8080/swagger-ui.html`.
 OpenAPI JSON: `http://localhost:8080/v3/api-docs`.
-Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação atualmente não possui operações de negócio.
+Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe os CRUDs HTTP provisórios, ainda sem execução de regras ou persistência.
 
 ## Separação de leitura e escrita via Spring Modulith
 
@@ -155,6 +155,9 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação atualm
 - Implementações de gateway ficam na infraestrutura e podem usar repositories Spring Data. Não expor `JpaRepository`, entidades JPA ou detalhes de read/write aos casos de uso.
 - Não criar `BaseGateway` CRUD por antecedência. Extrações compartilhadas só devem ocorrer quando existir repetição técnica real, estável e sem regras de negócio.
 - O CRUD abstrato existente é provisório. Ao implementar fluxos reais, preferir contratos menores e remover operações que não sejam justificadas pelo negócio.
+- Existem 24 controllers CRUD provisórios, um por modelo persistente, com cadastrar, buscar, listar, editar e deletar. Eles retornam apenas um envelope `HashMap` com as chaves `menssage` e `Body`; não injetam casos de uso, gateways ou repositories. Não interpretar suas mensagens de sucesso como persistência concluída.
+- `CrudHttpResponseFactory` centraliza apenas a montagem técnica do envelope e remove senha, hashes, tokens e segredos do corpo devolvido. Ele não é um `BaseController` e não contém regras de negócio.
+- A aplicação usa `@Modulithic` e detecção `explicitly-annotated`. Os pacotes dos controllers declaram os módulos transitórios `identidade`, `assinaturas`, `catalogo` e `vendas`. Atualmente esses módulos delimitam a superfície HTTP; a organização completa por capacidade ainda exigirá evolução dos pacotes de domínio e infraestrutura.
 
 ## Orientações de manutenção
 
