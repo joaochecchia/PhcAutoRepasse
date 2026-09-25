@@ -8,7 +8,14 @@ services:
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     environment:
-      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-phcauto}
+      WRITE_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-phcauto}
+      READ_DATABASE_URL: jdbc:postgresql://postgres-read:5432/${POSTGRES_DB:-phcauto}
+      POSTGRES_READ_USER: ${POSTGRES_READ_USER:-phcauto_read}
+      POSTGRES_READ_PASSWORD: ${POSTGRES_READ_PASSWORD:-phcauto_read_local}
+      PROJECTION_USER: ${PROJECTION_USER:-phcauto_projection}
+      PROJECTION_PASSWORD: ${PROJECTION_PASSWORD:-phcauto_projection_local}
+      PROJECTION_BOOTSTRAP: ${PROJECTION_BOOTSTRAP:-true}
+      PROJECTION_RETRY_DELAY: ${PROJECTION_RETRY_DELAY:-30s}
       POSTGRES_USER: ${POSTGRES_USER:-phcauto}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-phcauto_local}
       REDIS_HOST: redis
@@ -21,6 +28,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      postgres-bootstrap:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -42,6 +51,44 @@ services:
       retries: 10
       start_period: 10s
 
+  postgres-read:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-phcauto}
+      POSTGRES_USER: ${PROJECTION_USER:-phcauto_projection}
+      POSTGRES_PASSWORD: ${PROJECTION_PASSWORD:-phcauto_projection_local}
+    ports:
+      - "127.0.0.1:${POSTGRES_READ_PORT:-5433}:5432"
+    volumes:
+      # Volume novo: não reutilizar o volume da antiga réplica física.
+      - postgres_projection_data:/var/lib/postgresql/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  postgres-bootstrap:
+    image: postgres:17
+    restart: "no"
+    entrypoint: ["sh", "/scripts/bootstrap.sh"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-phcauto}
+      PROJECTION_USER: ${PROJECTION_USER:-phcauto_projection}
+      PROJECTION_PASSWORD: ${PROJECTION_PASSWORD:-phcauto_projection_local}
+      POSTGRES_READ_USER: ${POSTGRES_READ_USER:-phcauto_read}
+      POSTGRES_READ_PASSWORD: ${POSTGRES_READ_PASSWORD:-phcauto_read_local}
+    volumes:
+      - ./docker/postgres/bootstrap.sh:/scripts/bootstrap.sh:ro
+    depends_on:
+      postgres-read:
+        condition: service_healthy
+
   redis:
     image: redis:7.4
     restart: unless-stopped
@@ -58,4 +105,5 @@ services:
 
 volumes:
   postgres_data:
+  postgres_projection_data:
   redis_data:

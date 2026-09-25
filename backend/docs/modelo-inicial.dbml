@@ -72,7 +72,8 @@ Table identidade.usuarios {
   id uuid [pk]
   nome varchar(160) [not null]
   email varchar(254) [not null, unique]
-  senha_hash text [not null]
+  senha_hash text [note: 'Ausente para contas exclusivamente sociais']
+  telefone varchar(32)
   tipo_pessoa identidade.tipo_pessoa [not null]
   papel identidade.papel_usuario [not null]
   ativo boolean [not null, default: true]
@@ -371,3 +372,48 @@ Ref: identidade.usuarios.id < vendas.compras.comprador_id
 Ref: identidade.usuarios.id < vendas.compras.vendedor_id
 Ref: vendas.compras.id < vendas.pagamentos.compra_id
 Ref: vendas.pagamentos.id < vendas.eventos_gateway.pagamento_id
+// Evolução do cadastro: V3 comum e V4 exclusiva do write.
+Enum identidade.provedor_autenticacao {
+  GOOGLE
+  FACEBOOK
+}
+
+Table identidade.enderecos_usuario {
+  usuario_id uuid [pk, ref: > identidade.usuarios.id]
+  cep varchar(8)
+  cidade varchar(120)
+  bairro varchar(120)
+  rua varchar(200)
+  numero varchar(20)
+  complemento varchar(200)
+  uf varchar(2)
+  Note: 'Um endereço de cadastro por usuário, PF ou PJ. Preenchimento pode ser retomado.'
+}
+
+Table identidade.dados_compra_pf {
+  usuario_id uuid [pk, ref: > identidade.usuarios_pf.usuario_id]
+  rg varchar(30)
+  nome_pai varchar(160)
+  nome_mae varchar(160)
+  naturalidade varchar(160)
+  genero varchar(60)
+  Note: 'Complemento do perfil, solicitado na compra; não é snapshot de uma transação.'
+}
+
+Table identidade.dados_compra_pj {
+  usuario_id uuid [pk, ref: > identidade.usuarios_pj.usuario_id]
+  inscricao_estadual varchar(30)
+  regime_tributario varchar(80)
+}
+
+Table identidade.identidades_externas {
+  id uuid [pk]
+  usuario_id uuid [not null, ref: > identidade.usuarios.id]
+  provedor identidade.provedor_autenticacao [not null]
+  identificador_externo varchar(255) [not null]
+  indexes {
+    (provedor, identificador_externo) [unique]
+    usuario_id
+  }
+  Note: 'Identificador estável validado pelo provedor; não armazenar tokens. Não vincular por email automaticamente.'
+}

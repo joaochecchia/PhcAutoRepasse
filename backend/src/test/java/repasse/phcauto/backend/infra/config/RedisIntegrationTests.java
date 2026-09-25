@@ -40,7 +40,9 @@ class RedisIntegrationTests {
             Long ttl = redis.getExpire(redisKey, TimeUnit.SECONDS);
             assertNotNull(ttl);
             assertTrue(ttl > 0 && ttl <= 30);
-            cache.evict(id);
+            // Spring Data Redis 4 pode executar evict de forma assíncrona.
+            // Esta operação garante remoção imediata antes da verificação.
+            cache.evictIfPresent(id);
             assertFalse(redis.hasKey(redisKey));
         } finally {
             redis.delete(redisKey);

@@ -18,8 +18,11 @@ public abstract class Usuario {
     /** Obrigatório no modelo inicial. */
     public abstract String getEmail();
 
-    /** Obrigatório no modelo inicial. */
+    /** Ausente para contas que usam apenas autenticação externa. Nunca é senha em texto. */
     public abstract String getSenhaHash();
+
+    /** Celular da PF ou telefone de contato da PJ; pode faltar em cadastros legados. */
+    public abstract String getTelefone();
 
     /** Obrigatório no modelo inicial. */
     public abstract TipoPessoa getTipoPessoa();

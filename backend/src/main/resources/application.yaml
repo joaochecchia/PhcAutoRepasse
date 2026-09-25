@@ -4,17 +4,11 @@ spring:
   docker:
     compose:
       enabled: ${DOCKER_COMPOSE_ENABLED:false}
-  datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:phcauto}}
-    username: ${POSTGRES_USER:phcauto}
-    password: ${POSTGRES_PASSWORD:phcauto_local}
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: validate
   flyway:
-    enabled: true
-    locations: classpath:db/migration
+    # Execução explícita por datasource em PersistenceConfig.
+    enabled: false
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -30,8 +24,46 @@ spring:
         enabled: false
   cache:
     type: redis
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: false
+      completion-mode: delete
+      republish-outstanding-events-on-restart: true
+      staleness:
+        check-interval: 30s
+        published: 2m
+        processing: 2m
+        resubmitted: 2m
 
 app:
+  datasource:
+    write:
+      jdbc-url: ${WRITE_DATABASE_URL:${DATABASE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:phcauto}}}
+      username: ${POSTGRES_USER:phcauto}
+      password: ${POSTGRES_PASSWORD:phcauto_local}
+      pool-name: phcauto-write
+      maximum-pool-size: ${WRITE_POOL_SIZE:10}
+      connection-timeout: 5000
+    read:
+      jdbc-url: ${READ_DATABASE_URL:jdbc:postgresql://localhost:${POSTGRES_READ_PORT:5433}/${POSTGRES_DB:phcauto}}
+      username: ${POSTGRES_READ_USER:phcauto_read}
+      password: ${POSTGRES_READ_PASSWORD:phcauto_read_local}
+      read-only: true
+      pool-name: phcauto-read
+      maximum-pool-size: ${READ_POOL_SIZE:10}
+      connection-timeout: 5000
+    projection:
+      jdbc-url: ${READ_DATABASE_URL:jdbc:postgresql://localhost:${POSTGRES_READ_PORT:5433}/${POSTGRES_DB:phcauto}}
+      username: ${PROJECTION_USER:phcauto_projection}
+      password: ${PROJECTION_PASSWORD:phcauto_projection_local}
+      pool-name: phcauto-projection
+      maximum-pool-size: ${PROJECTION_POOL_SIZE:5}
+      connection-timeout: 3000
+  projection:
+    bootstrap: ${PROJECTION_BOOTSTRAP:true}
+    retry-delay: ${PROJECTION_RETRY_DELAY:30s}
   cache:
     ttl: ${REDIS_CACHE_TTL:10m}
     key-prefix: ${REDIS_CACHE_PREFIX:phcauto:cache:}
