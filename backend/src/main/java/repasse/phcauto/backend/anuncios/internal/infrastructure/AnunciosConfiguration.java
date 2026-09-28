@@ -7,6 +7,9 @@ import repasse.phcauto.backend.anuncios.internal.core.*;
 
 @Configuration(proxyBeanMethods = false)
 class AnunciosConfiguration {
+    @Bean BuscarAnunciosUseCase buscarAnunciosUseCase(BuscarAnunciosGateway gateway) {
+        return new BuscarAnuncios(gateway);
+    }
     @Bean CriarAnuncioUseCase criarAnuncioUseCase(CriarAnuncioGateway gateway,
             PublicarAnuncioCriadoGateway eventos, Clock applicationClock) {
         return new CriarAnuncio(gateway, eventos, applicationClock);

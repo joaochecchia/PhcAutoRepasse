@@ -11,27 +11,29 @@ import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 /** Resposta pública: a localização expõe somente a cidade. */
 public record AnuncioResponse(UUID id, UUID veiculoId, UUID anuncianteId, TipoVeiculo tipoVeiculo,
         String fabricante, String modelo, String versao, Integer anoFabricacao, Integer anoModelo,
-        String cor, String titulo, String descricao, TipoPreco tipoPreco, Long precoCentavos,
+        String cor, repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao,
+        String tipoFreio, String titulo, String descricao, TipoPreco tipoPreco, Long precoCentavos,
         Boolean aceitaTroca, String cidade, StatusAnuncio status, DetalhesVeiculoResponse detalhes,
         Instant criadoEm, Instant publicadoEm) {
 
     public sealed interface DetalhesVeiculoResponse permits CarroResponse, MotoResponse,
             CaminhaoResponse, CaminhoneteResponse, BarcoResponse, LinhaAmarelaResponse { }
     public record CarroResponse(Integer quilometragem, String carroceria, String cambio,
-            String combustivel, String tracao, String motorizacao, Integer numeroPortas,
+            String combustivel, String tracao, String motorizacao, String tipoDirecao,
+            BigDecimal cilindradaLitros, Integer numeroPortas,
             Integer numeroLugares, String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
             Boolean licenciado, Boolean blindado) implements DetalhesVeiculoResponse { }
     public record MotoResponse(Integer quilometragem, Integer cilindradas, String categoria,
             String partida, String refrigeracao, String cambio, String combustivel, String finalPlaca,
             Boolean ipvaPago, Boolean licenciado) implements DetalhesVeiculoResponse { }
     public record CaminhaoResponse(Integer quilometragem, String configuracao, String carroceria,
-            String cambio, String combustivel, String tracao, Integer numeroEixos,
+            String cambio, String combustivel, String tracao, String tipoDirecao, Integer numeroEixos,
             Integer capacidadeCargaKg, Integer pesoBrutoTotalKg, String implemento, String finalPlaca,
             Boolean ipvaPago, Boolean licenciado) implements DetalhesVeiculoResponse { }
     public record CaminhoneteResponse(Integer quilometragem, String tipoCabine, String carroceria,
-            String cambio, String combustivel, String tracao, String motorizacao,
-            Integer capacidadeCargaKg, Integer numeroPortas, String finalPlaca, Boolean unicoDono,
-            Boolean ipvaPago, Boolean licenciado) implements DetalhesVeiculoResponse { }
+            String cambio, String combustivel, String tracao, String motorizacao, String tipoDirecao,
+            BigDecimal cilindradaLitros, Integer capacidadeCargaKg, Integer numeroPortas, String finalPlaca, Boolean unicoDono,
+            Boolean ipvaPago, Boolean licenciado, Boolean blindado) implements DetalhesVeiculoResponse { }
     public record BarcoResponse(BigDecimal tamanhoPes, String estilo, String materialCasco,
             Integer capacidadePessoas, Integer numeroCabines, Integer horasUso,
             String registroMaritimo, List<MotorBarcoResponse> motores) implements DetalhesVeiculoResponse { }

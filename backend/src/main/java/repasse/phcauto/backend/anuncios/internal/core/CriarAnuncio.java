@@ -57,13 +57,14 @@ public final class CriarAnuncio implements CriarAnuncioUseCase {
             throw new AnuncioInvalidoException("Preço positivo é obrigatório para preço fixo");
         if (c.tipoPreco() == TipoPreco.SOB_CONSULTA && c.precoCentavos() != null)
             throw new AnuncioInvalidoException("Preço deve ser omitido quando estiver sob consulta");
+        ValidarDadosTecnicosAnuncio.validar(c);
         int limiteAno = Year.now(clock).getValue() + 1;
         validarAno(c.anoFabricacao(), limiteAno, "anoFabricacao");
         validarAno(c.anoModelo(), limiteAno, "anoModelo");
-        validarDetalhes(c.tipoVeiculo(), c.detalhes());
+        validarDetalhes(c.tipoVeiculo(), c.condicao(), c.detalhes());
     }
 
-    private void validarDetalhes(TipoVeiculo tipo, CriarAnuncioCommand.DetalhesVeiculo detalhes) {
+    private void validarDetalhes(TipoVeiculo tipo, repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao, CriarAnuncioCommand.DetalhesVeiculo detalhes) {
         boolean compativel = switch (tipo) {
             case CARRO -> detalhes instanceof CriarAnuncioCommand.Carro;
             case MOTO -> detalhes instanceof CriarAnuncioCommand.Moto;
@@ -90,4 +91,9 @@ public final class CriarAnuncio implements CriarAnuncioUseCase {
     private void obrigatorio(String valor, String campo) {
         if (valor == null || valor.isBlank()) throw new AnuncioInvalidoException(campo + " é obrigatório");
     }
+
+    private void obrigatorio(Object valor, String campo) {
+        if (valor == null) throw new AnuncioInvalidoException(campo + " é obrigatório");
+    }
+
 }

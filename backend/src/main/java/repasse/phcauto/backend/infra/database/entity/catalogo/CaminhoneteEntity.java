@@ -1,6 +1,7 @@
 package repasse.phcauto.backend.infra.database.entity.catalogo;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -38,6 +39,12 @@ public class CaminhoneteEntity extends Caminhonete {
     @Column(name = "motorizacao", nullable = true, length = 100)
     private String motorizacao;
 
+    @Column(name = "tipo_direcao", nullable = true, length = 60)
+    private String tipoDirecao;
+
+    @Column(name = "cilindrada_litros", nullable = true, precision = 4, scale = 1)
+    private BigDecimal cilindradaLitros;
+
     @Column(name = "capacidade_carga_kg", nullable = true)
     private Integer capacidadeCargaKg;
 
@@ -58,6 +65,9 @@ public class CaminhoneteEntity extends Caminhonete {
     @Column(name = "licenciado", nullable = true)
     private Boolean licenciado;
 
+    @Column(name = "blindado", nullable = true)
+    private Boolean blindado;
+
     @Version
     @Column(name = "lock_version", nullable = false)
     private Long lockVersion;
@@ -75,12 +85,15 @@ public class CaminhoneteEntity extends Caminhonete {
         entity.combustivel = dados.getCombustivel();
         entity.tracao = dados.getTracao();
         entity.motorizacao = dados.getMotorizacao();
+        entity.tipoDirecao = dados.getTipoDirecao();
+        entity.cilindradaLitros = dados.getCilindradaLitros();
         entity.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         entity.numeroPortas = dados.getNumeroPortas();
         entity.finalPlaca = dados.getFinalPlaca();
         entity.unicoDono = dados.getUnicoDono();
         entity.ipvaPago = dados.getIpvaPago();
         entity.licenciado = dados.getLicenciado();
+        entity.blindado = dados.getBlindado();
         return entity;
     }
 
@@ -96,12 +109,15 @@ public class CaminhoneteEntity extends Caminhonete {
         this.combustivel = dados.getCombustivel();
         this.tracao = dados.getTracao();
         this.motorizacao = dados.getMotorizacao();
+        this.tipoDirecao = dados.getTipoDirecao();
+        this.cilindradaLitros = dados.getCilindradaLitros();
         this.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         this.numeroPortas = dados.getNumeroPortas();
         this.finalPlaca = dados.getFinalPlaca();
         this.unicoDono = dados.getUnicoDono();
         this.ipvaPago = dados.getIpvaPago();
         this.licenciado = dados.getLicenciado();
+        this.blindado = dados.getBlindado();
     }
 
     @Override
@@ -129,6 +145,12 @@ public class CaminhoneteEntity extends Caminhonete {
     public String getMotorizacao() { return motorizacao; }
 
     @Override
+    public String getTipoDirecao() { return tipoDirecao; }
+
+    @Override
+    public BigDecimal getCilindradaLitros() { return cilindradaLitros; }
+
+    @Override
     public Integer getCapacidadeCargaKg() { return capacidadeCargaKg; }
 
     @Override
@@ -145,6 +167,9 @@ public class CaminhoneteEntity extends Caminhonete {
 
     @Override
     public Boolean getLicenciado() { return licenciado; }
+
+    @Override
+    public Boolean getBlindado() { return blindado; }
 
     public Long getLockVersion() { return lockVersion; }
 }

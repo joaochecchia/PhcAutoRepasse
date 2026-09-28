@@ -88,6 +88,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         public String getModelo(){return c.modelo();} public String getVersao(){return c.versao();}
         public Integer getAnoFabricacao(){return c.anoFabricacao();} public Integer getAnoModelo(){return c.anoModelo();}
         public String getCor(){return c.cor();} public String getIdentificadorPublico(){return c.identificadorPublico();}
+        public repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo getCondicao(){return c.condicao();} public String getTipoFreio(){return c.tipoFreio();}
         public Instant getCriadoEm(){return agora;} public Instant getAtualizadoEm(){return agora;}
     }
 
@@ -116,7 +117,8 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         private final UUID id; private final CriarAnuncioCommand.Carro d; CarroDados(UUID id,CriarAnuncioCommand.Carro d){this.id=id;this.d=d;}
         public UUID getVeiculoId(){return id;} public Integer getQuilometragem(){return d.quilometragem();} public String getCarroceria(){return d.carroceria();}
         public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();} public String getTracao(){return d.tracao();}
-        public String getMotorizacao(){return d.motorizacao();} public Integer getNumeroPortas(){return d.numeroPortas();}
+        public String getMotorizacao(){return d.motorizacao();} public String getTipoDirecao(){return d.tipoDirecao();}
+        public BigDecimal getCilindradaLitros(){return d.cilindradaLitros();} public Integer getNumeroPortas(){return d.numeroPortas();}
         public Integer getNumeroLugares(){return d.numeroLugares();} public String getFinalPlaca(){return upper(d.finalPlaca());}
         public Boolean getUnicoDono(){return d.unicoDono();} public Boolean getIpvaPago(){return d.ipvaPago();}
         public Boolean getLicenciado(){return d.licenciado();} public Boolean getBlindado(){return d.blindado();}
@@ -132,7 +134,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         private final UUID id; private final CriarAnuncioCommand.Caminhao d; CaminhaoDados(UUID id,CriarAnuncioCommand.Caminhao d){this.id=id;this.d=d;}
         public UUID getVeiculoId(){return id;} public Integer getQuilometragem(){return d.quilometragem();} public String getConfiguracao(){return d.configuracao();}
         public String getCarroceria(){return d.carroceria();} public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();}
-        public String getTracao(){return d.tracao();} public Integer getNumeroEixos(){return d.numeroEixos();} public Integer getCapacidadeCargaKg(){return d.capacidadeCargaKg();}
+        public String getTracao(){return d.tracao();} public String getTipoDirecao(){return d.tipoDirecao();} public Integer getNumeroEixos(){return d.numeroEixos();} public Integer getCapacidadeCargaKg(){return d.capacidadeCargaKg();}
         public Integer getPesoBrutoTotalKg(){return d.pesoBrutoTotalKg();} public String getImplemento(){return d.implemento();} public String getFinalPlaca(){return upper(d.finalPlaca());}
         public Boolean getIpvaPago(){return d.ipvaPago();} public Boolean getLicenciado(){return d.licenciado();}
     }
@@ -140,9 +142,10 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         private final UUID id; private final CriarAnuncioCommand.Caminhonete d; CaminhoneteDados(UUID id,CriarAnuncioCommand.Caminhonete d){this.id=id;this.d=d;}
         public UUID getVeiculoId(){return id;} public Integer getQuilometragem(){return d.quilometragem();} public String getTipoCabine(){return d.tipoCabine();}
         public String getCarroceria(){return d.carroceria();} public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();}
-        public String getTracao(){return d.tracao();} public String getMotorizacao(){return d.motorizacao();} public Integer getCapacidadeCargaKg(){return d.capacidadeCargaKg();}
+        public String getTracao(){return d.tracao();} public String getMotorizacao(){return d.motorizacao();} public String getTipoDirecao(){return d.tipoDirecao();}
+        public BigDecimal getCilindradaLitros(){return d.cilindradaLitros();} public Integer getCapacidadeCargaKg(){return d.capacidadeCargaKg();}
         public Integer getNumeroPortas(){return d.numeroPortas();} public String getFinalPlaca(){return upper(d.finalPlaca());} public Boolean getUnicoDono(){return d.unicoDono();}
-        public Boolean getIpvaPago(){return d.ipvaPago();} public Boolean getLicenciado(){return d.licenciado();}
+        public Boolean getIpvaPago(){return d.ipvaPago();} public Boolean getLicenciado(){return d.licenciado();} public Boolean getBlindado(){return d.blindado();}
     }
     static final class BarcoDados extends Barco {
         private final UUID id; private final CriarAnuncioCommand.Barco d; BarcoDados(UUID id,CriarAnuncioCommand.Barco d){this.id=id;this.d=d;}

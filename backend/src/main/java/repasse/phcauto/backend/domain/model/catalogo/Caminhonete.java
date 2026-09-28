@@ -32,6 +32,10 @@ public abstract class Caminhonete {
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract String getMotorizacao();
 
+    public abstract String getTipoDirecao();
+
+    public abstract java.math.BigDecimal getCilindradaLitros();
+
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Integer getCapacidadeCargaKg();
 
@@ -49,4 +53,6 @@ public abstract class Caminhonete {
 
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Boolean getLicenciado();
+
+    public abstract Boolean getBlindado();
 }

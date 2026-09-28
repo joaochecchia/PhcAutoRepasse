@@ -35,6 +35,9 @@ public class CaminhaoEntity extends Caminhao {
     @Column(name = "tracao", nullable = true, length = 40)
     private String tracao;
 
+    @Column(name = "tipo_direcao", nullable = true, length = 60)
+    private String tipoDirecao;
+
     @JdbcTypeCode(SqlTypes.SMALLINT)
     @Column(name = "numero_eixos", nullable = true)
     private Integer numeroEixos;
@@ -74,6 +77,7 @@ public class CaminhaoEntity extends Caminhao {
         entity.cambio = dados.getCambio();
         entity.combustivel = dados.getCombustivel();
         entity.tracao = dados.getTracao();
+        entity.tipoDirecao = dados.getTipoDirecao();
         entity.numeroEixos = dados.getNumeroEixos();
         entity.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         entity.pesoBrutoTotalKg = dados.getPesoBrutoTotalKg();
@@ -95,6 +99,7 @@ public class CaminhaoEntity extends Caminhao {
         this.cambio = dados.getCambio();
         this.combustivel = dados.getCombustivel();
         this.tracao = dados.getTracao();
+        this.tipoDirecao = dados.getTipoDirecao();
         this.numeroEixos = dados.getNumeroEixos();
         this.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         this.pesoBrutoTotalKg = dados.getPesoBrutoTotalKg();
@@ -124,6 +129,9 @@ public class CaminhaoEntity extends Caminhao {
 
     @Override
     public String getTracao() { return tracao; }
+
+    @Override
+    public String getTipoDirecao() { return tipoDirecao; }
 
     @Override
     public Integer getNumeroEixos() { return numeroEixos; }

@@ -29,6 +29,10 @@ public abstract class Carro {
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract String getMotorizacao();
 
+    public abstract String getTipoDirecao();
+
+    public abstract java.math.BigDecimal getCilindradaLitros();
+
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Integer getNumeroPortas();
 

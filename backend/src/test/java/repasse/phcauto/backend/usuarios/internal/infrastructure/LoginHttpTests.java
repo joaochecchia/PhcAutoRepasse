@@ -20,7 +20,7 @@ class LoginHttpTests {
     private MockMvc mvc;
 
     @BeforeEach void configurar() {
-        var gateway = new DatabaseAutenticacaoGateway(repository, encoder);
+        var gateway = new DatabaseAutenticacaoGateway(new UsuarioCredenciaisReader(repository), encoder);
         mvc = MockMvcBuilders.standaloneSetup(new LoginController(new Login(gateway)))
                 .setControllerAdvice(new LoginExceptionHandler()).build();
     }

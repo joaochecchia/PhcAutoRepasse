@@ -8,7 +8,8 @@ import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 
 public record CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, String fabricante,
         String modelo, String versao, Integer anoFabricacao, Integer anoModelo, String cor,
-        String identificadorPublico, String titulo, String descricao, TipoPreco tipoPreco,
+        String identificadorPublico,
+        repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao, String tipoFreio, String titulo, String descricao, TipoPreco tipoPreco,
         Long precoCentavos, Boolean aceitaTroca, boolean publicarAgora, Endereco endereco,
         DetalhesVeiculo detalhes) {
 
@@ -18,7 +19,7 @@ public record CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, St
     public sealed interface DetalhesVeiculo permits Carro, Moto, Caminhao, Caminhonete, Barco, LinhaAmarela { }
 
     public record Carro(Integer quilometragem, String carroceria, String cambio, String combustivel,
-            String tracao, String motorizacao, Integer numeroPortas, Integer numeroLugares,
+            String tracao, String motorizacao, String tipoDirecao, BigDecimal cilindradaLitros, Integer numeroPortas, Integer numeroLugares,
             String finalPlaca, Boolean unicoDono, Boolean ipvaPago, Boolean licenciado,
             Boolean blindado) implements DetalhesVeiculo { }
 
@@ -27,14 +28,15 @@ public record CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, St
             Boolean ipvaPago, Boolean licenciado) implements DetalhesVeiculo { }
 
     public record Caminhao(Integer quilometragem, String configuracao, String carroceria, String cambio,
-            String combustivel, String tracao, Integer numeroEixos, Integer capacidadeCargaKg,
+            String combustivel, String tracao, String tipoDirecao, Integer numeroEixos, Integer capacidadeCargaKg,
             Integer pesoBrutoTotalKg, String implemento, String finalPlaca, Boolean ipvaPago,
             Boolean licenciado) implements DetalhesVeiculo { }
 
     public record Caminhonete(Integer quilometragem, String tipoCabine, String carroceria, String cambio,
-            String combustivel, String tracao, String motorizacao, Integer capacidadeCargaKg,
+            String combustivel, String tracao, String motorizacao, String tipoDirecao,
+            BigDecimal cilindradaLitros, Integer capacidadeCargaKg,
             Integer numeroPortas, String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
-            Boolean licenciado) implements DetalhesVeiculo { }
+            Boolean licenciado, Boolean blindado) implements DetalhesVeiculo { }
 
     public record Barco(BigDecimal tamanhoPes, String estilo, String materialCasco,
             Integer capacidadePessoas, Integer numeroCabines, Integer horasUso,

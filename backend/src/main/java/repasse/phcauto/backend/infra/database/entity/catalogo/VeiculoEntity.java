@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo;
 import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 import repasse.phcauto.backend.domain.model.catalogo.Veiculo;
 
@@ -49,6 +50,13 @@ public class VeiculoEntity extends Veiculo {
     @Column(name = "identificador_publico", nullable = true, length = 80)
     private String identificadorPublico;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "condicao", nullable = true, length = 16)
+    private CondicaoVeiculo condicao;
+
+    @Column(name = "tipo_freio", nullable = true, length = 60)
+    private String tipoFreio;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private Instant criadoEm;
 
@@ -74,6 +82,8 @@ public class VeiculoEntity extends Veiculo {
         entity.anoModelo = dados.getAnoModelo();
         entity.cor = dados.getCor();
         entity.identificadorPublico = dados.getIdentificadorPublico();
+        entity.condicao = dados.getCondicao();
+        entity.tipoFreio = dados.getTipoFreio();
         entity.criadoEm = Objects.requireNonNull(dados.getCriadoEm(), "criadoEm");
         entity.atualizadoEm = Objects.requireNonNull(dados.getAtualizadoEm(), "atualizadoEm");
         return entity;
@@ -93,6 +103,8 @@ public class VeiculoEntity extends Veiculo {
         this.anoModelo = dados.getAnoModelo();
         this.cor = dados.getCor();
         this.identificadorPublico = dados.getIdentificadorPublico();
+        this.condicao = dados.getCondicao();
+        this.tipoFreio = dados.getTipoFreio();
         this.atualizadoEm = Objects.requireNonNull(dados.getAtualizadoEm(), "atualizadoEm");
     }
 
@@ -125,6 +137,12 @@ public class VeiculoEntity extends Veiculo {
 
     @Override
     public String getIdentificadorPublico() { return identificadorPublico; }
+
+    @Override
+    public CondicaoVeiculo getCondicao() { return condicao; }
+
+    @Override
+    public String getTipoFreio() { return tipoFreio; }
 
     @Override
     public Instant getCriadoEm() { return criadoEm; }

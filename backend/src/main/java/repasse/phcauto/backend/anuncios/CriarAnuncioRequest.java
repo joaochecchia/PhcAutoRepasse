@@ -19,10 +19,12 @@ public record CriarAnuncioRequest(
         @NotBlank @Size(max = 100) String fabricante,
         @NotBlank @Size(max = 120) String modelo,
         @Size(max = 180) String versao,
-        @Positive Integer anoFabricacao,
-        @Positive Integer anoModelo,
+        @NotNull @Positive Integer anoFabricacao,
+        @NotNull @Positive Integer anoModelo,
         @Size(max = 60) String cor,
         @Size(max = 80) String identificadorPublico,
+        @NotNull repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao,
+        @Size(max = 60) String tipoFreio,
         @NotBlank @Size(max = 180) String titulo,
         @Size(max = 10000) String descricao,
         @NotNull TipoPreco tipoPreco,
@@ -37,9 +39,54 @@ public record CriarAnuncioRequest(
         @Valid BarcoRequest barco,
         @Valid LinhaAmarelaRequest linhaAmarela) {
 
+
+    @jakarta.validation.constraints.AssertTrue(message = "Informe exatamente um bloco de dados específicos compatível com tipoVeiculo")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean isDetalhesCompativeisComTipo() {
+        int blocos = (carro != null ? 1 : 0) + (moto != null ? 1 : 0)
+                + (caminhao != null ? 1 : 0) + (caminhonete != null ? 1 : 0)
+                + (barco != null ? 1 : 0) + (linhaAmarela != null ? 1 : 0);
+        if (blocos != 1 || tipoVeiculo == null) return false;
+        return switch (tipoVeiculo) {
+            case CARRO -> carro != null;
+            case MOTO -> moto != null;
+            case CAMINHAO -> caminhao != null;
+            case CAMINHONETE -> caminhonete != null;
+            case BARCO -> barco != null;
+            case LINHA_AMARELA -> linhaAmarela != null;
+        };
+    }
+
+    @jakarta.validation.constraints.AssertTrue(message = "Preencha os dados técnicos obrigatórios do veículo")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public boolean isDadosTecnicosObrigatoriosPreenchidos() {
+        if (carro != null) return carro.quilometragem() != null && preenchido(carro.carroceria())
+                && preenchido(carro.cambio()) && preenchido(carro.combustivel())
+                && preenchido(carro.motorizacao()) && carro.cilindradaLitros() != null
+                && carro.numeroPortas() != null;
+        if (moto != null) return moto.quilometragem() != null && moto.cilindradas() != null
+                && preenchido(moto.categoria()) && preenchido(moto.cambio())
+                && preenchido(moto.combustivel());
+        if (caminhao != null) return caminhao.quilometragem() != null
+                && preenchido(caminhao.configuracao()) && preenchido(caminhao.carroceria())
+                && preenchido(caminhao.cambio()) && preenchido(caminhao.combustivel())
+                && caminhao.numeroEixos() != null;
+        if (caminhonete != null) return caminhonete.quilometragem() != null
+                && preenchido(caminhonete.tipoCabine()) && preenchido(caminhonete.carroceria())
+                && preenchido(caminhonete.cambio()) && preenchido(caminhonete.combustivel())
+                && preenchido(caminhonete.motorizacao()) && caminhonete.cilindradaLitros() != null
+                && caminhonete.numeroPortas() != null;
+        return true;
+    }
+
+    private static boolean preenchido(String valor) {
+        return valor != null && !valor.isBlank();
+    }
+
     public record CarroRequest(@PositiveOrZero Integer quilometragem, @Size(max=60) String carroceria,
             @Size(max=60) String cambio, @Size(max=60) String combustivel, @Size(max=40) String tracao,
-            @Size(max=100) String motorizacao, @Positive Integer numeroPortas, @Positive Integer numeroLugares,
+            @Size(max=100) String motorizacao, @Size(max=60) String tipoDirecao,
+            @Positive BigDecimal cilindradaLitros, @Positive Integer numeroPortas, @Positive Integer numeroLugares,
             @Pattern(regexp="[A-Za-z0-9]") String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
             Boolean licenciado, Boolean blindado) { }
 
@@ -50,16 +97,18 @@ public record CriarAnuncioRequest(
 
     public record CaminhaoRequest(@PositiveOrZero Integer quilometragem, @Size(max=80) String configuracao,
             @Size(max=80) String carroceria, @Size(max=60) String cambio, @Size(max=60) String combustivel,
-            @Size(max=40) String tracao, @Positive Integer numeroEixos, @Positive Integer capacidadeCargaKg,
+            @Size(max=40) String tracao, @Size(max=60) String tipoDirecao,
+            @Positive Integer numeroEixos, @Positive Integer capacidadeCargaKg,
             @Positive Integer pesoBrutoTotalKg, @Size(max=100) String implemento,
             @Pattern(regexp="[A-Za-z0-9]") String finalPlaca, Boolean ipvaPago, Boolean licenciado) { }
 
     public record CaminhoneteRequest(@PositiveOrZero Integer quilometragem, @Size(max=50) String tipoCabine,
             @Size(max=60) String carroceria, @Size(max=60) String cambio, @Size(max=60) String combustivel,
             @Size(max=40) String tracao, @Size(max=100) String motorizacao,
+            @Size(max=60) String tipoDirecao, @Positive BigDecimal cilindradaLitros,
             @Positive Integer capacidadeCargaKg, @Positive Integer numeroPortas,
             @Pattern(regexp="[A-Za-z0-9]") String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
-            Boolean licenciado) { }
+            Boolean licenciado, Boolean blindado) { }
 
     public record BarcoRequest(@Positive BigDecimal tamanhoPes, @Size(max=80) String estilo,
             @Size(max=80) String materialCasco, @Positive Integer capacidadePessoas,

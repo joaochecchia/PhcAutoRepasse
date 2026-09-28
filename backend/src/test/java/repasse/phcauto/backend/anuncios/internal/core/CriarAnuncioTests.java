@@ -59,19 +59,41 @@ class CriarAnuncioTests {
                 .isInstanceOf(AnuncioInvalidoException.class).hasMessageContaining("omitido");
     }
 
+    @Test void rejeitaDadosTecnicosObrigatoriosAusentes() {
+        var incompleto = new CriarAnuncioCommand.Carro(1, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null);
+        assertThatThrownBy(() -> useCase.execute(command(TipoVeiculo.CARRO, incompleto, true, TipoPreco.FIXO, 1L)))
+                .isInstanceOf(AnuncioInvalidoException.class)
+                .hasMessageContaining("carroceria");
+        assertThat(gateway.salvamentos).isZero();
+    }
+
+    @Test void rejeitaQuilometragemPositivaParaVeiculoZeroKm() {
+        var base = command(TipoVeiculo.CARRO, detalhes(TipoVeiculo.CARRO), true, TipoPreco.FIXO, 1L);
+        var zeroKm = new CriarAnuncioCommand(base.anuncianteId(), base.tipoVeiculo(), base.fabricante(),
+                base.modelo(), base.versao(), base.anoFabricacao(), base.anoModelo(), base.cor(),
+                base.identificadorPublico(), CondicaoVeiculo.ZERO_KM, base.tipoFreio(), base.titulo(),
+                base.descricao(), base.tipoPreco(), base.precoCentavos(), base.aceitaTroca(),
+                base.publicarAgora(), base.endereco(), base.detalhes());
+        assertThatThrownBy(() -> useCase.execute(zeroKm))
+                .isInstanceOf(AnuncioInvalidoException.class)
+                .hasMessageContaining("zero km");
+        assertThat(gateway.salvamentos).isZero();
+    }
+
     private CriarAnuncioCommand command(TipoVeiculo tipo, CriarAnuncioCommand.DetalhesVeiculo detalhes,
             boolean publicar, TipoPreco tipoPreco, Long preco) {
         return new CriarAnuncioCommand(USUARIO, tipo, "Fabricante", "Modelo", "Versão", 2025, 2026,
-                "Preto", null, "Título", "Descrição", tipoPreco, preco, true, publicar,
+                "Preto", null, CondicaoVeiculo.USADO, "DISCO", "Título", "Descrição", tipoPreco, preco, true, publicar,
                 new CriarAnuncioCommand.Endereco("74000000", "Goiânia", "Centro", "Rua 1", "10", null, "GO"), detalhes);
     }
 
     private CriarAnuncioCommand.DetalhesVeiculo detalhes(TipoVeiculo tipo) {
         return switch (tipo) {
-            case CARRO -> new CriarAnuncioCommand.Carro(1,null,null,null,null,null,null,null,null,null,null,null,null);
-            case MOTO -> new CriarAnuncioCommand.Moto(1,null,null,null,null,null,null,null,null,null);
-            case CAMINHAO -> new CriarAnuncioCommand.Caminhao(1,null,null,null,null,null,null,null,null,null,null,null,null);
-            case CAMINHONETE -> new CriarAnuncioCommand.Caminhonete(1,null,null,null,null,null,null,null,null,null,null,null,null);
+            case CARRO -> new CriarAnuncioCommand.Carro(1,"SUV","AUTOMATICO","FLEX",null,"2.0",null,new java.math.BigDecimal("2.0"),4,null,null,null,null,null,null);
+            case MOTO -> new CriarAnuncioCommand.Moto(1,160,"STREET",null,null,"MANUAL","GASOLINA",null,null,null);
+            case CAMINHAO -> new CriarAnuncioCommand.Caminhao(1,"TOCO","BAU","MANUAL","DIESEL",null,null,2,null,null,null,null,null,null);
+            case CAMINHONETE -> new CriarAnuncioCommand.Caminhonete(1,"DUPLA","PICKUP","AUTOMATICO","DIESEL",null,"2.8",null,new java.math.BigDecimal("2.8"),null,4,null,null,null,null,null);
             case BARCO -> new CriarAnuncioCommand.Barco(null,null,null,null,null,null,null,List.of());
             case LINHA_AMARELA -> new CriarAnuncioCommand.LinhaAmarela(null,null,null,null,null,null,null);
         };

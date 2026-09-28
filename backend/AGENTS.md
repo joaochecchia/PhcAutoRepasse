@@ -177,7 +177,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Campos adicionados aceitam ausência para preservar usuários existentes e permitir preenchimento gradual. Isso não define todos como opcionais no formulário: o cadastro local completo já é validado no core de `usuarios`; a etapa de compra continua pendente. Complemento, filiação desconhecida e inscrição isenta precisam de tratamento adequado, sem dados fictícios.
 - `identidades_externas` permite Google e Facebook no mesmo usuário, com unicidade de `(provedor, identificador_externo)` no write. A senha local pode ser nula. Nenhum token OAuth é persistido. O identificador deve vir de uma resposta autenticada do provedor; não vincular contas automaticamente pela coincidência de email.
 - O cadastro local PF/PJ está implementado no módulo `usuarios`; login OAuth, callbacks, credenciais dos provedores e fluxos de compra permanecem pendentes. O futuro fluxo deve exigir senha local válida ou identidade externa verificada, coletar email se o provedor não o fornecer e completar CPF/CNPJ/endereço antes da etapa que os exige. A criação dos vínculos deve ocorrer na mesma transação do usuário.
-- V3 comum adiciona os campos e as quatro tabelas, preservando V1/V2. V4 exclusiva do write aplica FKs e unicidade. V5 comum garante documentos numéricos. V6 comum cria `catalogo.enderecos_anuncio`, migra cidade/UF e torna `anuncios.endereco_id` obrigatório; V7 exclusiva adiciona FK no write e remove a unicidade da projeção read. Próximas migrations comuns devem usar V8 ou superior.
+- V3 comum adiciona os campos e as quatro tabelas, preservando V1/V2. V4 exclusiva do write aplica FKs e unicidade. V5 comum garante documentos numéricos. V6 comum cria `catalogo.enderecos_anuncio`, migra cidade/UF e torna `anuncios.endereco_id` obrigatório; V7 exclusiva adiciona FK no write e remove a unicidade da projeção read. V8 comum adiciona os campos e índices necessários aos filtros do catálogo. V9 exclusiva do write reforça os dados técnicos obrigatórios de novos anúncios sem invalidar registros legados. V10 comum adiciona índices funcionais da busca pública. Próximas migrations devem usar V11 ou superior.
 - `catalogo.enderecos_anuncio` usa o mesmo conjunto de dados postais de `identidade.enderecos_usuario`: CEP, cidade, bairro, rua, número, complemento e UF. A chave identifica o endereço do anúncio, e `anuncios.endereco_id` mantém o relacionamento com a oferta.
 - No futuro frontend de criação do anúncio, perguntar se o veículo está no mesmo endereço do usuário. Se estiver, copiar os dados para o endereço próprio do anúncio; se não estiver, solicitar outro endereço. Não vincular o anúncio diretamente ao endereço do usuário, pois o anunciante pode publicar um veículo localizado longe dele e o endereço do anúncio precisa preservar seu próprio estado.
 - Por privacidade e segurança, respostas públicas e a visualização inicial do anúncio devem expor somente a cidade do veículo. CEP, bairro, rua, número, complemento e o endereço completo não devem ser enviados no DTO público inicial; qualquer liberação posterior exige um caso de uso e regra de autorização explícitos.
@@ -243,3 +243,32 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Usuário/perfil/endereço e anúncio/veículo/especialização/endereço/dependências são atômicos. Qualquer falha deve reverter todas as linhas e os registros Modulith criados na transação.
 - A projeção read recebe somente eventos após commit. Nunca capturar uma exceção de persistência e continuar a transação como se a operação tivesse sucesso.
 - Há testes reais, habilitados pelas variáveis de integração, que forçam rollback de criação, PATCH e DELETE e verificam ausência de persistência parcial.
+
+## Desempenho JPA e transações
+
+- Associações JPA futuras devem declarar `FetchType.LAZY`; buscar grafos necessários com `JOIN FETCH`, projeção ou consulta específica. Nunca introduzir `EAGER`.
+- Não usar `CascadeType.ALL` nem `CascadeType.PERSIST`. Persistir dependências manualmente, em ordem, dentro da transação do agregado.
+- Os modelos atuais usam UUIDs escalares para FKs e não possuem associações JPA, eliminando carregamento implícito e N+1 por navegação.
+- Manter transações curtas. Validação HTTP, serialização, chamadas externas e cálculos caros devem ocorrer fora da transação quando não dependem de consistência do banco. No login, somente a leitura das credenciais é transacional; PBKDF2/BCrypt ocorre depois.
+- `JpaMappingArchitectureTests` deve continuar falhando se surgir relação EAGER ou cascade ALL/PERSIST.
+
+## Campos de filtro do catálogo
+
+- V8 comum adiciona `condicao` (`ZERO_KM`/`USADO`) e `tipo_freio` aos veículos; direção e cilindrada em litros para carros/caminhonetes; direção para caminhões; e blindagem para caminhonetes. Registros legados podem permanecer nulos, mas novos anúncios exigem condição.
+- Marca usa `veiculos.fabricante`; cidade/UF usam `enderecos_anuncio`; preço usa `anuncios.preco_centavos`; ano usa `veiculos.ano_modelo`/`ano_fabricacao`; câmbio, combustível, tração, carroceria, IPVA e portas já ficam nas tabelas específicas. Motos usam `cilindradas` em cc.
+- Perfil do anunciante vem do relacionamento `anuncios.anunciante_id`: PF usa `usuarios.nome`; PJ pode usar `usuarios_pj.nome_fantasia`, com `usuarios.tipo_pessoa` para distinguir o perfil.
+- A migration prepara persistência e índices. O caso de uso/endpoint de pesquisa ainda deve ser criado com filtros opcionais e paginação; não expor entidades JPA diretamente.
+
+## Obrigatoriedade técnica dos anúncios
+
+- Todo novo anúncio exige ano de fabricação, ano do modelo e condição. Para carro, moto, caminhão e caminhonete, o core também exige os dados técnicos definidos por tipo; a regra é aplicada após a mesclagem do PATCH.
+- Carro: quilometragem, carroceria, câmbio, combustível, motorização, cilindrada em litros e portas. Moto: quilometragem, cilindradas, categoria, câmbio e combustível. Caminhão: quilometragem, configuração, carroceria, câmbio, combustível e eixos. Caminhonete: quilometragem, cabine, carroceria, câmbio, combustível, motorização, cilindrada em litros e portas.
+- Veículo `ZERO_KM` deve ter quilometragem zero. Os demais campos técnicos continuam opcionais.
+- V9 do write cria constraints `NOT VALID`: novas gravações inválidas são bloqueadas, enquanto anúncios legados incompletos são preservados até serem corrigidos. Não preencher legado com dados fictícios.
+
+## Busca pública de anúncios
+
+- Consulte `docs/busca-anuncios.md`. GET `/api/v1/anuncios` usa o banco read e retorna somente anúncios `PUBLICADO`, com paginação limitada a 100 itens.
+- Os filtros opcionais cobrem tipo, localização pública, marca, perfil PF/PJ, nome de pessoa/loja, faixas de preço/ano e dados técnicos. Comparações categóricas textuais ignoram maiúsculas/minúsculas; perfil usa correspondência parcial.
+- O caso de uso e gateway estão em `anuncios/internal/core`; o adaptador JDBC parametrizado fica na infraestrutura. A resposta HTTP é `ResponseEntity<HashMap<String,Object>>` com `mensagem`, `carros`, `total`, `pagina` e `tamanho`.
+- Por privacidade, a lista retorna cidade e UF, nunca CEP, bairro, rua, número ou complemento. A chave `carros` pode conter qualquer tipo de veículo por decisão explícita do contrato atual.

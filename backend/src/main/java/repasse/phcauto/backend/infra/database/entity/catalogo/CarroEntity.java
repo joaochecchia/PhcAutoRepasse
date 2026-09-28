@@ -1,6 +1,7 @@
 package repasse.phcauto.backend.infra.database.entity.catalogo;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -34,6 +35,12 @@ public class CarroEntity extends Carro {
 
     @Column(name = "motorizacao", nullable = true, length = 100)
     private String motorizacao;
+
+    @Column(name = "tipo_direcao", nullable = true, length = 60)
+    private String tipoDirecao;
+
+    @Column(name = "cilindrada_litros", nullable = true, precision = 4, scale = 1)
+    private BigDecimal cilindradaLitros;
 
     @JdbcTypeCode(SqlTypes.SMALLINT)
     @Column(name = "numero_portas", nullable = true)
@@ -75,6 +82,8 @@ public class CarroEntity extends Carro {
         entity.combustivel = dados.getCombustivel();
         entity.tracao = dados.getTracao();
         entity.motorizacao = dados.getMotorizacao();
+        entity.tipoDirecao = dados.getTipoDirecao();
+        entity.cilindradaLitros = dados.getCilindradaLitros();
         entity.numeroPortas = dados.getNumeroPortas();
         entity.numeroLugares = dados.getNumeroLugares();
         entity.finalPlaca = dados.getFinalPlaca();
@@ -96,6 +105,8 @@ public class CarroEntity extends Carro {
         this.combustivel = dados.getCombustivel();
         this.tracao = dados.getTracao();
         this.motorizacao = dados.getMotorizacao();
+        this.tipoDirecao = dados.getTipoDirecao();
+        this.cilindradaLitros = dados.getCilindradaLitros();
         this.numeroPortas = dados.getNumeroPortas();
         this.numeroLugares = dados.getNumeroLugares();
         this.finalPlaca = dados.getFinalPlaca();
@@ -125,6 +136,12 @@ public class CarroEntity extends Carro {
 
     @Override
     public String getMotorizacao() { return motorizacao; }
+
+    @Override
+    public String getTipoDirecao() { return tipoDirecao; }
+
+    @Override
+    public BigDecimal getCilindradaLitros() { return cilindradaLitros; }
 
     @Override
     public Integer getNumeroPortas() { return numeroPortas; }

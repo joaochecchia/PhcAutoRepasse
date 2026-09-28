@@ -37,8 +37,10 @@ class AnunciosIntegrationTests {
     @BeforeEach void preparar() {
         write = new JdbcTemplate(writeDataSource); read = new JdbcTemplate(projectionDataSource);
         usuarioId = UUID.randomUUID();
-        write.update("insert into identidade.usuarios(id,nome,email,tipo_pessoa,papel,ativo,criado_em,atualizado_em) values (?,?,?,'PF','CLIENTE',true,?,?)",
-                usuarioId, "Anunciante teste", usuarioId+"@teste.local", Timestamp.from(Instant.now()), Timestamp.from(Instant.now()));
+        Object[] usuario = {usuarioId, "Anunciante teste", usuarioId+"@teste.local", Timestamp.from(Instant.now()), Timestamp.from(Instant.now())};
+        String sql = "insert into identidade.usuarios(id,nome,email,tipo_pessoa,papel,ativo,criado_em,atualizado_em) values (?,?,?,'PF','CLIENTE',true,?,?)";
+        write.update(sql, usuario);
+        read.update(sql, usuario);
     }
 
     @AfterEach void limpar() {
@@ -58,6 +60,7 @@ class AnunciosIntegrationTests {
         // Endereços são obtidos antes da remoção do anúncio no fluxo real; neste teste isolado removemos órfãos do usuário de teste.
         write.update("delete from catalogo.enderecos_anuncio e where not exists (select 1 from catalogo.anuncios a where a.endereco_id=e.id)");
         write.update("delete from identidade.usuarios where id=?", usuarioId);
+        read.update("delete from identidade.usuarios where id=?", usuarioId);
     }
 
     @Test void rollbackDesfazCriacaoPatchEDeleteDoAgregado() {
@@ -74,9 +77,9 @@ class AnunciosIntegrationTests {
         var criado = anuncios.criar(request(TipoVeiculo.CARRO));
         criados.add(criado);
         tx.executeWithoutResult(status -> {
-            var patch = new AtualizarAnuncioRequest(null,null,null,null,null,null,null,"Título que será desfeito",null,
+            var patch = new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título que será desfeito",null,
                     null,null,null,null,new EnderecoAnuncioPatchRequest(null,"Cidade desfeita",null,null,null,null,null),
-                    new CriarAnuncioRequest.CarroRequest(999,null,null,null,null,null,null,null,null,null,null,null,null),
+                    new CriarAnuncioRequest.CarroRequest(999,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
                     null,null,null,null,null);
             anuncios.atualizar(criado.id(), patch);
             status.setRollbackOnly();
@@ -94,10 +97,10 @@ class AnunciosIntegrationTests {
     @Test void atualizaParcialmenteEnderecoEDetalhesEExcluiAgregado() throws Exception {
         var criado=anuncios.criar(request(TipoVeiculo.CARRO));
         criados.add(criado);
-        var patch=new AtualizarAnuncioRequest(null,null,null,null,null,null,null,"Título alterado",null,
+        var patch=new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título alterado",null,
                 TipoPreco.SOB_CONSULTA,null,false,null,
                 new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,null),
-                new CriarAnuncioRequest.CarroRequest(250,null,null,null,null,null,null,null,null,null,null,null,null),
+                new CriarAnuncioRequest.CarroRequest(250,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
                 null,null,null,null,null);
         var atualizado=anuncios.atualizar(criado.id(),patch);
         assertThat(atualizado.titulo()).isEqualTo("Título alterado");
@@ -110,6 +113,25 @@ class AnunciosIntegrationTests {
         criados.remove(criado);
         assertThat(write.queryForObject("select count(*) from catalogo.anuncios where id=?",Long.class,criado.id())).isZero();
         assertThat(write.queryForObject("select count(*) from catalogo.veiculos where id=?",Long.class,criado.veiculoId())).isZero();
+    }
+
+    @Test void buscaPublicadosComFiltrosCombinadosEPaginacao() throws Exception {
+        var criado = anuncios.criar(request(TipoVeiculo.CARRO));
+        criados.add(criado);
+        esperarProjecao(1);
+        var filtros = new BuscarAnunciosRequest(TipoVeiculo.CARRO, "goiânia", "go", "fabricante",
+                repasse.phcauto.backend.domain.model.identidade.TipoPessoa.PF, "Anunciante",
+                50_000L, 150_000L, 2025, 2026, "automatico", "flex", "2.0",
+                repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO, null, null,
+                null, null, 4, new java.math.BigDecimal("2.0"), "disco", "suv", 0, 10);
+        var pagina = anuncios.buscar(filtros);
+        assertThat(pagina.total()).isOne();
+        assertThat(pagina.anuncios()).singleElement().satisfies(item -> {
+            assertThat(item.anuncioId()).isEqualTo(criado.id());
+            assertThat(item.nomePerfil()).isEqualTo("Anunciante teste");
+            assertThat(item.cidade()).isEqualTo("Goiânia");
+            assertThat(item).extracting(AnuncioBuscaResponse::getClass).isNotNull();
+        });
     }
 
     @Test void persisteEProjetaAnunciosDosSeisTipos() throws Exception {
@@ -138,12 +160,12 @@ class AnunciosIntegrationTests {
 
     private CriarAnuncioRequest request(TipoVeiculo tipo) {
         var endereco = new EnderecoAnuncioRequest("74000000","Goiânia","Centro","Rua 1","10",null,"GO");
-        return new CriarAnuncioRequest(usuarioId,tipo,"Fabricante","Modelo",null,2025,2026,"Preto",null,
+        return new CriarAnuncioRequest(usuarioId,tipo,"Fabricante","Modelo",null,2025,2026,"Preto",null,repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO,"DISCO",
                 "Anúncio "+tipo,null,TipoPreco.FIXO,100_000L,true,true,endereco,
-                tipo==TipoVeiculo.CARRO?new CriarAnuncioRequest.CarroRequest(10,null,null,null,null,null,null,null,null,null,null,null,null):null,
-                tipo==TipoVeiculo.MOTO?new CriarAnuncioRequest.MotoRequest(10,null,null,null,null,null,null,null,null,null):null,
-                tipo==TipoVeiculo.CAMINHAO?new CriarAnuncioRequest.CaminhaoRequest(10,null,null,null,null,null,null,null,null,null,null,null,null):null,
-                tipo==TipoVeiculo.CAMINHONETE?new CriarAnuncioRequest.CaminhoneteRequest(10,null,null,null,null,null,null,null,null,null,null,null,null):null,
+                tipo==TipoVeiculo.CARRO?new CriarAnuncioRequest.CarroRequest(10,"SUV","AUTOMATICO","FLEX",null,"2.0",null,new java.math.BigDecimal("2.0"),4,null,null,null,null,null,null):null,
+                tipo==TipoVeiculo.MOTO?new CriarAnuncioRequest.MotoRequest(10,160,"STREET",null,null,"MANUAL","GASOLINA",null,null,null):null,
+                tipo==TipoVeiculo.CAMINHAO?new CriarAnuncioRequest.CaminhaoRequest(10,"TOCO","BAU","MANUAL","DIESEL",null,null,2,null,null,null,null,null,null):null,
+                tipo==TipoVeiculo.CAMINHONETE?new CriarAnuncioRequest.CaminhoneteRequest(10,"DUPLA","PICKUP","AUTOMATICO","DIESEL",null,"2.8",null,new java.math.BigDecimal("2.8"),null,4,null,null,null,null,null):null,
                 tipo==TipoVeiculo.BARCO?new CriarAnuncioRequest.BarcoRequest(null,null,null,null,null,null,null,List.of()):null,
                 tipo==TipoVeiculo.LINHA_AMARELA?new CriarAnuncioRequest.LinhaAmarelaRequest(null,null,null,null,null,null,null):null);
     }

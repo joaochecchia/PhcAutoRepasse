@@ -132,6 +132,8 @@ Table catalogo.veiculos {
   ano_modelo smallint
   cor varchar(60)
   identificador_publico varchar(80)
+  condicao varchar(16)
+  tipo_freio varchar(60)
   criado_em timestamptz [not null]
   atualizado_em timestamptz [not null]
 
@@ -146,6 +148,8 @@ Table catalogo.carros {
   combustivel varchar(60)
   tracao varchar(40)
   motorizacao varchar(100)
+  tipo_direcao varchar(60)
+  cilindrada_litros decimal(4,1)
   numero_portas smallint
   numero_lugares smallint
   final_placa char(1)
@@ -177,6 +181,7 @@ Table catalogo.caminhoes {
   cambio varchar(60)
   combustivel varchar(60)
   tracao varchar(40)
+  tipo_direcao varchar(60)
   numero_eixos smallint
   capacidade_carga_kg integer
   peso_bruto_total_kg integer
@@ -195,12 +200,15 @@ Table catalogo.caminhonetes {
   combustivel varchar(60)
   tracao varchar(40)
   motorizacao varchar(100)
+  tipo_direcao varchar(60)
+  cilindrada_litros decimal(4,1)
   capacidade_carga_kg integer
   numero_portas smallint
   final_placa char(1)
   unico_dono boolean
   ipva_pago boolean
   licenciado boolean
+  blindado boolean
 }
 
 Table catalogo.barcos {

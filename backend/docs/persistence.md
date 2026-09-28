@@ -153,3 +153,11 @@ A criação atômica e o evento de negócio UsuarioCriado estão descritos em [c
 As fachadas de `usuarios` e `anuncios` delimitam as transações com `writeTransactionManager`. Os gateways JPA e publicadores desses módulos usam propagação `MANDATORY`, portanto falham imediatamente se forem chamados fora de uma transação write.
 
 Criação, alteração parcial, exclusão e registros de eventos técnicos/de negócio participam do mesmo commit. Uma exceção não tratada ou uma transação marcada para rollback desfaz todas as linhas do agregado e as publicações registradas naquela transação. Os listeners de projeção são executados após o commit; transações revertidas não devem alterar o banco read.
+
+## Estratégia de carregamento e cascades
+
+Os modelos JPA atuais mantêm chaves estrangeiras como UUIDs escalares e não declaram associações JPA. Assim, não há carregamento `EAGER`, proxies inesperados, N+1 por navegação nem cascades implícitos. Os gateways carregam e persistem cada parte do agregado explicitamente e na ordem exigida pelas FKs.
+
+Se uma associação JPA for introduzida futuramente, ela deve usar `FetchType.LAZY`; consultas que precisarem do grafo devem declarar `JOIN FETCH` ou projeção específica. `CascadeType.ALL` e `CascadeType.PERSIST` não são aceitos. `JpaMappingArchitectureTests` protege essas regras.
+
+A consulta de credenciais do login possui uma transação read-only curta. A comparação PBKDF2/BCrypt ocorre depois que a leitura termina, sem manter uma conexão do pool ocupada durante o cálculo do hash.

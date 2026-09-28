@@ -39,6 +39,12 @@ public abstract class Veiculo {
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract String getIdentificadorPublico();
 
+    /** Condição comercial usada na busca; nula somente para registros legados. */
+    public abstract CondicaoVeiculo getCondicao();
+
+    /** Tipo predominante de freio; opcional. */
+    public abstract String getTipoFreio();
+
     /** Obrigatório no modelo inicial. */
     public abstract Instant getCriadoEm();
 

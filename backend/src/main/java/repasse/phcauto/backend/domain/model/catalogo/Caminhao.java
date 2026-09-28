@@ -29,6 +29,8 @@ public abstract class Caminhao {
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract String getTracao();
 
+    public abstract String getTipoDirecao();
+
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Integer getNumeroEixos();
 
