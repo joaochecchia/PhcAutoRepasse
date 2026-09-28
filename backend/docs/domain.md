@@ -82,3 +82,9 @@ Os contratos `Salvar*UseCase` e consultas específicas anteriores foram preserva
 ## Core do módulo usuarios
 
 O cadastro local possui `CriarUsuarioUseCase.execute`, implementação pura e portas específicas em `usuarios/internal/core`. Buscar, atualizar parcialmente e excluir também possuem casos de uso e portas segregadas no mesmo core. Os modelos abstratos legados permanecem disponíveis. Consulte [criação de usuário](criacao-usuario.md) e [agregado de usuário](agregado-usuario.md).
+
+## Localização do anúncio
+
+A localização pertence ao anúncio, não ao veículo nem às classes específicas (carro, moto, caminhão, caminhonete, barco ou linha amarela). `catalogo.anuncios.endereco_id` é obrigatório e referencia uma linha exclusiva de `catalogo.enderecos_anuncio` no write. A tabela contém CEP, cidade, bairro, rua, número, complemento e UF. Cidade e UF são obrigatórios; os demais campos permitem ausência para preservar anúncios legados. O futuro caso de uso de publicação deverá gravar anúncio e endereço na mesma transação e poderá exigir o endereço completo conforme a regra comercial. O conjunto de dados postais é o mesmo de `identidade.enderecos_usuario`, embora cada endereço tenha identidade e ciclo de vida próprios.
+
+No futuro formulário de publicação, o frontend deverá perguntar se o endereço do veículo é o mesmo do usuário. Uma resposta positiva apenas preenche uma cópia no endereço do anúncio; o relacionamento permanece no anúncio para permitir que uma pessoa anuncie um veículo localizado longe dela. Na resposta pública e na visualização inicial do anúncio, expor somente a cidade. O endereço completo permanece interno e não deve integrar o DTO público sem regra explícita de autorização.

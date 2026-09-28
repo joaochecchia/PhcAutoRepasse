@@ -12,8 +12,6 @@ import repasse.phcauto.backend.usuarios.internal.core.*;
 
 @Configuration(proxyBeanMethods = false)
 class UsuariosConfiguration {
-    @Bean Clock usuariosClock() { return Clock.systemUTC(); }
-
     @Bean PasswordEncoder usuarioPasswordEncoder() {
         // TODO: ao adotar BCryptPasswordEncoder para novos hashes, manter PBKDF2 para contas existentes.
         return new DelegatingPasswordEncoder("pbkdf2@SpringSecurity_v5_8", Map.of(
@@ -26,8 +24,8 @@ class UsuariosConfiguration {
     @Bean LoginUseCase loginUseCase(AutenticacaoGateway autenticacao) { return new Login(autenticacao); }
 
     @Bean CriarUsuarioUseCase criarUsuarioUseCase(UsuarioGateway usuarios, HashSenhaGateway senhas,
-            PublicarUsuarioCriadoGateway eventos, Clock usuariosClock) {
-        return new CriarUsuario(usuarios, senhas, eventos, usuariosClock);
+            PublicarUsuarioCriadoGateway eventos, Clock applicationClock) {
+        return new CriarUsuario(usuarios, senhas, eventos, applicationClock);
     }
 
     @Bean BuscarUsuarioUseCase buscarUsuarioUseCase(ConsultarUsuarioGateway usuarios) {
@@ -36,12 +34,12 @@ class UsuariosConfiguration {
 
     @Bean AtualizarUsuarioUseCase atualizarUsuarioUseCase(ConsultarUsuarioGateway consultas,
             AtualizarUsuarioGateway atualizacoes, HashSenhaGateway senhas,
-            PublicarUsuarioAlteradoGateway eventos, Clock usuariosClock) {
-        return new AtualizarUsuario(consultas, atualizacoes, senhas, eventos, usuariosClock);
+            PublicarUsuarioAlteradoGateway eventos, Clock applicationClock) {
+        return new AtualizarUsuario(consultas, atualizacoes, senhas, eventos, applicationClock);
     }
 
     @Bean ExcluirUsuarioUseCase excluirUsuarioUseCase(ExcluirUsuarioGateway usuarios,
-            PublicarUsuarioAlteradoGateway eventos, Clock usuariosClock) {
-        return new ExcluirUsuario(usuarios, eventos, usuariosClock);
+            PublicarUsuarioAlteradoGateway eventos, Clock applicationClock) {
+        return new ExcluirUsuario(usuarios, eventos, applicationClock);
     }
 }

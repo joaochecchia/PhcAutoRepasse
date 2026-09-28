@@ -80,7 +80,7 @@ class PersistenceIntegrationTests {
             usuarios.saveAndFlush(usuario);
             await(() -> readRepository(Usuario.class).findById(id("usuarios"))
                     .map(value -> ((Usuario) value).getNome().equals("Nome atualizado na origem")).orElse(false));
-            assertEquals(24, saved.stream().map(s -> s.fixture().type()).distinct().count());
+            assertEquals(25, saved.stream().map(s -> s.fixture().type()).distinct().count());
             var primary = new JdbcTemplate(writeDataSource);
             var replica = new JdbcTemplate(readDataSource);
             assertFalse(primary.queryForObject("select pg_is_in_recovery()", Boolean.class));
@@ -468,6 +468,15 @@ class PersistenceIntegrationTests {
                 entry("getVeiculoId", id("veiculos")),
                 entry("getCaracteristicaId", id("caracteristicas")),
                 entry("getObservacao", "teste"))));
+        fixtures.add(fixture(EnderecoAnuncio.class, Map.ofEntries(
+                entry("getId", id("enderecos_anuncio")),
+                entry("getCep", "01001000"),
+                entry("getCidade", "São Paulo"),
+                entry("getBairro", "Sé"),
+                entry("getRua", "Praça da Sé"),
+                entry("getNumero", "10"),
+                entry("getComplemento", "Pátio"),
+                entry("getUf", "SP"))));
         fixtures.add(fixture(Anuncio.class, Map.ofEntries(
                 entry("getId", id("anuncios")),
                 entry("getVeiculoId", id("veiculos")),
@@ -477,8 +486,7 @@ class PersistenceIntegrationTests {
                 entry("getTipoPreco", TipoPreco.FIXO),
                 entry("getPrecoCentavos", 12500L),
                 entry("getAceitaTroca", Boolean.TRUE),
-                entry("getCidade", "teste"),
-                entry("getUf", "11"),
+                entry("getEnderecoId", id("enderecos_anuncio")),
                 entry("getStatus", StatusAnuncio.RASCUNHO),
                 entry("getPublicadoEm", NOW),
                 entry("getCriadoEm", NOW),

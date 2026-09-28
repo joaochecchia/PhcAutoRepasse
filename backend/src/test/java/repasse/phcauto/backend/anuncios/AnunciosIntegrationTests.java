@@ -1,0 +1,155 @@
+package repasse.phcauto.backend.anuncios;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
+import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
+
+@SpringBootTest
+@EnabledIfEnvironmentVariable(named = "ANUNCIOS_INTEGRATION_TEST", matches = "true")
+class AnunciosIntegrationTests {
+    @Autowired AnunciosFacade anuncios;
+    @Autowired @Qualifier("writeDataSource") DataSource writeDataSource;
+    @Autowired @Qualifier("projectionDataSource") DataSource projectionDataSource;
+    @Autowired @Qualifier("writeTransactionManager") PlatformTransactionManager transactions;
+    private JdbcTemplate write;
+    private JdbcTemplate read;
+    private UUID usuarioId;
+    private final List<AnuncioResponse> criados = new ArrayList<>();
+
+    @BeforeEach void preparar() {
+        write = new JdbcTemplate(writeDataSource); read = new JdbcTemplate(projectionDataSource);
+        usuarioId = UUID.randomUUID();
+        write.update("insert into identidade.usuarios(id,nome,email,tipo_pessoa,papel,ativo,criado_em,atualizado_em) values (?,?,?,'PF','CLIENTE',true,?,?)",
+                usuarioId, "Anunciante teste", usuarioId+"@teste.local", Timestamp.from(Instant.now()), Timestamp.from(Instant.now()));
+    }
+
+    @AfterEach void limpar() {
+        for (int i = criados.size() - 1; i >= 0; i--) {
+            var a = criados.get(i);
+            write.update("delete from catalogo.anuncios where id=?", a.id());
+            write.update("delete from catalogo.motores_barco where barco_id=?", a.veiculoId());
+            write.update("delete from catalogo.carros where veiculo_id=?", a.veiculoId());
+            write.update("delete from catalogo.motos where veiculo_id=?", a.veiculoId());
+            write.update("delete from catalogo.caminhoes where veiculo_id=?", a.veiculoId());
+            write.update("delete from catalogo.caminhonetes where veiculo_id=?", a.veiculoId());
+            write.update("delete from catalogo.barcos where veiculo_id=?", a.veiculoId());
+            write.update("delete from catalogo.linha_amarela where veiculo_id=?", a.veiculoId());
+            write.update("delete from catalogo.veiculos where id=?", a.veiculoId());
+            write.update("delete from catalogo.enderecos_anuncio where id=(select endereco_id from catalogo.anuncios where id=?)", a.id());
+        }
+        // Endereços são obtidos antes da remoção do anúncio no fluxo real; neste teste isolado removemos órfãos do usuário de teste.
+        write.update("delete from catalogo.enderecos_anuncio e where not exists (select 1 from catalogo.anuncios a where a.endereco_id=e.id)");
+        write.update("delete from identidade.usuarios where id=?", usuarioId);
+    }
+
+    @Test void rollbackDesfazCriacaoPatchEDeleteDoAgregado() {
+        var tx = new TransactionTemplate(transactions);
+        var desfeito = tx.execute(status -> {
+            var criado = anuncios.criar(request(TipoVeiculo.CARRO));
+            status.setRollbackOnly();
+            return criado;
+        });
+        assertThat(write.queryForObject("select count(*) from catalogo.anuncios where id=?",Long.class,desfeito.id())).isZero();
+        assertThat(write.queryForObject("select count(*) from catalogo.veiculos where id=?",Long.class,desfeito.veiculoId())).isZero();
+        assertThat(write.queryForObject("select count(*) from catalogo.carros where veiculo_id=?",Long.class,desfeito.veiculoId())).isZero();
+
+        var criado = anuncios.criar(request(TipoVeiculo.CARRO));
+        criados.add(criado);
+        tx.executeWithoutResult(status -> {
+            var patch = new AtualizarAnuncioRequest(null,null,null,null,null,null,null,"Título que será desfeito",null,
+                    null,null,null,null,new EnderecoAnuncioPatchRequest(null,"Cidade desfeita",null,null,null,null,null),
+                    new CriarAnuncioRequest.CarroRequest(999,null,null,null,null,null,null,null,null,null,null,null,null),
+                    null,null,null,null,null);
+            anuncios.atualizar(criado.id(), patch);
+            status.setRollbackOnly();
+        });
+        assertThat(write.queryForObject("select titulo from catalogo.anuncios where id=?",String.class,criado.id())).isEqualTo(criado.titulo());
+        assertThat(write.queryForObject("select cidade from catalogo.enderecos_anuncio where id=(select endereco_id from catalogo.anuncios where id=?)",String.class,criado.id())).isEqualTo(criado.cidade());
+        assertThat(write.queryForObject("select quilometragem from catalogo.carros where veiculo_id=?",Integer.class,criado.veiculoId())).isEqualTo(10);
+
+        tx.executeWithoutResult(status -> { anuncios.excluir(criado.id()); status.setRollbackOnly(); });
+        assertThat(write.queryForObject("select count(*) from catalogo.anuncios where id=?",Long.class,criado.id())).isOne();
+        assertThat(write.queryForObject("select count(*) from catalogo.veiculos where id=?",Long.class,criado.veiculoId())).isOne();
+        assertThat(write.queryForObject("select count(*) from catalogo.carros where veiculo_id=?",Long.class,criado.veiculoId())).isOne();
+    }
+
+    @Test void atualizaParcialmenteEnderecoEDetalhesEExcluiAgregado() throws Exception {
+        var criado=anuncios.criar(request(TipoVeiculo.CARRO));
+        criados.add(criado);
+        var patch=new AtualizarAnuncioRequest(null,null,null,null,null,null,null,"Título alterado",null,
+                TipoPreco.SOB_CONSULTA,null,false,null,
+                new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,null),
+                new CriarAnuncioRequest.CarroRequest(250,null,null,null,null,null,null,null,null,null,null,null,null),
+                null,null,null,null,null);
+        var atualizado=anuncios.atualizar(criado.id(),patch);
+        assertThat(atualizado.titulo()).isEqualTo("Título alterado");
+        assertThat(atualizado.cidade()).isEqualTo("Anápolis");
+        assertThat(atualizado.tipoPreco()).isEqualTo(TipoPreco.SOB_CONSULTA);
+        assertThat(atualizado.precoCentavos()).isNull();
+        assertThat(((AnuncioResponse.CarroResponse)atualizado.detalhes()).quilometragem()).isEqualTo(250);
+        assertThat(write.queryForObject("select cidade from catalogo.enderecos_anuncio where id=(select endereco_id from catalogo.anuncios where id=?)",String.class,criado.id())).isEqualTo("Anápolis");
+        anuncios.excluir(criado.id());
+        criados.remove(criado);
+        assertThat(write.queryForObject("select count(*) from catalogo.anuncios where id=?",Long.class,criado.id())).isZero();
+        assertThat(write.queryForObject("select count(*) from catalogo.veiculos where id=?",Long.class,criado.veiculoId())).isZero();
+    }
+
+    @Test void persisteEProjetaAnunciosDosSeisTipos() throws Exception {
+        for (var tipo : TipoVeiculo.values()) {
+            var resposta = anuncios.criar(request(tipo));
+            criados.add(resposta);
+            assertThat(resposta.tipoVeiculo()).isEqualTo(tipo);
+            assertThat(resposta.cidade()).isEqualTo("Goiânia");
+            assertThat(resposta.getClass().getRecordComponents()).extracting(c -> c.getName())
+                    .doesNotContain("cep", "bairro", "rua", "numero", "complemento", "uf");
+            assertThat(write.queryForObject("select count(*) from catalogo.anuncios where id=? and endereco_id is not null", Long.class, resposta.id())).isOne();
+            assertThat(write.queryForObject("select count(*) from catalogo."+tabela(tipo)+" where veiculo_id=?", Long.class, resposta.veiculoId())).isOne();
+        }
+        esperarProjecao(criados.size());
+    }
+
+    private void esperarProjecao(int quantidade) throws Exception {
+        var limite = Instant.now().plus(Duration.ofSeconds(10));
+        while (Instant.now().isBefore(limite)) {
+            Long count = read.queryForObject("select count(*) from catalogo.anuncios where anunciante_id=?", Long.class, usuarioId);
+            if (count != null && count == quantidade) return;
+            Thread.sleep(100);
+        }
+        assertThat(read.queryForObject("select count(*) from catalogo.anuncios where anunciante_id=?", Long.class, usuarioId)).isEqualTo((long) quantidade);
+    }
+
+    private CriarAnuncioRequest request(TipoVeiculo tipo) {
+        var endereco = new EnderecoAnuncioRequest("74000000","Goiânia","Centro","Rua 1","10",null,"GO");
+        return new CriarAnuncioRequest(usuarioId,tipo,"Fabricante","Modelo",null,2025,2026,"Preto",null,
+                "Anúncio "+tipo,null,TipoPreco.FIXO,100_000L,true,true,endereco,
+                tipo==TipoVeiculo.CARRO?new CriarAnuncioRequest.CarroRequest(10,null,null,null,null,null,null,null,null,null,null,null,null):null,
+                tipo==TipoVeiculo.MOTO?new CriarAnuncioRequest.MotoRequest(10,null,null,null,null,null,null,null,null,null):null,
+                tipo==TipoVeiculo.CAMINHAO?new CriarAnuncioRequest.CaminhaoRequest(10,null,null,null,null,null,null,null,null,null,null,null,null):null,
+                tipo==TipoVeiculo.CAMINHONETE?new CriarAnuncioRequest.CaminhoneteRequest(10,null,null,null,null,null,null,null,null,null,null,null,null):null,
+                tipo==TipoVeiculo.BARCO?new CriarAnuncioRequest.BarcoRequest(null,null,null,null,null,null,null,List.of()):null,
+                tipo==TipoVeiculo.LINHA_AMARELA?new CriarAnuncioRequest.LinhaAmarelaRequest(null,null,null,null,null,null,null):null);
+    }
+
+    private String tabela(TipoVeiculo tipo) {
+        return switch(tipo) { case CARRO->"carros"; case MOTO->"motos"; case CAMINHAO->"caminhoes";
+            case CAMINHONETE->"caminhonetes"; case BARCO->"barcos"; case LINHA_AMARELA->"linha_amarela"; };
+    }
+}

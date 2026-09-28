@@ -33,11 +33,8 @@ public abstract class Anuncio {
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Boolean getAceitaTroca();
 
-    /** Obrigatório no modelo inicial. */
-    public abstract String getCidade();
-
-    /** Obrigatório no modelo inicial. */
-    public abstract String getUf();
+    /** Endereço obrigatório da oferta, independente do tipo de veículo. */
+    public abstract UUID getEnderecoId();
 
     /** Obrigatório no modelo inicial. */
     public abstract StatusAnuncio getStatus();

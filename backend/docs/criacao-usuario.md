@@ -30,6 +30,8 @@ usuarios/
       controller/
         LoginController.java
         UsuariosController.java
+      service/
+        DefaultUsuariosFacade.java
       JpaUsuarioGateway.java
       SpringUsuarioCriadoPublisher.java
       UsuariosConfiguration.java
@@ -39,7 +41,7 @@ usuarios/
       repository/write/
 ```
 
-A raiz expõe contratos HTTP, fachada e evento público. Os controllers são adaptadores Spring MVC internos em `internal/infrastructure/controller`. O core contém interface e implementação do caso de uso com `execute`, portas e validações Java puras. `UsuariosConfiguration` monta o caso de uso por injeção de dependências. A fachada delimita a transação write. As quatro entidades e seus repositories foram movidos, preservando nomes de tabelas, dados e versões; nenhuma migration nova foi necessária.
+A raiz expõe contratos HTTP, a interface `UsuariosFacade` e eventos públicos, sem implementação Spring na fachada pública. Os controllers são adaptadores Spring MVC internos em `internal/infrastructure/controller`; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, implementa a fachada e delimita as transações. O core contém interface e implementação do caso de uso com `execute`, portas e validações Java puras. `UsuariosConfiguration` monta o caso de uso por injeção de dependências. A fachada delimita a transação write. As quatro entidades e seus repositories foram movidos, preservando nomes de tabelas, dados e versões; nenhuma migration nova foi necessária.
 
 O caso de uso solicita a publicação por `PublicarUsuarioCriadoGateway`. Seu adaptador usa `ApplicationEventPublisher` na mesma transação. Assim o core não importa Spring. Importar diretamente esse publisher no core contrariaria sua independência de frameworks.
 
@@ -108,7 +110,8 @@ Nenhum parâmetro permite escolher papel administrativo; o cadastro cria CLIENTE
 ## Transação e eventos
 
 ```text
-HTTP -> UsuariosFacade (@Transactional write)
+HTTP -> UsuariosFacade (interface pública)
+     -> DefaultUsuariosFacade (@Transactional write)
      -> CriarUsuario.execute
         -> validações e unicidades no write
         -> hash da senha
@@ -142,6 +145,6 @@ POSTGRES_PORT=15432 POSTGRES_READ_PORT=15433 REDIS_PORT=16379 \
 USUARIOS_INTEGRATION_TEST=true ./mvnw -B -ntp -Dtest=UsuariosIntegrationTests test
 ```
 
-A integração grava dados sintéticos; não apontar para produção. Verifica HTTP, PF/PJ, hash, ausência de credenciais na resposta, perfil exclusivo, endereço, projeção read, rollback, colisão concorrente e recuperação de listener. Os testes de persistência existentes cobrem os 24 mapeamentos e podem ser habilitados com `PERSISTENCE_INTEGRATION_TEST=true` nos mesmos bancos isolados.
+A integração grava dados sintéticos; não apontar para produção. Verifica HTTP, PF/PJ, hash, ausência de credenciais na resposta, perfil exclusivo, endereço, projeção read, rollback, colisão concorrente e recuperação de listener. Os testes de persistência existentes cobrem os 25 mapeamentos e podem ser habilitados com `PERSISTENCE_INTEGRATION_TEST=true` nos mesmos bancos isolados.
 
 Para executar o código atualizado no contêiner, reconstrua o backend com `docker compose up -d --build backend` usando as portas/variáveis do ambiente atual.

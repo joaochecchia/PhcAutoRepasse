@@ -267,6 +267,19 @@ Table catalogo.veiculo_caracteristicas {
   }
 }
 
+Table catalogo.enderecos_anuncio {
+  id uuid [pk]
+  cep varchar(8)
+  cidade varchar(120) [not null]
+  bairro varchar(120)
+  rua varchar(200)
+  numero varchar(20)
+  complemento varchar(200)
+  uf char(2) [not null]
+
+  Note: 'Localização da oferta; não pertence ao tipo específico do veículo.'
+}
+
 Table catalogo.anuncios {
   id uuid [pk]
   veiculo_id uuid [not null]
@@ -276,8 +289,7 @@ Table catalogo.anuncios {
   tipo_preco catalogo.tipo_preco [not null]
   preco_centavos bigint [note: 'Obrigatorio se FIXO; vazio se SOB_CONSULTA']
   aceita_troca boolean
-  cidade varchar(120) [not null]
-  uf char(2) [not null]
+  endereco_id uuid [not null, unique]
   status catalogo.status_anuncio [not null]
   publicado_em timestamptz
   criado_em timestamptz [not null]
@@ -364,6 +376,7 @@ Ref: catalogo.veiculos.id < catalogo.veiculo_caracteristicas.veiculo_id
 Ref: catalogo.caracteristicas.id < catalogo.veiculo_caracteristicas.caracteristica_id
 
 Ref: identidade.usuarios.id < catalogo.anuncios.anunciante_id
+Ref: catalogo.enderecos_anuncio.id - catalogo.anuncios.endereco_id
 Ref: catalogo.veiculos.id < catalogo.anuncios.veiculo_id
 Ref: catalogo.anuncios.id < catalogo.fotos.anuncio_id
 

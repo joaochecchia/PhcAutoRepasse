@@ -75,3 +75,7 @@ As constraints PostgreSQL continuam protegendo contra concorrência.
 `UsuarioAggregateIntegrationTests` verifica PF e PJ, PATCH parcial, GET agregado, delete no write e
 read, rollback quando há vínculo de compra e ausência das rotas diretas. `ManterUsuarioTests` cobre
 ordem entre persistência e evento, hash de nova senha, PATCH vazio e campos incompatíveis.
+
+## CPF, CNPJ e CEP
+
+A API recebe, persiste e retorna CPF, CNPJ e CEP somente com números: CPF possui 11 dígitos, CNPJ possui 14 e CEP possui 8. O frontend é responsável apenas pela máscara visual. A migration V5 aplica as mesmas restrições nos bancos write e read.

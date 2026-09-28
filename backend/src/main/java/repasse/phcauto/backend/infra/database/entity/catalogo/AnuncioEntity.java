@@ -1,8 +1,6 @@
 package repasse.phcauto.backend.infra.database.entity.catalogo;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -42,12 +40,8 @@ public class AnuncioEntity extends Anuncio {
     @Column(name = "aceita_troca", nullable = true)
     private Boolean aceitaTroca;
 
-    @Column(name = "cidade", nullable = false, length = 120)
-    private String cidade;
-
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(name = "uf", nullable = false, length = 2, columnDefinition = "char(2)")
-    private String uf;
+    @Column(name = "endereco_id", nullable = false)
+    private UUID enderecoId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
@@ -79,8 +73,7 @@ public class AnuncioEntity extends Anuncio {
         entity.tipoPreco = Objects.requireNonNull(dados.getTipoPreco(), "tipoPreco");
         entity.precoCentavos = dados.getPrecoCentavos();
         entity.aceitaTroca = dados.getAceitaTroca();
-        entity.cidade = Objects.requireNonNull(dados.getCidade(), "cidade");
-        entity.uf = Objects.requireNonNull(dados.getUf(), "uf");
+        entity.enderecoId = Objects.requireNonNull(dados.getEnderecoId(), "enderecoId");
         entity.status = Objects.requireNonNull(dados.getStatus(), "status");
         entity.publicadoEm = dados.getPublicadoEm();
         entity.criadoEm = Objects.requireNonNull(dados.getCriadoEm(), "criadoEm");
@@ -101,8 +94,7 @@ public class AnuncioEntity extends Anuncio {
         this.tipoPreco = Objects.requireNonNull(dados.getTipoPreco(), "tipoPreco");
         this.precoCentavos = dados.getPrecoCentavos();
         this.aceitaTroca = dados.getAceitaTroca();
-        this.cidade = Objects.requireNonNull(dados.getCidade(), "cidade");
-        this.uf = Objects.requireNonNull(dados.getUf(), "uf");
+        this.enderecoId = Objects.requireNonNull(dados.getEnderecoId(), "enderecoId");
         this.status = Objects.requireNonNull(dados.getStatus(), "status");
         this.publicadoEm = dados.getPublicadoEm();
         this.atualizadoEm = Objects.requireNonNull(dados.getAtualizadoEm(), "atualizadoEm");
@@ -133,10 +125,7 @@ public class AnuncioEntity extends Anuncio {
     public Boolean getAceitaTroca() { return aceitaTroca; }
 
     @Override
-    public String getCidade() { return cidade; }
-
-    @Override
-    public String getUf() { return uf; }
+    public UUID getEnderecoId() { return enderecoId; }
 
     @Override
     public StatusAnuncio getStatus() { return status; }

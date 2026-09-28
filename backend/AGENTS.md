@@ -13,7 +13,7 @@ Comunique-se com o usuário em português brasileiro.
 
 A arquitetura definida pelo usuário é Clean Architecture, com princípios SOLID e monólito modular. Preserve essa direção nas implementações.
 
-Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 24 entidades JPA, repositories separados de leitura/escrita e 24 controllers CRUD provisórios na infraestrutura. A criação real agora está em `usuarios`, com contratos, fachada e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
+Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 25 entidades JPA, repositories separados de leitura/escrita e 20 controllers CRUD provisórios na infraestrutura. A criação real de usuários está em `usuarios` e a criação real de anúncios está em `anuncios`, ambos com contratos e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
 
 Pacote base: `repasse.phcauto.backend`.
 
@@ -115,7 +115,7 @@ docker compose config --quiet
 ./mvnw -B -ntp test
 ```
 
-O teste de contexto usa `@SpringBootTest` e requer write e read acessíveis. `PERSISTENCE_INTEGRATION_TEST=true` habilita os testes reais dos 24 mapeamentos, eventos, recuperação e concorrência; use bancos isolados. A integração automática Spring/Docker Compose está desativada por padrão; inicie as dependências explicitamente. Não confunda build com testes pulados com execução bem-sucedida dos testes.
+O teste de contexto usa `@SpringBootTest` e requer write e read acessíveis. `PERSISTENCE_INTEGRATION_TEST=true` habilita os testes reais dos 25 mapeamentos, eventos, recuperação e concorrência; use bancos isolados. A integração automática Spring/Docker Compose está desativada por padrão; inicie as dependências explicitamente. Não confunda build com testes pulados com execução bem-sucedida dos testes.
 
 Swagger UI: `http://localhost:8080/swagger-ui.html`.
 OpenAPI JSON: `http://localhost:8080/v3/api-docs`.
@@ -177,7 +177,10 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Campos adicionados aceitam ausência para preservar usuários existentes e permitir preenchimento gradual. Isso não define todos como opcionais no formulário: o cadastro local completo já é validado no core de `usuarios`; a etapa de compra continua pendente. Complemento, filiação desconhecida e inscrição isenta precisam de tratamento adequado, sem dados fictícios.
 - `identidades_externas` permite Google e Facebook no mesmo usuário, com unicidade de `(provedor, identificador_externo)` no write. A senha local pode ser nula. Nenhum token OAuth é persistido. O identificador deve vir de uma resposta autenticada do provedor; não vincular contas automaticamente pela coincidência de email.
 - O cadastro local PF/PJ está implementado no módulo `usuarios`; login OAuth, callbacks, credenciais dos provedores e fluxos de compra permanecem pendentes. O futuro fluxo deve exigir senha local válida ou identidade externa verificada, coletar email se o provedor não o fornecer e completar CPF/CNPJ/endereço antes da etapa que os exige. A criação dos vínculos deve ocorrer na mesma transação do usuário.
-- V3 comum adiciona os campos e as quatro tabelas, preservando V1/V2. V4 exclusiva do write aplica FKs e unicidade; o read mantém a projeção assíncrona sem essas restrições. Próximas migrations comuns devem usar V5 ou superior.
+- V3 comum adiciona os campos e as quatro tabelas, preservando V1/V2. V4 exclusiva do write aplica FKs e unicidade. V5 comum garante documentos numéricos. V6 comum cria `catalogo.enderecos_anuncio`, migra cidade/UF e torna `anuncios.endereco_id` obrigatório; V7 exclusiva adiciona FK no write e remove a unicidade da projeção read. Próximas migrations comuns devem usar V8 ou superior.
+- `catalogo.enderecos_anuncio` usa o mesmo conjunto de dados postais de `identidade.enderecos_usuario`: CEP, cidade, bairro, rua, número, complemento e UF. A chave identifica o endereço do anúncio, e `anuncios.endereco_id` mantém o relacionamento com a oferta.
+- No futuro frontend de criação do anúncio, perguntar se o veículo está no mesmo endereço do usuário. Se estiver, copiar os dados para o endereço próprio do anúncio; se não estiver, solicitar outro endereço. Não vincular o anúncio diretamente ao endereço do usuário, pois o anunciante pode publicar um veículo localizado longe dele e o endereço do anúncio precisa preservar seu próprio estado.
+- Por privacidade e segurança, respostas públicas e a visualização inicial do anúncio devem expor somente a cidade do veículo. CEP, bairro, rua, número, complemento e o endereço completo não devem ser enviados no DTO público inicial; qualquer liberação posterior exige um caso de uso e regra de autorização explícitos.
 - Os quatro novos modelos têm contratos de domínio, entidades JPA, repositories read/write e sincronização Modulith. Os casos de uso desses modelos são interfaces específicas em `domain/usecases/identidade`: salvar e consultar endereço/complementos por usuário, vincular identidade externa verificada e consultar por provedor/identificador. O endereço participa da criação concreta de usuário; não há CRUD completo nem fluxos concretos de compra/vínculo externo para esses modelos. `domain` corresponde ao core da arquitetura, sem frameworks.
 
 ## Preparação de eventos do CRUD de usuário
@@ -191,7 +194,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 ## Criação concreta no módulo usuarios
 
 - API pública na raiz `usuarios`; core Java puro em `usuarios/internal/core`; entidades, repositories read/write e adaptadores em `usuarios/internal/infrastructure`.
-- `CriarUsuarioUseCase.execute` é implementado por `CriarUsuario`. `UsuariosFacade` delimita a transação write; `JpaUsuarioGateway` grava usuário, PF ou PJ e endereço. Consultas de unicidade usam write. Concorrência também é protegida por constraints.
+- `CriarUsuarioUseCase.execute` é implementado por `CriarUsuario`. `UsuariosFacade` é uma interface pública sem Spring; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, delimita a transação write; `JpaUsuarioGateway` grava usuário, PF ou PJ e endereço. Consultas de unicidade usam write. Concorrência também é protegida por constraints.
 - O caso de uso publica por `PublicarUsuarioCriadoGateway`; o adaptador usa ApplicationEventPublisher. Não importar Spring no core.
 - POST `/api/v1/usuarios` retorna UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como PBKDF2; papel fixo CLIENTE.
 - Evento público `usuarios.UsuarioCriado` e RowChanged são publicados na transação. A recuperação aceita ambos e UsuarioAlterado. Não publicar UsuarioAlterado(CADASTRADO) adicionalmente no novo fluxo.
@@ -215,3 +218,28 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - `DatabaseAutenticacaoGateway` consulta write em transação read-only e valida hash/status; não consultar a projeção para autenticação. Senha nunca é comparada como texto puro.
 - PasswordEncoder compartilhado mantém PBKDF2 e aceita BCrypt identificado. Conta inexistente/inativa/sem senha local, hash inválido e email ambíguo retornam a mesma CredenciaisInvalidasException (401).
 - O sucesso não estabelece sessão ou token. OAuth2 e Spring Security HTTP continuam pendentes; ver `docs/login.md`.
+
+## Criação concreta no módulo anuncios
+
+- Consulte `docs/criacao-anuncio.md`. POST `/api/v1/anuncios` cria veículo, exatamente uma especialização, endereço próprio, motores de barco quando houver e anúncio na mesma transação write.
+- Tipos atendidos: CARRO, MOTO, CAMINHAO, CAMINHONETE, BARCO e LINHA_AMARELA. O core rejeita bloco específico ausente, duplicado ou incompatível com o tipo.
+- `CriarAnuncioUseCase.execute` é implementado por `CriarAnuncio` e depende somente de `CriarAnuncioGateway` e `PublicarAnuncioCriadoGateway`. Spring, JPA e HTTP ficam em `anuncios/internal/infrastructure`.
+- `publicarAgora=true` cria PUBLICADO e define `publicadoEm`; falso ou ausente cria RASCUNHO. FIXO exige preço positivo e SOB_CONSULTA não aceita preço.
+- O anunciante precisa existir e estar ativo. Até a autenticação HTTP ser implementada, o ID vem no request; futuramente deve vir da identidade autenticada.
+- `AnuncioResponse` expõe somente a cidade da localização. O endereço completo é persistido, mas não integra a resposta pública.
+- `AnuncioCriado` é o evento público de negócio. `RowChanged` continua sendo produzido pelos callbacks JPA e consumido pelo projetor Modulith para sincronizar todas as linhas no read. Registros essenciais não são criados assincronamente.
+- `ANUNCIOS_INTEGRATION_TEST=true` habilita o teste real dos seis tipos e da projeção; use bancos isolados.
+
+## Manutenção do agregado de anúncio
+
+- `PATCH /api/v1/anuncios/{anuncioId}` e `DELETE /api/v1/anuncios/{anuncioId}` estão implementados no módulo `anuncios`; PF/PJ/endereço de usuário continuam fora desse fluxo.
+- O PATCH é parcial também para veículo, endereço e especialização, não permite trocar tipo/anunciante/IDs e preserva o status quando `publicarAgora` não é enviado.
+- O DELETE remove dependências próprias do catálogo na mesma transação e é bloqueado quando há compra vinculada. Use remoções individuais pelos repositories para preservar callbacks `RowChanged`; não introduzir bulk delete sem projeção equivalente.
+- Eventos públicos `AnuncioAtualizado` e `AnuncioExcluido` são publicados na transação write. A projeção read continua sendo sincronizada pelos eventos técnicos de linha.
+
+## Rollback dos agregados
+
+- As fachadas concretas de `usuarios` e `anuncios` abrem transações no `writeTransactionManager`; gateways JPA e adaptadores de publicação exigem `Propagation.MANDATORY`.
+- Usuário/perfil/endereço e anúncio/veículo/especialização/endereço/dependências são atômicos. Qualquer falha deve reverter todas as linhas e os registros Modulith criados na transação.
+- A projeção read recebe somente eventos após commit. Nunca capturar uma exceção de persistência e continuar a transação como se a operação tivesse sucesso.
+- Há testes reais, habilitados pelas variáveis de integração, que forçam rollback de criação, PATCH e DELETE e verificam ausência de persistência parcial.

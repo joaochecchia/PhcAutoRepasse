@@ -20,7 +20,7 @@ O domínio permanece em Java puro. Os eventos desta implementação são eventos
 
 ## Entidades e repositories
 
-As 24 entidades estendem os modelos abstratos do domínio. Usuário, PF, PJ e endereço ficam em `usuarios/internal/infrastructure/entity`, com repositories read/write internos ao módulo; as demais continuam em `infra/database/entity/<area>`. As anotações JPA ficam na infraestrutura. O mesmo mapeamento de colunas é usado pelas duas unidades JPA.
+As 25 entidades estendem os modelos abstratos do domínio. Usuário, PF, PJ e endereço ficam em `usuarios/internal/infrastructure/entity`, com repositories read/write internos ao módulo; as demais continuam em `infra/database/entity/<area>`. As anotações JPA ficam na infraestrutura. O mesmo mapeamento de colunas é usado pelas duas unidades JPA.
 
 - `*WriteRepository`: operações JPA na origem. Também deve ser usado para consultas que exigem leitura consistente logo após uma gravação.
 - `*ReadRepository`: busca por ID, existência, contagem e listagem paginada no banco de leitura. Não expõe `save` ou `delete`.
@@ -96,7 +96,7 @@ A V1 existente foi preservada. O Flyway é executado explicitamente por datasour
 
 Cada banco tem seu histórico Flyway. Versões podem coincidir entre pastas exclusivas de bancos diferentes; não podem se repetir dentro das localizações de um mesmo banco. Migrations comuns futuras devem usar uma versão livre em ambos os históricos. `spring.flyway.enabled=false` desliga apenas a autoconfiguração duplicada, não os beans explícitos. Hibernate valida o esquema nas duas unidades.
 
-Regras de composição PF/PJ, detalhes por tipo de veículo e transições comerciais ainda dependem dos casos de uso. As FKs, unicidades e CHECK de preço da V1 continuam no write.
+Regras de composição PF/PJ, detalhes por tipo de veículo e transições comerciais ainda dependem dos casos de uso. A localização do anúncio foi separada pela V6: `anuncios.endereco_id` é obrigatório; a V7 impõe a FK somente no write. Anúncio e endereço deverão ser gravados na mesma transação pelo futuro caso de uso.
 
 ## Executar e migrar da topologia anterior
 
@@ -127,7 +127,7 @@ POSTGRES_PORT=15432 POSTGRES_READ_PORT=15433 REDIS_PORT=16379 \
   PERSISTENCE_INTEGRATION_TEST=true REDIS_INTEGRATION_TEST=true ./mvnw -B -ntp test
 ```
 
-A suíte cobre os 24 modelos e suas chaves, atualização/exclusão no read, concorrência otimista, permissões, rollback de dados/eventos, falha e reprocessamento, dirty checking, entrega atrasada sem regressão e reconstrução da projeção. O teste de falha cria e remove uma constraint temporária no read: execute em bancos isolados.
+A suíte cobre os 25 modelos e suas chaves, atualização/exclusão no read, concorrência otimista, permissões, rollback de dados/eventos, falha e reprocessamento, dirty checking, entrega atrasada sem regressão e reconstrução da projeção. O teste de falha cria e remove uma constraint temporária no read: execute em bancos isolados.
 
 Referência: [Eventos e registro persistente do Spring Modulith](https://docs.spring.io/spring-modulith/reference/events.html).
 
@@ -147,3 +147,9 @@ Referência: [Eventos e registro persistente do Spring Modulith](https://docs.sp
 ## Cadastro local
 
 A criação atômica e o evento de negócio UsuarioCriado estão descritos em [criacao-usuario.md](criacao-usuario.md). PATCH, consulta e exclusão coordenada estão em [agregado-usuario.md](agregado-usuario.md). As duas unidades JPA também escaneiam as entidades internas de usuarios; ProjectionTable preserva as mesmas tabelas e chaves. O registro de falhas inclui UsuarioCriado.
+
+## Atomicidade dos agregados
+
+As fachadas de `usuarios` e `anuncios` delimitam as transações com `writeTransactionManager`. Os gateways JPA e publicadores desses módulos usam propagação `MANDATORY`, portanto falham imediatamente se forem chamados fora de uma transação write.
+
+Criação, alteração parcial, exclusão e registros de eventos técnicos/de negócio participam do mesmo commit. Uma exceção não tratada ou uma transação marcada para rollback desfaz todas as linhas do agregado e as publicações registradas naquela transação. Os listeners de projeção são executados após o commit; transações revertidas não devem alterar o banco read.

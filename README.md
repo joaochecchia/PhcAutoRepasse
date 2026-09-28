@@ -4,9 +4,9 @@ Backend do site de repasse de veículos da **PHC Auto**, inspirado no Webmotors.
 
 ## Estado do projeto
 
-A infraestrutura de execução está configurada: aplicação Spring Boot, PostgreSQL write e read independente, Redis, Flyway, Swagger e Docker Compose. As 24 entidades JPA, 48 repositories (leitura/escrita) e a migration inicial estão implementados. O domínio contém modelos abstratos e contratos de casos de uso em Java puro, organizados por área de negócio.
+A infraestrutura de execução está configurada: aplicação Spring Boot, PostgreSQL write e read independente, Redis, Flyway, Swagger e Docker Compose. As 25 entidades JPA, 50 repositories (leitura/escrita) e a migration inicial estão implementados. O domínio contém modelos abstratos e contratos de casos de uso em Java puro, organizados por área de negócio.
 
-Ainda não há endpoints de negócio nem implementações concretas dos casos de uso. A configuração de cache está disponível, mas nenhuma funcionalidade de negócio utiliza cache automaticamente.
+Os fluxos concretos atuais são cadastro, consulta, edição parcial, exclusão e login local de usuários, além da criação de anúncios para os seis tipos de veículo. A configuração de cache está disponível, mas nenhuma funcionalidade de negócio utiliza cache automaticamente.
 
 As regras e valores dos planos, a exigência de assinatura para publicar e a conclusão da venda dentro do site ainda serão definidos.
 
@@ -54,7 +54,7 @@ docker compose logs -f backend
 | PostgreSQL read no host | localhost:5433 |
 | Redis no host | localhost:6379 |
 
-O Swagger ainda não lista operações de negócio porque os controllers não foram implementados.
+O Swagger lista os fluxos reais de usuários e `POST /api/v1/anuncios`. Os controllers CRUD provisórios permanecem ocultos.
 
 ### Portas ocupadas
 
@@ -294,8 +294,36 @@ POSTGRES_PORT=15432 POSTGRES_READ_PORT=15433 REDIS_PORT=16379 \
 - `usuarios.telefone` representa celular da PF ou número de contato da PJ. Senhas locais são hashes em `senha_hash`, nunca texto puro.
 - `enderecos_usuario` armazena um endereço por usuário (PF ou PJ): CEP, cidade, bairro, rua, número, complemento e UF.
 - `dados_compra_pf` contém RG, nome do pai, nome da mãe, naturalidade e gênero. `dados_compra_pj` contém inscrição estadual e regime tributário. São complementos opcionais do perfil, preenchidos na etapa de compra; não são snapshots de transações.
-- Campos adicionados aceitam ausência para preservar usuários existentes e permitir preenchimento gradual. Isso não define todos como opcionais no formulário: a validação de cadastro completo e da etapa de compra deverá ficar nos futuros casos de uso. Complemento, filiação desconhecida e inscrição isenta precisam de tratamento adequado, sem dados fictícios.
+- Campos adicionados aceitam ausência para preservar usuários existentes e permitir preenchimento gradual. Isso não define todos como opcionais no formulário: o cadastro local completo já é validado no core de `usuarios`; a etapa de compra continua pendente. Complemento, filiação desconhecida e inscrição isenta precisam de tratamento adequado, sem dados fictícios.
 - `identidades_externas` permite Google e Facebook no mesmo usuário, com unicidade de `(provedor, identificador_externo)` no write. A senha local pode ser nula. Nenhum token OAuth é persistido. O identificador deve vir de uma resposta autenticada do provedor; não vincular contas automaticamente pela coincidência de email.
-- Esta entrega prepara a persistência, mas não implementa login OAuth, callbacks, credenciais dos provedores, endpoints ou casos de uso de cadastro/compra. O futuro fluxo deve exigir senha local válida ou identidade externa verificada, coletar email se o provedor não o fornecer e completar CPF/CNPJ/endereço antes da etapa que os exige. A criação dos vínculos deve ocorrer na mesma transação do usuário.
+- O cadastro local PF/PJ está implementado no módulo `usuarios`; login OAuth, callbacks, credenciais dos provedores e fluxos de compra permanecem pendentes. O futuro fluxo deve exigir senha local válida ou identidade externa verificada, coletar email se o provedor não o fornecer e completar CPF/CNPJ/endereço antes da etapa que os exige. A criação dos vínculos deve ocorrer na mesma transação do usuário.
 - V3 comum adiciona os campos e as quatro tabelas, preservando V1/V2. V4 exclusiva do write aplica FKs e unicidade; o read mantém a projeção assíncrona sem essas restrições. Próximas migrations comuns devem usar V5 ou superior.
-- Os quatro novos modelos têm contratos de domínio, entidades JPA, repositories read/write e sincronização Modulith. Os casos de uso desses modelos são interfaces específicas em `domain/usecases/identidade`: salvar e consultar endereço/complementos por usuário, vincular identidade externa verificada e consultar por provedor/identificador. Não há implementações concretas nem CRUD completo para esses modelos. `domain` corresponde ao core da arquitetura, sem frameworks.
+- Os quatro novos modelos têm contratos de domínio, entidades JPA, repositories read/write e sincronização Modulith. Os casos de uso desses modelos são interfaces específicas em `domain/usecases/identidade`: salvar e consultar endereço/complementos por usuário, vincular identidade externa verificada e consultar por provedor/identificador. O endereço participa da criação concreta de usuário; não há CRUD completo nem fluxos concretos de compra/vínculo externo para esses modelos. `domain` corresponde ao core da arquitetura, sem frameworks.
+
+## Eventos preparados para o CRUD de usuário
+
+A porta Java pura `PublicarEventoUsuarioGateway` publica `UsuarioAlterado` (CADASTRADO, ATUALIZADO e EXCLUIDO) por um adaptador Spring que exige transação write existente. O futuro cadastro deve salvar usuário, perfil PF **ou** PJ e endereço na mesma transação. O sincronizador RowChanged continua atualizando o read.
+
+O executor aceita `MODULITH_EVENT_WORKERS` (2) e `MODULITH_EVENT_QUEUE_CAPACITY` (1000), também pelo Compose. A recuperação existente passa a incluir eventos de usuário. A criação local persistente está implementada no módulo usuarios; consumidores de negócio ainda precisam ser implementados; sem listener transacional não há entrega durável registrada para esse evento.
+
+Veja [fluxo, garantias e testes de eventos de usuário](backend/docs/eventos-usuario.md).
+
+## Cadastro local implementado
+
+`POST /api/v1/usuarios` cria usuário, perfil PF ou PJ e endereço na mesma transação, codifica a senha com PBKDF2 e publica UsuarioCriado. Retorna 201 com resposta tipada sem credenciais; erros de validação retornam 400 e duplicidades 409. Os 20 controllers CRUD provisórios restantes estão ocultos do Swagger até que cada fluxo de negócio seja implementado.
+
+Veja [contratos, exemplos completos PF/PJ, arquitetura e testes](backend/docs/criacao-usuario.md). OAuth não está implementado; o login local de verificação de credenciais está disponível. Para testar o cadastro com PostgreSQL real, habilite USUARIOS_INTEGRATION_TEST=true em bancos isolados.
+
+## Login local
+
+`POST /api/v1/usuarios/login` recebe email/senha e responde HTTP 200 com `{"mensagem":"Login realizado com sucesso"}`. Valida o hash no banco principal; credenciais inválidas retornam 401 e entrada inválida 400. Não cria sessão ou token nesta etapa.
+
+`POST /api/v1/anuncios` cria o veículo, sua especialização, o endereço próprio e o anúncio na mesma transação. Aceita CARRO, MOTO, CAMINHAO, CAMINHONETE, BARCO e LINHA_AMARELA. A resposta pública expõe somente a cidade da localização. Consulte [criação de anúncio](backend/docs/criacao-anuncio.md).
+
+Veja [contratos e arquitetura do login](backend/docs/login.md). Google/Facebook continuam pendentes.
+
+## Consulta, edição parcial e exclusão de usuário
+
+O agregado é administrado somente por `/api/v1/usuarios`: GET consulta usuário com PF ou PJ e endereço; PATCH altera apenas os campos enviados; DELETE remove endereço, perfil e usuário na mesma transação. As rotas separadas de PF, PJ e endereço foram removidas.
+
+Cada linha alterada ou removida gera o evento técnico que atualiza o banco read. Vínculos externos podem bloquear a exclusão com HTTP 409 e fazem rollback completo. Consulte [agregado de usuário](backend/docs/agregado-usuario.md).

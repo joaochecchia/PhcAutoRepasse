@@ -15,6 +15,7 @@ import repasse.phcauto.backend.infra.database.entity.catalogo.CaminhaoEntity;
 import repasse.phcauto.backend.infra.database.entity.catalogo.CaminhoneteEntity;
 import repasse.phcauto.backend.infra.database.entity.catalogo.CaracteristicaEntity;
 import repasse.phcauto.backend.infra.database.entity.catalogo.CarroEntity;
+import repasse.phcauto.backend.infra.database.entity.catalogo.EnderecoAnuncioEntity;
 import repasse.phcauto.backend.infra.database.entity.catalogo.FotoEntity;
 import repasse.phcauto.backend.infra.database.entity.catalogo.LinhaAmarelaEntity;
 import repasse.phcauto.backend.infra.database.entity.catalogo.MotoEntity;
@@ -36,7 +37,8 @@ public enum ProjectionTable {
     IDENTIDADES_EXTERNAS("identidade.identidades_externas", IdentidadeExternaEntity.class, List.of("id"), List.of("uuid"), List.of("id", "usuario_id", "provedor", "identificador_externo", "lock_version")),
     ASSINATURAS("assinaturas.assinaturas", AssinaturaEntity.class, List.of("id"), List.of("uuid"), List.of("id", "usuario_id", "plano_id", "valor_contratado_centavos", "status", "inicio_em", "fim_em", "criado_em", "lock_version")),
     PLANOS("assinaturas.planos", PlanoEntity.class, List.of("id"), List.of("uuid"), List.of("id", "nome", "valor_centavos", "periodo_meses", "limite_anuncios", "ativo", "criado_em", "lock_version")),
-    ANUNCIOS("catalogo.anuncios", AnuncioEntity.class, List.of("id"), List.of("uuid"), List.of("id", "veiculo_id", "anunciante_id", "titulo", "descricao", "tipo_preco", "preco_centavos", "aceita_troca", "cidade", "uf", "status", "publicado_em", "criado_em", "atualizado_em", "versao")),
+    ENDERECOS_ANUNCIO("catalogo.enderecos_anuncio", EnderecoAnuncioEntity.class, List.of("id"), List.of("uuid"), List.of("id", "cep", "cidade", "bairro", "rua", "numero", "complemento", "uf", "lock_version")),
+    ANUNCIOS("catalogo.anuncios", AnuncioEntity.class, List.of("id"), List.of("uuid"), List.of("id", "veiculo_id", "anunciante_id", "endereco_id", "titulo", "descricao", "tipo_preco", "preco_centavos", "aceita_troca", "status", "publicado_em", "criado_em", "atualizado_em", "versao")),
     BARCOS("catalogo.barcos", BarcoEntity.class, List.of("veiculo_id"), List.of("uuid"), List.of("veiculo_id", "tamanho_pes", "estilo", "material_casco", "capacidade_pessoas", "numero_cabines", "horas_uso", "registro_maritimo", "lock_version")),
     CAMINHOES("catalogo.caminhoes", CaminhaoEntity.class, List.of("veiculo_id"), List.of("uuid"), List.of("veiculo_id", "quilometragem", "configuracao", "carroceria", "cambio", "combustivel", "tracao", "numero_eixos", "capacidade_carga_kg", "peso_bruto_total_kg", "implemento", "final_placa", "ipva_pago", "licenciado", "lock_version")),
     CAMINHONETES("catalogo.caminhonetes", CaminhoneteEntity.class, List.of("veiculo_id"), List.of("uuid"), List.of("veiculo_id", "quilometragem", "tipo_cabine", "carroceria", "cambio", "combustivel", "tracao", "motorizacao", "capacidade_carga_kg", "numero_portas", "final_placa", "unico_dono", "ipva_pago", "licenciado", "lock_version")),

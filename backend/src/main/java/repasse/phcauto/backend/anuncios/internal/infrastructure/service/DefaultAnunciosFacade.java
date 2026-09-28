@@ -1,0 +1,95 @@
+package repasse.phcauto.backend.anuncios.internal.infrastructure.service;
+
+import java.util.List;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import repasse.phcauto.backend.anuncios.*;
+import repasse.phcauto.backend.anuncios.internal.core.*;
+
+@Service
+public class DefaultAnunciosFacade implements AnunciosFacade {
+    private final CriarAnuncioUseCase criarAnuncio;
+    private final AtualizarAnuncioUseCase atualizarAnuncio;
+    private final ExcluirAnuncioUseCase excluirAnuncio;
+    public DefaultAnunciosFacade(CriarAnuncioUseCase criarAnuncio, AtualizarAnuncioUseCase atualizarAnuncio,
+            ExcluirAnuncioUseCase excluirAnuncio) {
+        this.criarAnuncio = criarAnuncio; this.atualizarAnuncio = atualizarAnuncio; this.excluirAnuncio = excluirAnuncio;
+    }
+
+    @Override
+    @Transactional(transactionManager = "writeTransactionManager")
+    public AnuncioResponse criar(CriarAnuncioRequest request) {
+        return response(criarAnuncio.execute(command(request)));
+    }
+
+    @Override
+    @Transactional(transactionManager = "writeTransactionManager")
+    public AnuncioResponse atualizar(java.util.UUID anuncioId, AtualizarAnuncioRequest request) {
+        if (request == null) throw new AnuncioInvalidoException("Alterações são obrigatórias");
+        int blocos=(request.carro()!=null?1:0)+(request.moto()!=null?1:0)+(request.caminhao()!=null?1:0)
+                +(request.caminhonete()!=null?1:0)+(request.barco()!=null?1:0)+(request.linhaAmarela()!=null?1:0);
+        if (blocos > 1) throw new AnuncioInvalidoException("Informe no máximo um bloco de dados específicos");
+        var e=request.endereco();
+        var endereco=e==null?null:new CriarAnuncioCommand.Endereco(e.cep(),e.cidade(),e.bairro(),e.rua(),e.numero(),e.complemento(),e.uf());
+        var command=new AtualizarAnuncioCommand(request.fabricante(),request.modelo(),request.versao(),request.anoFabricacao(),
+                request.anoModelo(),request.cor(),request.identificadorPublico(),request.titulo(),request.descricao(),
+                request.tipoPreco(),request.precoCentavos(),request.aceitaTroca(),request.publicarAgora(),endereco,detalhes(request));
+        return response(atualizarAnuncio.execute(anuncioId, command));
+    }
+
+    @Override
+    @Transactional(transactionManager = "writeTransactionManager")
+    public void excluir(java.util.UUID anuncioId) { excluirAnuncio.execute(anuncioId); }
+
+    private AnuncioResponse response(AnuncioCriadoResultado resultado) {
+        var c=resultado.dados();
+        return new AnuncioResponse(resultado.anuncioId(), resultado.veiculoId(), c.anuncianteId(),
+                c.tipoVeiculo(), c.fabricante(), c.modelo(), c.versao(), c.anoFabricacao(), c.anoModelo(),
+                c.cor(), c.titulo(), c.descricao(), c.tipoPreco(), c.precoCentavos(), c.aceitaTroca(),
+                c.endereco().cidade(), resultado.status(), response(c.detalhes()), resultado.criadoEm(), resultado.publicadoEm());
+    }
+
+    private CriarAnuncioCommand.DetalhesVeiculo detalhes(AtualizarAnuncioRequest r) {
+        if(r.carro()!=null){var d=r.carro();return new CriarAnuncioCommand.Carro(d.quilometragem(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.numeroPortas(),d.numeroLugares(),d.finalPlaca(),d.unicoDono(),d.ipvaPago(),d.licenciado(),d.blindado());}
+        if(r.moto()!=null){var d=r.moto();return new CriarAnuncioCommand.Moto(d.quilometragem(),d.cilindradas(),d.categoria(),d.partida(),d.refrigeracao(),d.cambio(),d.combustivel(),d.finalPlaca(),d.ipvaPago(),d.licenciado());}
+        if(r.caminhao()!=null){var d=r.caminhao();return new CriarAnuncioCommand.Caminhao(d.quilometragem(),d.configuracao(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.numeroEixos(),d.capacidadeCargaKg(),d.pesoBrutoTotalKg(),d.implemento(),d.finalPlaca(),d.ipvaPago(),d.licenciado());}
+        if(r.caminhonete()!=null){var d=r.caminhonete();return new CriarAnuncioCommand.Caminhonete(d.quilometragem(),d.tipoCabine(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.capacidadeCargaKg(),d.numeroPortas(),d.finalPlaca(),d.unicoDono(),d.ipvaPago(),d.licenciado());}
+        if(r.barco()!=null){var d=r.barco();return new CriarAnuncioCommand.Barco(d.tamanhoPes(),d.estilo(),d.materialCasco(),d.capacidadePessoas(),d.numeroCabines(),d.horasUso(),d.registroMaritimo(),d.motores().stream().map(m->new CriarAnuncioCommand.Motor(m.posicao(),m.fabricante(),m.modelo(),m.potenciaHp(),m.ano(),m.horasUso(),m.horasDesdeRevisao(),m.combustivel())).toList());}
+        if(r.linhaAmarela()!=null){var d=r.linhaAmarela();return new CriarAnuncioCommand.LinhaAmarela(d.tipoMaquina(),d.horimetro(),d.pesoOperacionalKg(),d.potenciaHp(),d.tipoEsteiraOuPneu(),d.capacidadeCacambaM3(),d.numeroSerie());}
+        return null;
+    }
+
+    private CriarAnuncioCommand command(CriarAnuncioRequest r) {
+        if (r == null) throw new AnuncioInvalidoException("Dados do anúncio são obrigatórios");
+        int blocos = (r.carro()!=null?1:0)+(r.moto()!=null?1:0)+(r.caminhao()!=null?1:0)
+                +(r.caminhonete()!=null?1:0)+(r.barco()!=null?1:0)+(r.linhaAmarela()!=null?1:0);
+        if (blocos != 1) throw new AnuncioInvalidoException("Informe exatamente um bloco de dados específicos");
+        var e = r.endereco();
+        var endereco = e == null ? null : new CriarAnuncioCommand.Endereco(e.cep(), e.cidade(), e.bairro(),
+                e.rua(), e.numero(), e.complemento(), e.uf());
+        return new CriarAnuncioCommand(r.anuncianteId(), r.tipoVeiculo(), r.fabricante(), r.modelo(),
+                r.versao(), r.anoFabricacao(), r.anoModelo(), r.cor(), r.identificadorPublico(),
+                r.titulo(), r.descricao(), r.tipoPreco(), r.precoCentavos(), r.aceitaTroca(),
+                Boolean.TRUE.equals(r.publicarAgora()), endereco, detalhes(r));
+    }
+
+    private CriarAnuncioCommand.DetalhesVeiculo detalhes(CriarAnuncioRequest r) {
+        if (r.carro()!=null) { var d=r.carro(); return new CriarAnuncioCommand.Carro(d.quilometragem(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.numeroPortas(),d.numeroLugares(),d.finalPlaca(),d.unicoDono(),d.ipvaPago(),d.licenciado(),d.blindado()); }
+        if (r.moto()!=null) { var d=r.moto(); return new CriarAnuncioCommand.Moto(d.quilometragem(),d.cilindradas(),d.categoria(),d.partida(),d.refrigeracao(),d.cambio(),d.combustivel(),d.finalPlaca(),d.ipvaPago(),d.licenciado()); }
+        if (r.caminhao()!=null) { var d=r.caminhao(); return new CriarAnuncioCommand.Caminhao(d.quilometragem(),d.configuracao(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.numeroEixos(),d.capacidadeCargaKg(),d.pesoBrutoTotalKg(),d.implemento(),d.finalPlaca(),d.ipvaPago(),d.licenciado()); }
+        if (r.caminhonete()!=null) { var d=r.caminhonete(); return new CriarAnuncioCommand.Caminhonete(d.quilometragem(),d.tipoCabine(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.capacidadeCargaKg(),d.numeroPortas(),d.finalPlaca(),d.unicoDono(),d.ipvaPago(),d.licenciado()); }
+        if (r.barco()!=null) { var d=r.barco(); return new CriarAnuncioCommand.Barco(d.tamanhoPes(),d.estilo(),d.materialCasco(),d.capacidadePessoas(),d.numeroCabines(),d.horasUso(),d.registroMaritimo(),d.motores().stream().map(m->new CriarAnuncioCommand.Motor(m.posicao(),m.fabricante(),m.modelo(),m.potenciaHp(),m.ano(),m.horasUso(),m.horasDesdeRevisao(),m.combustivel())).toList()); }
+        if (r.linhaAmarela()!=null) { var d=r.linhaAmarela(); return new CriarAnuncioCommand.LinhaAmarela(d.tipoMaquina(),d.horimetro(),d.pesoOperacionalKg(),d.potenciaHp(),d.tipoEsteiraOuPneu(),d.capacidadeCacambaM3(),d.numeroSerie()); }
+        throw new AnuncioInvalidoException("Dados específicos são obrigatórios");
+    }
+
+    private AnuncioResponse.DetalhesVeiculoResponse response(CriarAnuncioCommand.DetalhesVeiculo detalhes) {
+        if (detalhes instanceof CriarAnuncioCommand.Carro d) return new AnuncioResponse.CarroResponse(d.quilometragem(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.numeroPortas(),d.numeroLugares(),d.finalPlaca(),d.unicoDono(),d.ipvaPago(),d.licenciado(),d.blindado());
+        if (detalhes instanceof CriarAnuncioCommand.Moto d) return new AnuncioResponse.MotoResponse(d.quilometragem(),d.cilindradas(),d.categoria(),d.partida(),d.refrigeracao(),d.cambio(),d.combustivel(),d.finalPlaca(),d.ipvaPago(),d.licenciado());
+        if (detalhes instanceof CriarAnuncioCommand.Caminhao d) return new AnuncioResponse.CaminhaoResponse(d.quilometragem(),d.configuracao(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.numeroEixos(),d.capacidadeCargaKg(),d.pesoBrutoTotalKg(),d.implemento(),d.finalPlaca(),d.ipvaPago(),d.licenciado());
+        if (detalhes instanceof CriarAnuncioCommand.Caminhonete d) return new AnuncioResponse.CaminhoneteResponse(d.quilometragem(),d.tipoCabine(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.capacidadeCargaKg(),d.numeroPortas(),d.finalPlaca(),d.unicoDono(),d.ipvaPago(),d.licenciado());
+        if (detalhes instanceof CriarAnuncioCommand.Barco d) return new AnuncioResponse.BarcoResponse(d.tamanhoPes(),d.estilo(),d.materialCasco(),d.capacidadePessoas(),d.numeroCabines(),d.horasUso(),d.registroMaritimo(),d.motores().stream().map(m->new AnuncioResponse.MotorBarcoResponse(m.posicao(),m.fabricante(),m.modelo(),m.potenciaHp(),m.ano(),m.horasUso(),m.horasDesdeRevisao(),m.combustivel())).toList());
+        var d=(CriarAnuncioCommand.LinhaAmarela)detalhes;
+        return new AnuncioResponse.LinhaAmarelaResponse(d.tipoMaquina(),d.horimetro(),d.pesoOperacionalKg(),d.potenciaHp(),d.tipoEsteiraOuPneu(),d.capacidadeCacambaM3(),d.numeroSerie());
+    }
+}

@@ -18,6 +18,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.json.JsonMapper;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
 import repasse.phcauto.backend.usuarios.request.AtualizarUsuarioRequest;
@@ -29,8 +31,32 @@ import repasse.phcauto.backend.usuarios.request.EnderecoPatchRequest;
 class UsuarioAggregateIntegrationTests {
     @Autowired MockMvc mvc;
     @Autowired JsonMapper json;
+    @Autowired UsuariosFacade facade;
+    @Autowired @Qualifier("writeTransactionManager") PlatformTransactionManager transactions;
     @Autowired @Qualifier("writeDataSource") DataSource write;
     @Autowired @Qualifier("readDataSource") DataSource read;
+
+    @Test void rollbackDesfazPatchEDeleteDoAgregadoUsuario() throws Exception {
+        var criado = criar(TipoPessoa.PF);
+        UUID id = criado.id();
+        var source = new JdbcTemplate(write);
+        String nomeOriginal = source.queryForObject("select nome from identidade.usuarios where id=?", String.class, id);
+        String cidadeOriginal = source.queryForObject("select cidade from identidade.enderecos_usuario where usuario_id=?", String.class, id);
+        var tx = new TransactionTemplate(transactions);
+        tx.executeWithoutResult(status -> {
+            facade.atualizar(id, new AtualizarUsuarioRequest("Nome desfeito",null,null,null,null,null,null,null,
+                    new EnderecoPatchRequest(null,"Cidade desfeita",null,null,null,null,null)));
+            status.setRollbackOnly();
+        });
+        assertEquals(nomeOriginal, source.queryForObject("select nome from identidade.usuarios where id=?", String.class, id));
+        assertEquals(cidadeOriginal, source.queryForObject("select cidade from identidade.enderecos_usuario where usuario_id=?", String.class, id));
+
+        tx.executeWithoutResult(status -> { facade.excluir(id); status.setRollbackOnly(); });
+        assertEquals(1, source.queryForObject("select count(*) from identidade.usuarios where id=?", Integer.class, id));
+        assertEquals(1, source.queryForObject("select count(*) from identidade.usuarios_pf where usuario_id=?", Integer.class, id));
+        assertEquals(1, source.queryForObject("select count(*) from identidade.enderecos_usuario where usuario_id=?", Integer.class, id));
+        mvc.perform(delete("/api/v1/usuarios/{id}", id)).andExpect(status().isNoContent());
+    }
 
     @Test void patchPfAlteraSomenteBlocosEnviadosEDeleteRemoveAgregadoNosDoisBancos() throws Exception {
         var criado = criar(TipoPessoa.PF);
