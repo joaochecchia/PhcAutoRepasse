@@ -26,7 +26,7 @@ A atualização deve carregar os registros existentes, preservar o controle de v
 
 - `domain.event.identidade.UsuarioAlterado`: record Java puro com eventId, usuarioId, tipoPessoa, operacao e ocorridoEm; sem senha, hash, tokens, CPF/CNPJ ou endereço.
 - `domain.gateway.identidade.PublicarEventoUsuarioGateway`: porta interna para publicação.
-- `SpringPublicarEventoUsuarioGateway`: adaptador Spring com propagação MANDATORY no writeTransactionManager; rejeita ausência de transação e transação somente leitura.
+- `SpringUsuarioAlteradoPublisher`: adaptador Spring interno ao módulo usuarios com propagação MANDATORY no writeTransactionManager; rejeita ausência de transação e transação somente leitura.
 
 O futuro caso de uso publica depois de salvar todo o cadastro, ainda antes do commit, pela porta injetada. Um listener transacional só recebe após commit. Cada fato novo deve ter eventId próprio; reentregas preservam esse identificador.
 
@@ -52,7 +52,7 @@ O registro JDBC, as migrations existentes, a republicação no restart e o monit
 
 ## Validação
 
-`./mvnw -B -ntp -Dtest=UsuarioEventosTests,PublicationRecoveryTests,ModulithStructureTests test`
+`./mvnw -B -ntp -Dtest=ManterUsuarioTests,PublicationRecoveryTests,ModulithStructureTests test`
 
 Os testes verificam a porta Spring com proxy transacional, entrega após commit, ausência de entrega no rollback, rejeição sem transação e em transação somente leitura, seleção para recuperação e arquitetura atual. O datasource nesses novos testes é simulado; eles não comprovam durabilidade, restart ou gravação PF/PJ/endereço em PostgreSQL. A integração real do futuro cadastro deverá testar esses cenários em bancos isolados.
 

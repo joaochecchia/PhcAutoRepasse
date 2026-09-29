@@ -21,6 +21,12 @@ public abstract class Assinatura {
     /** Obrigatório no modelo inicial. */
     public abstract long getValorContratadoCentavos();
 
+    /** Snapshot opcional do limite de anúncios contratado. */
+    public abstract Integer getLimiteAnunciosContratado();
+
+    /** Snapshot opcional do limite de vistorias cautelares contratado. */
+    public abstract Integer getLimiteVistoriasCautelaresContratado();
+
     /** Obrigatório no modelo inicial. */
     public abstract StatusAssinatura getStatus();
 

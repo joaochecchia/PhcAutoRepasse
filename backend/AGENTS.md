@@ -13,7 +13,7 @@ Comunique-se com o usuário em português brasileiro.
 
 A arquitetura definida pelo usuário é Clean Architecture, com princípios SOLID e monólito modular. Preserve essa direção nas implementações.
 
-Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 26 entidades JPA, repositories separados de leitura/escrita e 20 controllers CRUD provisórios na infraestrutura. A criação real de usuários está em `usuarios` e a criação real de anúncios está em `anuncios`, ambos com contratos e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
+Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. As entidades JPA e os repositories de identidade, compliance, catálogo e planos ficam nos respectivos módulos. A entidade de assinatura e as entidades de vendas ainda permanecem na infraestrutura transitória. Há quatro controllers CRUD provisórios ocultos para essas áreas ainda não implementadas. A criação real de usuários está em `usuarios` e a criação real de anúncios está em `anuncios`, ambos com contratos e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
 
 Pacote base: `repasse.phcauto.backend`.
 
@@ -119,7 +119,7 @@ O teste de contexto usa `@SpringBootTest` e requer write e read acessíveis. `PE
 
 Swagger UI: `http://localhost:8080/swagger-ui.html`.
 OpenAPI JSON: `http://localhost:8080/v3/api-docs`.
-Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe o cadastro real em POST /api/v1/usuarios e os demais CRUDs provisórios.
+Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe os fluxos reais de usuários, anúncios e planos; os quatro CRUDs provisórios de assinatura e vendas permanecem ocultos.
 
 ## Separação de leitura e escrita via Spring Modulith
 
@@ -157,7 +157,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - O CRUD abstrato existente é provisório. Ao implementar fluxos reais, preferir contratos menores e remover operações que não sejam justificadas pelo negócio.
 - Os controllers legados provisórios restantes retornam apenas um envelope `HashMap` com as chaves `menssage` e `Body`; não injetam casos de uso, gateways ou repositories. O controller legado de usuário e os endpoints diretos de PF, PJ e endereço foram removidos; essas operações passam pelo agregado exposto por `UsuariosController` em `usuarios/internal/infrastructure/controller`. Não interpretar as mensagens dos controllers legados como persistência concluída.
 - `CrudHttpResponseFactory` centraliza apenas a montagem técnica do envelope e remove senha, hashes, tokens e segredos do corpo devolvido. Ele não é um `BaseController` e não contém regras de negócio.
-- A aplicação usa `@Modulithic` e detecção `explicitly-annotated`. Os pacotes dos controllers declaram os módulos transitórios `identidade`, `assinaturas`, `catalogo` e `vendas`. Esses quatro módulos delimitam a superfície HTTP; `usuarios` já possui organização por capacidade com implementação de cadastro; a organização completa por capacidade ainda exigirá evolução dos pacotes de domínio e infraestrutura.
+- A aplicação usa @Modulithic e detecção explicitly-annotated. Assinatura e vendas ainda são módulos transitórios; usuarios, anuncios, compliance e planos são módulos por capacidade, com entidades, repositories e adaptadores em internal/infrastructure. Identidade e catálogo não mantêm módulos HTTP legados paralelos.
 
 ## Orientações de manutenção
 
@@ -209,7 +209,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - DELETE remove endereço e perfil antes de usuário. Qualquer FK externa bloqueia e reverte tudo; não há exclusão parcial.
 - JPA publica `RowChanged` somente para linhas efetivamente alteradas; a projeção read converge após commit. GET agregado usa write para consistência imediata.
 - Casos de uso e gateways de buscar, atualizar e excluir são segregados no core. `JpaUsuarioAggregateGateway` é o adaptador interno.
-- Os quatro controllers provisórios Usuario/PF/PJ/Endereco foram removidos. Os 20 CRUDs provisórios restantes estão marcados com `@Hidden`: continuam no código, mas não aparecem no Swagger. Remova `@Hidden` apenas quando o respectivo fluxo de negócio estiver implementado e aprovado.
+- Os controllers provisórios de identidade e catálogo foram removidos após os fluxos reais migrarem para usuarios e anuncios. Restam quatro CRUDs provisórios de assinatura e vendas, marcados com @Hidden; remova @Hidden somente quando o respectivo fluxo de negócio estiver implementado e aprovado.
 
 ## Login local
 
@@ -283,3 +283,20 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Usuários PF precisam ter pelo menos 18 anos completos tanto no cadastro quanto ao alterar a data de nascimento. PJ não possui idade; eventual idade do representante exige requisito e campo próprios.
 - A gravação do aceite usa a transação write aberta pela fachada de usuários com propagação obrigatória. Falha em compliance reverte usuário, perfil, endereço e eventos.
 - V11 comum cria o schema e a tabela de compliance. A tabela participa da projeção read por `RowChanged`. Próximas migrations devem usar V12 ou superior.
+
+
+## Módulo de planos
+
+- `planos` é um módulo independente do Spring Modulith. A raiz contém requests, responses e `PlanosFacade`; regras puras ficam em `planos/internal/core`; controller, fachada transacional, entidade e repositories ficam em `planos/internal/infrastructure`.
+- O CRUD real usa `/api/v1/assinaturas/planos`: POST cria, GET por ID consulta, GET lista por `offset`/`limite`, PATCH altera parcialmente e DELETE remove. O antigo controller provisório com PUT foi removido.
+- Nome é obrigatório, normalizado e único. Valor e limite não podem ser negativos; período, quando informado, deve estar entre 1 e 32767 meses. Campos opcionais ausentes no PATCH são preservados; o contrato atual não usa `null` para limpar valores.
+- Todas as operações usam o banco write para consistência imediata. `RowChanged` continua projetando a tabela no read. Exclusão de plano referenciado por assinatura retorna conflito e faz rollback.
+- Não adicionar dependências de outros módulos em `planos` antecipadamente. Futuras permissões e integrações devem consumir somente a API pública do módulo.
+
+## Benefícios futuros de planos e assinaturas
+
+- V12 comum adiciona `planos.limite_vistorias_cautelares` e os snapshots `assinaturas.limite_anuncios_contratado` e `assinaturas.limite_vistorias_cautelares_contratado`. Próximas migrations devem usar V13 ou superior.
+- `planos.limite_anuncios` e `planos.limite_vistorias_cautelares` descrevem benefícios comerciais. Nulo significa ainda não definido, zero significa que o benefício não está incluído e valor positivo representa o limite oferecido.
+- Ao implementar o futuro módulo de assinaturas, copie preço e limites do plano para a assinatura no momento da contratação. Mudanças posteriores no plano não devem alterar benefícios já contratados.
+- Esses campos não aplicam limites atualmente. Não bloquear criação/publicação de anúncios, não criar consumo de vistoria e não presumir renovação, saldo ou permissão até os respectivos casos de uso serem definidos.
+- Contadores de uso não ficam na linha da assinatura nesta preparação. O futuro fluxo deve definir eventos/registros próprios para consumo e estorno, especialmente para vistorias cautelares.

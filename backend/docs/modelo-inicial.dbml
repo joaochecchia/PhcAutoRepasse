@@ -102,6 +102,7 @@ Table assinaturas.planos {
   valor_centavos bigint [note: 'A definir']
   periodo_meses smallint [note: 'A definir']
   limite_anuncios integer [note: 'A definir']
+  limite_vistorias_cautelares integer [note: 'Benefício futuro; nulo enquanto não definido']
   ativo boolean [not null, default: false]
   criado_em timestamptz [not null]
 
@@ -113,6 +114,8 @@ Table assinaturas.assinaturas {
   usuario_id uuid [not null]
   plano_id uuid [not null]
   valor_contratado_centavos bigint [not null]
+  limite_anuncios_contratado integer [note: 'Snapshot opcional do benefício contratado']
+  limite_vistorias_cautelares_contratado integer [note: 'Snapshot opcional do benefício contratado']
   status assinaturas.status_assinatura [not null]
   inicio_em timestamptz
   fim_em timestamptz

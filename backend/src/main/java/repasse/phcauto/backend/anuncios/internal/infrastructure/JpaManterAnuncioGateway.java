@@ -10,8 +10,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import repasse.phcauto.backend.anuncios.internal.core.*;
 import repasse.phcauto.backend.domain.model.catalogo.*;
-import repasse.phcauto.backend.infra.database.entity.catalogo.*;
-import repasse.phcauto.backend.infra.database.repository.write.catalogo.*;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.*;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.repository.write.*;
 
 @Repository
 @Transactional(transactionManager = "writeTransactionManager", propagation = Propagation.MANDATORY)

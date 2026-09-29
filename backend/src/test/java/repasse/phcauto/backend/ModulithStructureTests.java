@@ -11,12 +11,12 @@ import org.springframework.modulith.core.ApplicationModules;
 class ModulithStructureTests {
 
     @Test
-    void verificaModulosHttpEUsuarios() {
+    void verificaModulosDaAplicacao() {
         var modules = ApplicationModules.of(BackendApplication.class);
         modules.verify();
         var nomes = StreamSupport.stream(modules.spliterator(), false)
                 .map(module -> module.getIdentifier().toString())
                 .collect(Collectors.toSet());
-        assertEquals(Set.of("identidade", "assinaturas", "catalogo", "vendas", "usuarios", "anuncios", "compliance"), nomes);
+        assertEquals(Set.of("assinaturas", "vendas", "usuarios", "anuncios", "compliance", "planos"), nomes);
     }
 }

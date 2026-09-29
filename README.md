@@ -310,7 +310,7 @@ Veja [fluxo, garantias e testes de eventos de usuário](backend/docs/eventos-usu
 
 ## Cadastro local implementado
 
-`POST /api/v1/usuarios` cria usuário, perfil PF ou PJ e endereço na mesma transação, codifica a senha com PBKDF2 e publica UsuarioCriado. Retorna 201 com resposta tipada sem credenciais; erros de validação retornam 400 e duplicidades 409. Os 20 controllers CRUD provisórios restantes estão ocultos do Swagger até que cada fluxo de negócio seja implementado.
+`POST /api/v1/usuarios` cria usuário, perfil PF ou PJ e endereço na mesma transação, codifica a senha com PBKDF2 e publica UsuarioCriado. Retorna 201 com resposta tipada sem credenciais; erros de validação retornam 400 e duplicidades 409. Os quatro controllers CRUD provisórios de assinatura e vendas permanecem ocultos do Swagger até que esses fluxos sejam implementados.
 
 Veja [contratos, exemplos completos PF/PJ, arquitetura e testes](backend/docs/criacao-usuario.md). OAuth não está implementado; o login local de verificação de credenciais está disponível. Para testar o cadastro com PostgreSQL real, habilite USUARIOS_INTEGRATION_TEST=true em bancos isolados.
 
@@ -327,3 +327,10 @@ Veja [contratos e arquitetura do login](backend/docs/login.md). Google/Facebook 
 O agregado é administrado somente por `/api/v1/usuarios`: GET consulta usuário com PF ou PJ e endereço; PATCH altera apenas os campos enviados; DELETE remove endereço, perfil e usuário na mesma transação. As rotas separadas de PF, PJ e endereço foram removidas.
 
 Cada linha alterada ou removida gera o evento técnico que atualiza o banco read. Vínculos externos podem bloquear a exclusão com HTTP 409 e fazem rollback completo. Consulte [agregado de usuário](backend/docs/agregado-usuario.md).
+
+
+## CRUD de planos
+
+O módulo independente `planos` oferece o CRUD persistente em `/api/v1/assinaturas/planos`: POST, GET por ID, GET paginado por `offset` e `limite`, PATCH parcial e DELETE. As respostas são tipadas; criação retorna 201, exclusão retorna 204, registros ausentes retornam 404 e conflitos de nome ou dependências retornam 409.
+
+O PATCH preserva os campos que não forem enviados. Atualmente, um valor `null` também significa ausência de alteração; a limpeza explícita dos campos opcionais deverá receber um contrato próprio caso essa necessidade comercial seja aprovada. Consulte [documentação do módulo](backend/docs/planos.md).

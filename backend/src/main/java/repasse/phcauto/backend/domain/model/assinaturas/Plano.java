@@ -24,6 +24,9 @@ public abstract class Plano {
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Integer getLimiteAnuncios();
 
+    /** Benefício opcional; nulo enquanto não definido e zero quando não incluído. */
+    public abstract Integer getLimiteVistoriasCautelares();
+
     /** Obrigatório no modelo inicial. */
     public abstract boolean getAtivo();
 

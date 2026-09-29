@@ -26,6 +26,12 @@ public class AssinaturaEntity extends Assinatura {
     @Column(name = "valor_contratado_centavos", nullable = false)
     private long valorContratadoCentavos;
 
+    @Column(name = "limite_anuncios_contratado")
+    private Integer limiteAnunciosContratado;
+
+    @Column(name = "limite_vistorias_cautelares_contratado")
+    private Integer limiteVistoriasCautelaresContratado;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private StatusAssinatura status;
@@ -52,6 +58,8 @@ public class AssinaturaEntity extends Assinatura {
         entity.usuarioId = Objects.requireNonNull(dados.getUsuarioId(), "usuarioId");
         entity.planoId = Objects.requireNonNull(dados.getPlanoId(), "planoId");
         entity.valorContratadoCentavos = dados.getValorContratadoCentavos();
+        entity.limiteAnunciosContratado = dados.getLimiteAnunciosContratado();
+        entity.limiteVistoriasCautelaresContratado = dados.getLimiteVistoriasCautelaresContratado();
         entity.status = Objects.requireNonNull(dados.getStatus(), "status");
         entity.inicioEm = dados.getInicioEm();
         entity.fimEm = dados.getFimEm();
@@ -67,6 +75,8 @@ public class AssinaturaEntity extends Assinatura {
         this.usuarioId = Objects.requireNonNull(dados.getUsuarioId(), "usuarioId");
         this.planoId = Objects.requireNonNull(dados.getPlanoId(), "planoId");
         this.valorContratadoCentavos = dados.getValorContratadoCentavos();
+        this.limiteAnunciosContratado = dados.getLimiteAnunciosContratado();
+        this.limiteVistoriasCautelaresContratado = dados.getLimiteVistoriasCautelaresContratado();
         this.status = Objects.requireNonNull(dados.getStatus(), "status");
         this.inicioEm = dados.getInicioEm();
         this.fimEm = dados.getFimEm();
@@ -83,6 +93,12 @@ public class AssinaturaEntity extends Assinatura {
 
     @Override
     public long getValorContratadoCentavos() { return valorContratadoCentavos; }
+
+    @Override
+    public Integer getLimiteAnunciosContratado() { return limiteAnunciosContratado; }
+
+    @Override
+    public Integer getLimiteVistoriasCautelaresContratado() { return limiteVistoriasCautelaresContratado; }
 
     @Override
     public StatusAssinatura getStatus() { return status; }

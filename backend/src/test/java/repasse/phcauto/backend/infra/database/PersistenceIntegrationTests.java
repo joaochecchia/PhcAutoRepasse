@@ -259,9 +259,14 @@ class PersistenceIntegrationTests {
     }
     private Saved save(Fixture fixture) {
         try {
+            String area = fixture.type().getPackageName();
             String entityName = fixture.type().getName().replace("domain.model", "infra.database.entity") + "Entity";
-            if (Set.of(Usuario.class, UsuarioPf.class, UsuarioPj.class, EnderecoUsuario.class).contains(fixture.type())) {
+            if (area.endsWith(".identidade")) {
                 entityName = "repasse.phcauto.backend.usuarios.internal.infrastructure.entity." + fixture.type().getSimpleName() + "Entity";
+            } else if (area.endsWith(".catalogo")) {
+                entityName = "repasse.phcauto.backend.anuncios.internal.infrastructure.entity." + fixture.type().getSimpleName() + "Entity";
+            } else if (fixture.type() == Plano.class) {
+                entityName = "repasse.phcauto.backend.planos.internal.infrastructure.entity.PlanoEntity";
             }
             var entity = Class.forName(entityName).getMethod("criar", fixture.type()).invoke(null, model(fixture.type(), fixture.values()));
             Object saved = writeRepository(fixture.type()).saveAndFlush(entity);

@@ -20,7 +20,7 @@ O domínio permanece em Java puro. Os eventos desta implementação são eventos
 
 ## Entidades e repositories
 
-As 25 entidades estendem os modelos abstratos do domínio. Usuário, PF, PJ e endereço ficam em `usuarios/internal/infrastructure/entity`, com repositories read/write internos ao módulo; as demais continuam em `infra/database/entity/<area>`. As anotações JPA ficam na infraestrutura. O mesmo mapeamento de colunas é usado pelas duas unidades JPA.
+As entidades JPA estendem os modelos abstratos do domínio. Identidade fica em usuarios/internal/infrastructure, catálogo em anuncios/internal/infrastructure, planos em planos/internal/infrastructure e compliance em seu próprio módulo; somente a assinatura e vendas ainda permanecem em infra/database. As anotações JPA ficam na infraestrutura de cada módulo, e o mesmo mapeamento de colunas é usado pelas duas unidades JPA.
 
 - `*WriteRepository`: operações JPA na origem. Também deve ser usado para consultas que exigem leitura consistente logo após uma gravação.
 - `*ReadRepository`: busca por ID, existência, contagem e listagem paginada no banco de leitura. Não expõe `save` ou `delete`.
@@ -161,3 +161,7 @@ Os modelos JPA atuais mantêm chaves estrangeiras como UUIDs escalares e não de
 Se uma associação JPA for introduzida futuramente, ela deve usar `FetchType.LAZY`; consultas que precisarem do grafo devem declarar `JOIN FETCH` ou projeção específica. `CascadeType.ALL` e `CascadeType.PERSIST` não são aceitos. `JpaMappingArchitectureTests` protege essas regras.
 
 A consulta de credenciais do login possui uma transação read-only curta. A comparação PBKDF2/BCrypt ocorre depois que a leitura termina, sem manter uma conexão do pool ocupada durante o cálculo do hash.
+
+## Preparação de benefícios de assinatura
+
+A V12 adiciona o limite opcional de vistorias ao plano e snapshots opcionais dos limites de anúncios e vistorias na assinatura. Os campos são projetados no banco read pelo fluxo existente. Nenhuma regra consulta esses valores atualmente; eles apenas preservam a modelagem necessária para o futuro módulo de assinaturas.
