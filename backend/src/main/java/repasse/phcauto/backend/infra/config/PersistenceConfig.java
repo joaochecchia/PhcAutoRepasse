@@ -99,7 +99,8 @@ public class PersistenceConfig {
         factory.setDataSource(source);
         factory.setPersistenceUnitName(unit);
         factory.setPackagesToScan("repasse.phcauto.backend.infra.database.entity",
-                "repasse.phcauto.backend.usuarios.internal.infrastructure.entity");
+                "repasse.phcauto.backend.usuarios.internal.infrastructure.entity",
+                "repasse.phcauto.backend.compliance.internal.infrastructure.entity");
         factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of(
                 "hibernate.hbm2ddl.auto", "validate",

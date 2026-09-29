@@ -2,6 +2,7 @@ package repasse.phcauto.backend.infra.database.sync;
 
 import java.util.List;
 import repasse.phcauto.backend.infra.database.entity.identidade.*;
+import repasse.phcauto.backend.compliance.internal.infrastructure.entity.AceiteTermosEntity;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.EnderecoUsuarioEntity;
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -31,7 +32,9 @@ import repasse.phcauto.backend.infra.database.entity.vendas.PagamentoEntity;
 
 /** Allowlist dos mapeamentos que compõem a projeção. */
 public enum ProjectionTable {
-    ENDERECOS_USUARIO("identidade.enderecos_usuario", EnderecoUsuarioEntity.class, List.of("usuario_id"), List.of("uuid"), List.of("usuario_id", "cep", "cidade", "bairro", "rua", "numero", "complemento", "uf", "lock_version")),
+    ACEITES_TERMOS("compliance.aceites_termos", AceiteTermosEntity.class, List.of("id"), List.of("uuid"),
+            List.of("id", "usuario_id", "aceite_em", "versao_termos_uso",
+                    "versao_politica_privacidade", "endereco_rede", "registrado_em", "lock_version")),    ENDERECOS_USUARIO("identidade.enderecos_usuario", EnderecoUsuarioEntity.class, List.of("usuario_id"), List.of("uuid"), List.of("usuario_id", "cep", "cidade", "bairro", "rua", "numero", "complemento", "uf", "lock_version")),
     DADOS_COMPRA_PF("identidade.dados_compra_pf", DadosCompraPfEntity.class, List.of("usuario_id"), List.of("uuid"), List.of("usuario_id", "rg", "nome_pai", "nome_mae", "naturalidade", "genero", "lock_version")),
     DADOS_COMPRA_PJ("identidade.dados_compra_pj", DadosCompraPjEntity.class, List.of("usuario_id"), List.of("uuid"), List.of("usuario_id", "inscricao_estadual", "regime_tributario", "lock_version")),
     IDENTIDADES_EXTERNAS("identidade.identidades_externas", IdentidadeExternaEntity.class, List.of("id"), List.of("uuid"), List.of("id", "usuario_id", "provedor", "identificador_externo", "lock_version")),

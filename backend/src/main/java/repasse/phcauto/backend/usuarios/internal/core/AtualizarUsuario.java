@@ -107,8 +107,8 @@ public final class AtualizarUsuario implements AtualizarUsuarioUseCase {
     }
 
     private LocalDate validarNascimento(LocalDate nascimento) {
-        if (nascimento != null && !nascimento.isBefore(LocalDate.now(clock))) {
-            throw new CadastroInvalidoException("Nascimento deve estar no passado");
+        if (nascimento != null && nascimento.plusYears(18).isAfter(LocalDate.now(clock))) {
+            throw new CadastroInvalidoException("Cadastro permitido somente para maiores de 18 anos");
         }
         return nascimento;
     }

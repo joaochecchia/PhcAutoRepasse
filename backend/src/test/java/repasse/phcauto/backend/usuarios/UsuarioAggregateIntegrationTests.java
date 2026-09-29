@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
@@ -176,7 +177,8 @@ class UsuarioAggregateIntegrationTests {
                 tipo == TipoPessoa.PF ? LocalDate.of(1990, 1, 1) : null,
                 tipo == TipoPessoa.PJ ? documento : null,
                 tipo == TipoPessoa.PJ ? "Empresa Teste LTDA" : null,
-                new EnderecoRequest("01001000", "São Paulo", "Sé", "Praça da Sé", "10", "apto", "SP"));
+                new EnderecoRequest("01001000", "São Paulo", "Sé", "Praça da Sé", "10", "apto", "SP"),
+                true, Instant.now(), "1.0", "1.0");
         var body = json.valueToTree(request);
         ((tools.jackson.databind.node.ObjectNode) body).put("senha", request.senha());
         var result = mvc.perform(post("/api/v1/usuarios").contentType("application/json")

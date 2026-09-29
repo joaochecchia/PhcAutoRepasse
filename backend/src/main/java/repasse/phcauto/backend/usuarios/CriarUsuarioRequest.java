@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.time.Instant;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
 
 public record CriarUsuarioRequest(
@@ -14,6 +15,10 @@ public record CriarUsuarioRequest(
         @NotBlank @Size(min = 8, max = 128)
         @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String senha,
         String cpf, LocalDate dataNascimento, String cnpj, String razaoSocial,
-        @Valid @NotNull EnderecoRequest endereco) {
+        @Valid @NotNull EnderecoRequest endereco,
+        @NotNull @AssertTrue Boolean aceitouTermos,
+        @NotNull Instant aceiteTermosEm,
+        @NotBlank @Size(max = 64) String versaoTermosUso,
+        @NotBlank @Size(max = 64) String versaoPoliticaPrivacidade) {
     @Override public String toString() { return "CriarUsuarioRequest[conteudo protegido]"; }
 }

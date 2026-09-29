@@ -2,6 +2,8 @@ package repasse.phcauto.backend.usuarios.internal.infrastructure.service;
 
 import java.util.UUID;
 import repasse.phcauto.backend.usuarios.CriarUsuarioRequest;
+import repasse.phcauto.backend.compliance.ComplianceFacade;
+import repasse.phcauto.backend.compliance.RegistrarAceiteCadastroRequest;
 import repasse.phcauto.backend.usuarios.UsuarioResponse;
 import repasse.phcauto.backend.usuarios.UsuariosFacade;
 import org.springframework.stereotype.Service;
@@ -17,18 +19,21 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
     private final BuscarUsuarioUseCase buscarUsuario;
     private final AtualizarUsuarioUseCase atualizarUsuario;
     private final ExcluirUsuarioUseCase excluirUsuario;
+    private final ComplianceFacade compliance;
 
     public DefaultUsuariosFacade(CriarUsuarioUseCase criarUsuario, BuscarUsuarioUseCase buscarUsuario,
-            AtualizarUsuarioUseCase atualizarUsuario, ExcluirUsuarioUseCase excluirUsuario) {
+            AtualizarUsuarioUseCase atualizarUsuario, ExcluirUsuarioUseCase excluirUsuario,
+            ComplianceFacade compliance) {
         this.criarUsuario = criarUsuario;
         this.buscarUsuario = buscarUsuario;
         this.atualizarUsuario = atualizarUsuario;
         this.excluirUsuario = excluirUsuario;
+        this.compliance = compliance;
     }
 
     @Override
     @Transactional(transactionManager = "writeTransactionManager")
-    public UsuarioResponse criar(CriarUsuarioRequest request) {
+    public UsuarioResponse criar(CriarUsuarioRequest request, String enderecoRede) {
         if (request == null || request.endereco() == null) {
             throw new CadastroInvalidoException("Cadastro e endereço obrigatórios");
         }
@@ -39,6 +44,9 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
                 request.telefone(), request.senha(), request.cpf(), request.dataNascimento(),
                 request.cnpj(), request.razaoSocial(), endereco);
         var resultado = criarUsuario.execute(command);
+        compliance.registrarAceiteCadastro(new RegistrarAceiteCadastroRequest(
+                resultado.id(), request.aceitouTermos(), request.aceiteTermosEm(),
+                request.versaoTermosUso(), request.versaoPoliticaPrivacidade(), enderecoRede));
         return new UsuarioResponse(resultado.id(), resultado.tipoPessoa(), resultado.nome(),
                 resultado.email(), resultado.criadoEm());
     }

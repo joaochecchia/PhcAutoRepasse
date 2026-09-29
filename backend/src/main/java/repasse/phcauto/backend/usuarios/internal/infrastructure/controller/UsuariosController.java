@@ -1,6 +1,7 @@
 package repasse.phcauto.backend.usuarios.internal.infrastructure.controller;
 
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,10 @@ public class UsuariosController {
     public UsuariosController(UsuariosFacade usuarios) { this.usuarios = usuarios; }
 
     @PostMapping
-    public ResponseEntity<UsuarioResponse> criar(@Valid @RequestBody CriarUsuarioRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuarios.criar(request));
+    public ResponseEntity<UsuarioResponse> criar(@Valid @RequestBody CriarUsuarioRequest request,
+            HttpServletRequest httpRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(usuarios.criar(request, httpRequest.getRemoteAddr()));
     }
 
     @GetMapping("/{usuarioId}")

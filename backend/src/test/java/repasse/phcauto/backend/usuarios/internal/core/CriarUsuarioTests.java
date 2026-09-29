@@ -51,10 +51,13 @@ class CriarUsuarioTests {
         verifyNoInteractions(eventos);
     }
 
-    @Test void rejeitaNascimentoAtualOuFuturo() {
-        assertThrows(CadastroInvalidoException.class, () -> useCase.execute(command(LocalDate.now(clock))));
-        assertThrows(CadastroInvalidoException.class, () -> useCase.execute(command(LocalDate.now(clock).plusDays(1))));
+    @Test void rejeitaMenorDeDezoitoAnosEAceitaAniversarioDeDezoitoHoje() {
+        assertThrows(CadastroInvalidoException.class,
+                () -> useCase.execute(command(LocalDate.now(clock).minusYears(18).plusDays(1))));
         verifyNoInteractions(usuarios, senhas, eventos);
+
+        when(senhas.gerar(anyString())).thenReturn("hash");
+        assertDoesNotThrow(() -> useCase.execute(command(LocalDate.now(clock).minusYears(18))));
     }
 
     @Test void rejeitaDocumentosInvalidosEPerfisMisturados() {

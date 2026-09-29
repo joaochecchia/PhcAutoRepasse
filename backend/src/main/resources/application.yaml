@@ -39,6 +39,9 @@ spring:
         resubmitted: 2m
 
 app:
+  compliance:
+    termos-uso-versao: ${TERMOS_USO_VERSAO_ATUAL:1.0}
+    politica-privacidade-versao: ${POLITICA_PRIVACIDADE_VERSAO_ATUAL:1.0}
   events:
     workers: ${MODULITH_EVENT_WORKERS:2}
     queue-capacity: ${MODULITH_EVENT_QUEUE_CAPACITY:1000}

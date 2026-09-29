@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.controller.UsuariosController;
 import repasse.phcauto.backend.usuarios.internal.core.*;
+import repasse.phcauto.backend.compliance.AceiteInvalidoException;
 
 @RestControllerAdvice(assignableTypes = UsuariosController.class)
 class UsuariosExceptionHandler {
@@ -20,7 +21,7 @@ class UsuariosExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler({CadastroInvalidoException.class, IllegalArgumentException.class})
+    @ExceptionHandler({CadastroInvalidoException.class, AceiteInvalidoException.class, IllegalArgumentException.class})
     ProblemDetail invalido(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }

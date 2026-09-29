@@ -438,3 +438,24 @@ Table identidade.identidades_externas {
   }
   Note: 'Identificador estável validado pelo provedor; não armazenar tokens. Não vincular por email automaticamente.'
 }
+
+
+// Compliance: comprovantes imutáveis de aceite, introduzidos pela V11.
+Table compliance.aceites_termos {
+  id uuid [pk]
+  usuario_id uuid [not null]
+  aceite_em timestamptz [not null]
+  versao_termos_uso varchar(64) [not null]
+  versao_politica_privacidade varchar(64) [not null]
+  endereco_rede varchar(255) [not null]
+  registrado_em timestamptz [not null]
+  lock_version bigint [not null, default: 0]
+
+  indexes {
+    (usuario_id, versao_termos_uso, versao_politica_privacidade) [unique]
+    usuario_id
+    registrado_em
+  }
+
+  Note: 'Comprovante do aceite. Sem FK intencional para preservar a evidência quando a conta for excluída; retenção e descarte exigem política própria.'
+}

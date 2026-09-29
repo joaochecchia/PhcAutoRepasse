@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.*;
 import javax.sql.DataSource;
@@ -68,7 +69,8 @@ class UsuariosIntegrationTests {
                 "Senha-de-teste-123", tipo == TipoPessoa.PF ? documento : null,
                 tipo == TipoPessoa.PF ? LocalDate.of(1990, 1, 1) : null,
                 tipo == TipoPessoa.PJ ? documento : null, tipo == TipoPessoa.PJ ? "Empresa teste LTDA" : null,
-                new EnderecoRequest("01001000", "São Paulo", "Sé", "Praça da Sé", "10", null, "SP"));
+                new EnderecoRequest("01001000", "São Paulo", "Sé", "Praça da Sé", "10", null, "SP"),
+                true, Instant.now(), "1.0", "1.0");
     }
 
     @Test void criaPfEPjPeloHttpComPerfilEnderecoHashEProjecao() throws Exception {
@@ -96,6 +98,7 @@ class UsuariosIntegrationTests {
             assertEquals(1, source.queryForObject("select count(*) from identidade."+perfil+" where usuario_id=?", Integer.class, id));
             assertEquals(0, source.queryForObject("select count(*) from identidade."+outro+" where usuario_id=?", Integer.class, id));
             assertEquals(1, source.queryForObject("select count(*) from identidade.enderecos_usuario where usuario_id=?", Integer.class, id));
+            assertEquals(1, source.queryForObject("select count(*) from compliance.aceites_termos where usuario_id=? and versao_termos_uso='1.0' and versao_politica_privacidade='1.0'", Integer.class, id));
             var projection = new JdbcTemplate(read);
             await(() -> projection.queryForObject("select count(*) from identidade.usuarios u join identidade."+perfil+
                     " p on p.usuario_id=u.id join identidade.enderecos_usuario e on e.usuario_id=u.id where u.id=?", Integer.class, id) == 1);
@@ -110,7 +113,7 @@ class UsuariosIntegrationTests {
         var request = request(TipoPessoa.PF, "11144477735");
         var tx = new TransactionTemplate(transactions);
         UUID id = tx.execute(status -> {
-            var resultado = facade.criar(request);
+            var resultado = facade.criar(request, "127.0.0.1");
             assertFalse(receptor.recebeu(resultado.id()));
             status.setRollbackOnly();
             return resultado.id();
@@ -119,6 +122,7 @@ class UsuariosIntegrationTests {
         assertEquals(0, source.queryForObject("select count(*) from identidade.usuarios where id=?", Integer.class, id));
         assertEquals(0, source.queryForObject("select count(*) from identidade.usuarios_pf where usuario_id=?", Integer.class, id));
         assertEquals(0, source.queryForObject("select count(*) from identidade.enderecos_usuario where usuario_id=?", Integer.class, id));
+        assertEquals(0, source.queryForObject("select count(*) from compliance.aceites_termos where usuario_id=?", Integer.class, id));
         assertEquals(0, source.queryForObject("select count(*) from event_publication where serialized_event like ?", Integer.class, "%"+id+"%"));
         assertFalse(receptor.recebeu(id));
     }
@@ -138,7 +142,7 @@ class UsuariosIntegrationTests {
         var start = new CountDownLatch(1);
         Callable<Boolean> task = () -> {
             start.await();
-            try { facade.criar(request); return true; }
+            try { facade.criar(request, "127.0.0.1"); return true; }
             catch (CadastroDuplicadoException expected) { return false; }
         };
         try {
@@ -158,7 +162,7 @@ class UsuariosIntegrationTests {
             id.set(entity.getUsuarioId());
             throw new IllegalStateException("Falha de endereço simulada");
         }).when(enderecos).saveAndFlush(org.mockito.ArgumentMatchers.any());
-        assertThrows(IllegalStateException.class, () -> facade.criar(request));
+        assertThrows(IllegalStateException.class, () -> facade.criar(request, "127.0.0.1"));
         assertNotNull(id.get());
         var source = new JdbcTemplate(write);
         assertEquals(0, source.queryForObject("select count(*) from identidade.usuarios where id=?", Integer.class, id.get()));
@@ -170,7 +174,7 @@ class UsuariosIntegrationTests {
     @Test void recuperaEntregaPersistidaAposFalhaDoListener() throws Exception {
         var tx = new TransactionTemplate(transactions);
         UUID id = tx.execute(status -> {
-            var response = facade.criar(request(TipoPessoa.PF, documento(TipoPessoa.PF)));
+            var response = facade.criar(request(TipoPessoa.PF, documento(TipoPessoa.PF)), "127.0.0.1");
             receptor.falharUmaVez(response.id());
             return response.id();
         });

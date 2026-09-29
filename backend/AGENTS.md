@@ -13,7 +13,7 @@ Comunique-se com o usuário em português brasileiro.
 
 A arquitetura definida pelo usuário é Clean Architecture, com princípios SOLID e monólito modular. Preserve essa direção nas implementações.
 
-Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 25 entidades JPA, repositories separados de leitura/escrita e 20 controllers CRUD provisórios na infraestrutura. A criação real de usuários está em `usuarios` e a criação real de anúncios está em `anuncios`, ambos com contratos e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
+Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. Há 26 entidades JPA, repositories separados de leitura/escrita e 20 controllers CRUD provisórios na infraestrutura. A criação real de usuários está em `usuarios` e a criação real de anúncios está em `anuncios`, ambos com contratos e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
 
 Pacote base: `repasse.phcauto.backend`.
 
@@ -115,7 +115,7 @@ docker compose config --quiet
 ./mvnw -B -ntp test
 ```
 
-O teste de contexto usa `@SpringBootTest` e requer write e read acessíveis. `PERSISTENCE_INTEGRATION_TEST=true` habilita os testes reais dos 25 mapeamentos, eventos, recuperação e concorrência; use bancos isolados. A integração automática Spring/Docker Compose está desativada por padrão; inicie as dependências explicitamente. Não confunda build com testes pulados com execução bem-sucedida dos testes.
+O teste de contexto usa `@SpringBootTest` e requer write e read acessíveis. `PERSISTENCE_INTEGRATION_TEST=true` habilita os testes reais dos 26 mapeamentos, eventos, recuperação e concorrência; use bancos isolados. A integração automática Spring/Docker Compose está desativada por padrão; inicie as dependências explicitamente. Não confunda build com testes pulados com execução bem-sucedida dos testes.
 
 Swagger UI: `http://localhost:8080/swagger-ui.html`.
 OpenAPI JSON: `http://localhost:8080/v3/api-docs`.
@@ -272,3 +272,14 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Os filtros opcionais cobrem tipo, localização pública, marca, perfil PF/PJ, nome de pessoa/loja, faixas de preço/ano e dados técnicos. Comparações categóricas textuais ignoram maiúsculas/minúsculas; perfil usa correspondência parcial.
 - O caso de uso e gateway estão em `anuncios/internal/core`; o adaptador JDBC parametrizado fica na infraestrutura. A resposta HTTP é `ResponseEntity<HashMap<String,Object>>` com `mensagem`, `carros`, `total`, `pagina` e `tamanho`.
 - Por privacidade, a lista retorna cidade e UF, nunca CEP, bairro, rua, número ou complemento. A chave `carros` pode conter qualquer tipo de veículo por decisão explícita do contrato atual.
+
+
+## Compliance e restrição etária
+
+- O módulo `compliance` registra o comprovante do aceite no mesmo fluxo transacional de `POST /api/v1/usuarios`.
+- O request de cadastro exige `aceitouTermos=true`, `aceiteTermosEm`, `versaoTermosUso` e `versaoPoliticaPrivacidade`. O IP/identificador de rede vem de `HttpServletRequest.getRemoteAddr()`, nunca do corpo enviado pelo cliente.
+- As versões aceitas precisam coincidir com `TERMOS_USO_VERSAO_ATUAL` e `POLITICA_PRIVACIDADE_VERSAO_ATUAL`; os defaults locais são `1.0`. Atualize as variáveis junto com a publicação dos documentos.
+- `compliance.aceites_termos` preserva usuário, instante declarado do clique, versões, endereço de rede e instante de registro no servidor. Não existe endpoint público de leitura desses dados.
+- Usuários PF precisam ter pelo menos 18 anos completos tanto no cadastro quanto ao alterar a data de nascimento. PJ não possui idade; eventual idade do representante exige requisito e campo próprios.
+- A gravação do aceite usa a transação write aberta pela fachada de usuários com propagação obrigatória. Falha em compliance reverte usuário, perfil, endereço e eventos.
+- V11 comum cria o schema e a tabela de compliance. A tabela participa da projeção read por `RowChanged`. Próximas migrations devem usar V12 ou superior.

@@ -41,7 +41,7 @@ usuarios/
       repository/write/
 ```
 
-A raiz expõe contratos HTTP, a interface `UsuariosFacade` e eventos públicos, sem implementação Spring na fachada pública. Os controllers são adaptadores Spring MVC internos em `internal/infrastructure/controller`; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, implementa a fachada e delimita as transações. O core contém interface e implementação do caso de uso com `execute`, portas e validações Java puras. `UsuariosConfiguration` monta o caso de uso por injeção de dependências. A fachada delimita a transação write. As quatro entidades e seus repositories foram movidos, preservando nomes de tabelas, dados e versões; nenhuma migration nova foi necessária.
+A raiz expõe contratos HTTP, a interface `UsuariosFacade` e eventos públicos, sem implementação Spring na fachada pública. Os controllers são adaptadores Spring MVC internos em `internal/infrastructure/controller`; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, implementa a fachada e delimita as transações. O core contém interface e implementação do caso de uso com `execute`, portas e validações Java puras. `UsuariosConfiguration` monta o caso de uso por injeção de dependências. A fachada delimita a transação write. As entidades de usuários preservam seus nomes de tabelas. A V11 adiciona somente a tabela do módulo compliance, sem alterar as tabelas existentes.
 
 O caso de uso solicita a publicação por `PublicarUsuarioCriadoGateway`. Seu adaptador usa `ApplicationEventPublisher` na mesma transação. Assim o core não importa Spring. Importar diretamente esse publisher no core contrariaria sua independência de frameworks.
 
@@ -70,7 +70,11 @@ Exemplo PF:
     "numero": "10",
     "complemento": null,
     "uf": "SP"
-  }
+  },
+  "aceitouTermos": true,
+  "aceiteTermosEm": "2026-09-29T14:00:00Z",
+  "versaoTermosUso": "1.0",
+  "versaoPoliticaPrivacidade": "1.0"
 }
 ```
 
@@ -93,13 +97,17 @@ Para PJ, usar `tipoPessoa: "PJ"`, `nome` como nome da empresa, `cnpj` e `razaoSo
     "numero": "10",
     "complemento": null,
     "uf": "SP"
-  }
+  },
+  "aceitouTermos": true,
+  "aceiteTermosEm": "2026-09-29T14:00:00Z",
+  "versaoTermosUso": "1.0",
+  "versaoPoliticaPrivacidade": "1.0"
 }
 ```
 
-Os documentos acima são dados sintéticos de teste. Nesta versão CPF e CNPJ seguem o formato numérico do esquema existente, sem pontuação, e têm dígitos verificadores validados. Não se mistura PF e PJ. Email é normalizado em minúsculas; nome e campos textuais são aparados. Senha mantém exatamente o texto recebido. Nascimento deve ser anterior à data UTC atual; nenhum limite etário foi inventado.
+Os documentos acima são dados sintéticos de teste. Nesta versão CPF e CNPJ seguem o formato numérico do esquema existente, sem pontuação, e têm dígitos verificadores validados. Não se mistura PF e PJ. Email é normalizado em minúsculas; nome e campos textuais são aparados. Senha mantém exatamente o texto recebido. Cadastros PF exigem 18 anos completos; a mesma regra protege alterações posteriores da data de nascimento.
 
-Nome, email, telefone, senha, tipo, perfil correspondente e endereço são obrigatórios. Endereço exige CEP, cidade, bairro, rua e UF brasileira válida. Número e complemento continuam opcionais, como nos contratos de cadastro anteriores. Dados complementares de compra não são criados no cadastro.
+Nome, email, telefone, senha, tipo, perfil correspondente, endereço e comprovante de aceite são obrigatórios. Endereço exige CEP, cidade, bairro, rua e UF brasileira válida. Número e complemento continuam opcionais, como nos contratos de cadastro anteriores. Dados complementares de compra não são criados no cadastro.
 
 - **201**: resposta com id, tipoPessoa, nome, email e criadoEm.
 - **400**: campos inválidos, perfil incompatível ou corpo malformado.
@@ -119,13 +127,14 @@ HTTP -> UsuariosFacade (interface pública)
            -> usuarios
            -> usuarios_pf OU usuarios_pj
            -> enderecos_usuario
+     -> ComplianceFacade -> compliance.aceites_termos
         -> SpringUsuarioCriadoPublisher -> ApplicationEventPublisher
      -> commit
         -> RowChanged por linha -> projeção read
         -> UsuarioCriado -> listeners de negócio registrados
 ```
 
-Falha no endereço, no perfil ou na publicação reverte a transação inteira. Flushes confirmam restrições antes da publicação, mas não fazem commits intermediários. A projeção mantém consistência eventual e não é usada para decidir unicidade.
+Falha no endereço, no perfil, no aceite de compliance ou na publicação reverte a transação inteira. Flushes confirmam restrições antes da publicação, mas não fazem commits intermediários. A projeção mantém consistência eventual e não é usada para decidir unicidade.
 
 `UsuarioCriado` contém eventId, usuarioId, tipoPessoa e ocorridoEm. Não cria perfil nem endereço por listeners. O registro Modulith persiste uma entrega para cada listener transacional registrado, com recuperação de falhas. Não há listener de negócio fictício em produção; email e outros efeitos serão implementados quando definidos. O teste de integração registra um consumidor real para verificar commit, falha e reentrega. `UsuarioAlterado` permanece como preparação anterior para a evolução de atualização/exclusão; a criação real publica apenas `UsuarioCriado` além dos eventos técnicos.
 
@@ -145,6 +154,8 @@ POSTGRES_PORT=15432 POSTGRES_READ_PORT=15433 REDIS_PORT=16379 \
 USUARIOS_INTEGRATION_TEST=true ./mvnw -B -ntp -Dtest=UsuariosIntegrationTests test
 ```
 
-A integração grava dados sintéticos; não apontar para produção. Verifica HTTP, PF/PJ, hash, ausência de credenciais na resposta, perfil exclusivo, endereço, projeção read, rollback, colisão concorrente e recuperação de listener. Os testes de persistência existentes cobrem os 25 mapeamentos e podem ser habilitados com `PERSISTENCE_INTEGRATION_TEST=true` nos mesmos bancos isolados.
+A integração grava dados sintéticos; não apontar para produção. Verifica HTTP, PF/PJ, hash, ausência de credenciais na resposta, perfil exclusivo, endereço, projeção read, rollback, colisão concorrente e recuperação de listener. Os testes de persistência existentes cobrem os mapeamentos JPA e podem ser habilitados com `PERSISTENCE_INTEGRATION_TEST=true` nos mesmos bancos isolados.
 
 Para executar o código atualizado no contêiner, reconstrua o backend com `docker compose up -d --build backend` usando as portas/variáveis do ambiente atual.
+
+Detalhes do comprovante, versões vigentes e limites operacionais estão em [compliance](compliance.md).

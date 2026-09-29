@@ -23,8 +23,9 @@ public final class CriarUsuario implements CriarUsuarioUseCase {
 
     @Override public UsuarioCriadoResultado execute(CriarUsuarioCommand c) {
         Objects.requireNonNull(c, "command");
-        if (c.tipoPessoa() == TipoPessoa.PF && !c.dataNascimento().isBefore(LocalDate.now(clock))) {
-            throw new CadastroInvalidoException("Nascimento deve estar no passado");
+        if (c.tipoPessoa() == TipoPessoa.PF
+                && c.dataNascimento().plusYears(18).isAfter(LocalDate.now(clock))) {
+            throw new CadastroInvalidoException("Cadastro permitido somente para maiores de 18 anos");
         }
         String documento = c.tipoPessoa() == TipoPessoa.PF ? c.cpf() : c.cnpj();
         if (usuarios.existeEmail(c.email()) || usuarios.existeDocumento(c.tipoPessoa(), documento)) {
