@@ -19,30 +19,37 @@ public class JpaUsuarioGateway implements UsuarioGateway {
     private final UsuarioPfWriteRepository pessoasFisicas;
     private final UsuarioPjWriteRepository pessoasJuridicas;
     private final EnderecoUsuarioWriteRepository enderecos;
+    private final UsuarioAdminWriteRepository administradores;
 
     public JpaUsuarioGateway(UsuarioWriteRepository usuarios, UsuarioPfWriteRepository pessoasFisicas,
-            UsuarioPjWriteRepository pessoasJuridicas, EnderecoUsuarioWriteRepository enderecos) {
+            UsuarioPjWriteRepository pessoasJuridicas, EnderecoUsuarioWriteRepository enderecos,
+            UsuarioAdminWriteRepository administradores) {
         this.usuarios = usuarios;
         this.pessoasFisicas = pessoasFisicas;
         this.pessoasJuridicas = pessoasJuridicas;
         this.enderecos = enderecos;
+        this.administradores = administradores;
     }
 
     @Override public boolean existeEmail(String email) { return usuarios.existsByEmailIgnoreCase(email); }
 
     @Override public boolean existeDocumento(TipoPessoa tipo, String documento) {
-        return tipo == TipoPessoa.PF ? pessoasFisicas.existsByCpf(documento) : pessoasJuridicas.existsByCnpj(documento);
+        return tipo == TipoPessoa.PF
+                ? pessoasFisicas.existsByCpf(documento) || administradores.existsByCpf(documento)
+                : pessoasJuridicas.existsByCnpj(documento) || administradores.existsByCnpj(documento);
     }
 
     @Override public void salvarCadastro(UUID id, DadosNovoUsuario dados, Instant agora) {
         try {
             usuarios.saveAndFlush(UsuarioEntity.novoCadastro(id, dados, agora));
-            if (dados.tipoPessoa() == TipoPessoa.PF) {
-                pessoasFisicas.saveAndFlush(UsuarioPfEntity.novoCadastro(id, dados, agora));
-            } else {
-                pessoasJuridicas.saveAndFlush(UsuarioPjEntity.novoCadastro(id, dados, agora));
+            if (dados.papel() == repasse.phcauto.backend.domain.model.identidade.PapelUsuario.CLIENTE) {
+                if (dados.tipoPessoa() == TipoPessoa.PF) pessoasFisicas.saveAndFlush(UsuarioPfEntity.novoCadastro(id, dados, agora));
+                else pessoasJuridicas.saveAndFlush(UsuarioPjEntity.novoCadastro(id, dados, agora));
+                enderecos.saveAndFlush(EnderecoUsuarioEntity.novoCadastro(id, dados, agora));
+            } else if (dados.papel() == repasse.phcauto.backend.domain.model.identidade.PapelUsuario.ADMIN) {
+                administradores.saveAndFlush(UsuarioAdminEntity.novo(id, dados.tipoPessoa(), dados.cpf(),
+                        dados.dataNascimento(), dados.cnpj(), dados.razaoSocial()));
             }
-            enderecos.saveAndFlush(EnderecoUsuarioEntity.novoCadastro(id, dados, agora));
         } catch (DataIntegrityViolationException failure) {
             for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
                 if (cause instanceof SQLException sql && "23505".equals(sql.getSQLState())) {

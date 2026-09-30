@@ -34,20 +34,20 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
     @Override
     @Transactional(transactionManager = "writeTransactionManager")
     public UsuarioResponse criar(CriarUsuarioRequest request, String enderecoRede) {
-        if (request == null || request.endereco() == null) {
-            throw new CadastroInvalidoException("Cadastro e endereço obrigatórios");
-        }
+        if (request == null) throw new CadastroInvalidoException("Cadastro obrigatório");
         var e = request.endereco();
-        var endereco = new EnderecoCadastro(e.cep(), e.cidade(), e.bairro(), e.rua(),
+        var endereco = e == null ? null : new EnderecoCadastro(e.cep(), e.cidade(), e.bairro(), e.rua(),
                 e.numero(), e.complemento(), e.uf());
         var command = new CriarUsuarioCommand(request.tipoPessoa(), request.nome(), request.email(),
                 request.telefone(), request.senha(), request.cpf(), request.dataNascimento(),
-                request.cnpj(), request.razaoSocial(), endereco);
+                request.cnpj(), request.razaoSocial(), endereco, request.papel());
         var resultado = criarUsuario.execute(command);
-        compliance.registrarAceiteCadastro(new RegistrarAceiteCadastroRequest(
-                resultado.id(), request.aceitouTermos(), request.aceiteTermosEm(),
-                request.versaoTermosUso(), request.versaoPoliticaPrivacidade(), enderecoRede));
-        return new UsuarioResponse(resultado.id(), resultado.tipoPessoa(), resultado.nome(),
+        if (resultado.papel() != repasse.phcauto.backend.domain.model.identidade.PapelUsuario.DONO) {
+            compliance.registrarAceiteCadastro(new RegistrarAceiteCadastroRequest(
+                    resultado.id(), request.aceitouTermos(), request.aceiteTermosEm(),
+                    request.versaoTermosUso(), request.versaoPoliticaPrivacidade(), enderecoRede));
+        }
+        return new UsuarioResponse(resultado.id(), resultado.tipoPessoa(), resultado.papel(), resultado.nome(),
                 resultado.email(), resultado.criadoEm());
     }
 

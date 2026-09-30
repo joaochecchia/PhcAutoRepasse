@@ -133,7 +133,7 @@ public class UsuarioEntity extends Usuario {
         entity.telefone = dados.telefone();
         entity.senhaHash = dados.senhaHash();
         entity.tipoPessoa = dados.tipoPessoa();
-        entity.papel = PapelUsuario.CLIENTE;
+        entity.papel = dados.papel();
         entity.ativo = true;
         entity.criadoEm = agora;
         entity.atualizadoEm = agora;

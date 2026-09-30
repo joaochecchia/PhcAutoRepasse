@@ -4,5 +4,6 @@ public enum PapelUsuario {
     CLIENTE,
     ANUNCIANTE,
     OPERADOR,
-    ADMIN
+    ADMIN,
+    DONO
 }

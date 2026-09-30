@@ -310,6 +310,14 @@ class PersistenceIntegrationTests {
                 entry("getAtivo", Boolean.TRUE),
                 entry("getCriadoEm", NOW),
                 entry("getAtualizadoEm", NOW))));
+        fixtures.add(fixture(Usuario.class, Map.ofEntries(
+                entry("getId", id("usuario_admin")), entry("getNome", "Admin de teste"),
+                entry("getEmail", "admin-" + runId), entry("getTelefone", "+5561999999999"),
+                entry("getTipoPessoa", TipoPessoa.PF), entry("getPapel", PapelUsuario.ADMIN),
+                entry("getAtivo", Boolean.TRUE), entry("getCriadoEm", NOW), entry("getAtualizadoEm", NOW))));
+        fixtures.add(fixture(UsuarioAdministrador.class, Map.ofEntries(
+                entry("getUsuarioId", id("usuario_admin")), entry("getTipoPessoa", TipoPessoa.PF),
+                entry("getCpf", "52998224725"), entry("getDataNascimento", LocalDate.of(2004, 1, 1)))));
         fixtures.add(fixture(UsuarioPf.class, Map.ofEntries(
                 entry("getUsuarioId", id("usuarios")),
                 entry("getCpf", "11111111111"),

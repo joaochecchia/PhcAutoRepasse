@@ -23,21 +23,23 @@ public final class CriarUsuario implements CriarUsuarioUseCase {
 
     @Override public UsuarioCriadoResultado execute(CriarUsuarioCommand c) {
         Objects.requireNonNull(c, "command");
-        if (c.tipoPessoa() == TipoPessoa.PF
+        if (c.papel() != repasse.phcauto.backend.domain.model.identidade.PapelUsuario.DONO
+                && c.tipoPessoa() == TipoPessoa.PF
                 && c.dataNascimento().plusYears(18).isAfter(LocalDate.now(clock))) {
             throw new CadastroInvalidoException("Cadastro permitido somente para maiores de 18 anos");
         }
-        String documento = c.tipoPessoa() == TipoPessoa.PF ? c.cpf() : c.cnpj();
-        if (usuarios.existeEmail(c.email()) || usuarios.existeDocumento(c.tipoPessoa(), documento)) {
+        String documento = c.papel() == repasse.phcauto.backend.domain.model.identidade.PapelUsuario.DONO
+                ? null : (c.tipoPessoa() == TipoPessoa.PF ? c.cpf() : c.cnpj());
+        if (usuarios.existeEmail(c.email()) || (documento != null && usuarios.existeDocumento(c.tipoPessoa(), documento))) {
             throw new CadastroDuplicadoException("Já existe cadastro com os dados informados");
         }
         String hash = senhas.gerar(c.senha());
         var dados = new DadosNovoUsuario(c.tipoPessoa(), c.nome(), c.email(), c.telefone(), hash,
-                c.cpf(), c.dataNascimento(), c.cnpj(), c.razaoSocial(), c.endereco());
+                c.cpf(), c.dataNascimento(), c.cnpj(), c.razaoSocial(), c.endereco(), c.papel());
         var id = UUID.randomUUID();
         var agora = clock.instant();
         usuarios.salvarCadastro(id, dados, agora);
         eventos.publicar(new UsuarioCriado(UUID.randomUUID(), id, c.tipoPessoa(), agora));
-        return new UsuarioCriadoResultado(id, c.tipoPessoa(), c.nome(), c.email(), agora);
+        return new UsuarioCriadoResultado(id, c.tipoPessoa(), c.papel(), c.nome(), c.email(), agora);
     }
 }

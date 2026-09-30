@@ -6,6 +6,7 @@ import java.time.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
+import repasse.phcauto.backend.domain.model.identidade.PapelUsuario;
 import repasse.phcauto.backend.usuarios.UsuarioCriado;
 
 class CriarUsuarioTests {
@@ -58,6 +59,26 @@ class CriarUsuarioTests {
 
         when(senhas.gerar(anyString())).thenReturn("hash");
         assertDoesNotThrow(() -> useCase.execute(command(LocalDate.now(clock).minusYears(18))));
+    }
+
+    @Test void adminExigePerfilCompletoEDonoPersisteSomenteUsuario() {
+        when(senhas.gerar(anyString())).thenReturn("hash");
+        var admin = new CriarUsuarioCommand(TipoPessoa.PF,"admin","admin@email.com","+5561999999999",
+                "senha123","52998224725",LocalDate.of(2004,1,1),null,null,null,PapelUsuario.ADMIN);
+        var resultadoAdmin=useCase.execute(admin);
+        var dados=ArgumentCaptor.forClass(DadosNovoUsuario.class);
+        verify(usuarios).salvarCadastro(eq(resultadoAdmin.id()),dados.capture(),eq(clock.instant()));
+        assertEquals(PapelUsuario.ADMIN,dados.getValue().papel());
+        assertEquals("52998224725",dados.getValue().cpf());
+
+        reset(usuarios,senhas,eventos); when(senhas.gerar(anyString())).thenReturn("hash");
+        var dono=new CriarUsuarioCommand(null,"Dono","dono@email.com",null,"senha123",
+                null,null,null,null,null,PapelUsuario.DONO);
+        var resultadoDono=useCase.execute(dono);
+        verify(usuarios).existeEmail("dono@email.com");
+        verify(usuarios,never()).existeDocumento(any(),any());
+        verify(usuarios).salvarCadastro(eq(resultadoDono.id()),argThat(d -> d.papel()==PapelUsuario.DONO
+                && d.cpf()==null && d.cnpj()==null && d.endereco()==null),eq(clock.instant()));
     }
 
     @Test void rejeitaDocumentosInvalidosEPerfisMisturados() {

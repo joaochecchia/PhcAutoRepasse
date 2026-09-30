@@ -20,6 +20,7 @@ public class UsuariosController {
     public UsuariosController(UsuariosFacade usuarios) { this.usuarios = usuarios; }
 
     @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    @org.springframework.security.access.prepost.PreAuthorize("@registroUsuarioAuthorization.podeRegistrar(#request, authentication)")
     @PostMapping("/registrar")
     public ResponseEntity<UsuarioResponse> registrar(@Valid @RequestBody CriarUsuarioRequest request,
             HttpServletRequest httpRequest) {
