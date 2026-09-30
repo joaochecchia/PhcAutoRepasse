@@ -14,6 +14,15 @@ import org.junit.jupiter.api.Test;
 import repasse.phcauto.backend.anuncios.AnuncioCriado;
 import repasse.phcauto.backend.domain.model.catalogo.*;
 
+import repasse.phcauto.backend.anuncios.internal.core.domain.CriarAnuncioCommand;
+import repasse.phcauto.backend.anuncios.internal.core.exception.AnuncianteInvalidoException;
+import repasse.phcauto.backend.anuncios.internal.core.exception.AnuncioInvalidoException;
+import repasse.phcauto.backend.anuncios.internal.core.gateway.CriarAnuncioGateway;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.CriarAnuncio;
+import repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo;
+import repasse.phcauto.backend.domain.model.catalogo.StatusAnuncio;
+import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
+import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 class CriarAnuncioTests {
     private static final UUID USUARIO = UUID.randomUUID();
     private final Gateway gateway = new Gateway();

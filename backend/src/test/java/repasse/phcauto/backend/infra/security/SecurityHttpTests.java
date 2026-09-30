@@ -22,10 +22,10 @@ import repasse.phcauto.backend.infra.config.*;
 @SpringJUnitWebConfig(SecurityHttpTests.Config.class)
 @TestPropertySource(properties = "JWT_SECRET=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
 class SecurityHttpTests {
-    @Configuration @EnableWebMvc @Import({SecurityConfig.class, JwtConfig.class, Endpoints.class, repasse.phcauto.backend.usuarios.internal.infrastructure.controller.UsuariosController.class})
+    @Configuration @EnableWebMvc @Import({SecurityConfig.class, JwtConfig.class, Endpoints.class, repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.controller.UsuariosController.class})
     static class Config {
-        @Bean repasse.phcauto.backend.usuarios.UsuariosFacade usuarios() {
-            return org.mockito.Mockito.mock(repasse.phcauto.backend.usuarios.UsuariosFacade.class);
+        @Bean repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade usuarios() {
+            return org.mockito.Mockito.mock(repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade.class);
         }
     }
     @RestController static class Endpoints {

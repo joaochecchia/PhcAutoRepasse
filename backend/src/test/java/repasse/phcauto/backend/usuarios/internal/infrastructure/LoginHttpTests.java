@@ -9,11 +9,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.controller.LoginController;
-import repasse.phcauto.backend.usuarios.internal.core.Login;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.UsuarioEntity;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.repository.write.UsuarioWriteRepository;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.controller.LoginController;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.Login;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.UsuarioEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.repository.write.UsuarioWriteRepository;
 
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.exception.LoginExceptionHandler;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.gateway.DatabaseAutenticacaoGateway;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.configuration.AutenticacaoConfiguration;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.configuration.UsuariosConfiguration;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.security.JwtLoginService;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.security.UsuarioDetailsService;
 class LoginHttpTests {
     private final UsuarioWriteRepository repository = mock(UsuarioWriteRepository.class);
     private final org.springframework.security.crypto.password.PasswordEncoder encoder = new UsuariosConfiguration().usuarioPasswordEncoder();

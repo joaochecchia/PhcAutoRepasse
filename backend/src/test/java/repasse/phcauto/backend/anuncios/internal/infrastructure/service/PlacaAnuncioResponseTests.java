@@ -6,9 +6,17 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import repasse.phcauto.backend.anuncios.*;
-import repasse.phcauto.backend.anuncios.internal.core.*;
 import repasse.phcauto.backend.domain.model.catalogo.*;
 
+import repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioCriadoResultado;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.CriarAnuncioUseCase;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.CriarAnuncioRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.EnderecoAnuncioRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioResponse;
+import repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo;
+import repasse.phcauto.backend.domain.model.catalogo.StatusAnuncio;
+import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
+import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 class PlacaAnuncioResponseTests {
     @Test void retornaSomenteFinalQuandoAnuncianteOcultaPlaca() {
         assertThat(criar(false).detalhes()).isInstanceOfSatisfying(AnuncioResponse.CarroResponse.class,

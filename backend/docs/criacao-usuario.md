@@ -7,41 +7,32 @@ O módulo `repasse.phcauto.backend.usuarios` implementa cadastro **local** de PF
 ```text
 usuarios/
   package-info.java
-  CriarUsuarioRequest.java
-  EnderecoRequest.java
-  UsuarioResponse.java
   UsuarioCriado.java
-  UsuariosFacade.java
   internal/
     core/
-      CriarUsuarioUseCase.java
-      CriarUsuario.java
-      CriarUsuarioCommand.java
-      DadosNovoUsuario.java
-      EnderecoCadastro.java
-      UsuarioCriadoResultado.java
-      UsuarioGateway.java
-      HashSenhaGateway.java
-      PublicarUsuarioCriadoGateway.java
-      CadastroInvalidoException.java
-      CadastroDuplicadoException.java
-      ValidacaoCadastro.java
+      domain/
+      gateway/
+      usecase/
+      validation/
+      exception/
     infrastructure/
-      controller/
-        LoginController.java
-        UsuariosController.java
+      adapter/in/web/
+        controller/
+        request/
+        response/
+        validation/
+        exception/
+      adapter/out/
+        event/
+        persistence/entity/
+        persistence/gateway/
+        persistence/repository/{read,write}/
+      configuration/
+      security/
       service/
-        DefaultUsuariosFacade.java
-      JpaUsuarioGateway.java
-      SpringUsuarioCriadoPublisher.java
-      UsuariosConfiguration.java
-      UsuariosExceptionHandler.java
-      entity/
-      repository/read/
-      repository/write/
 ```
 
-A raiz expõe contratos HTTP, a interface `UsuariosFacade` e eventos públicos, sem implementação Spring na fachada pública. Os controllers são adaptadores Spring MVC internos em `internal/infrastructure/controller`; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, implementa a fachada e delimita as transações. O core contém interface e implementação do caso de uso com `execute`, portas e validações Java puras. `UsuariosConfiguration` monta o caso de uso por injeção de dependências. A fachada delimita a transação write. As entidades de usuários preservam seus nomes de tabelas. A V11 adiciona somente a tabela do módulo compliance, sem alterar as tabelas existentes.
+A raiz expõe somente o evento público `UsuarioCriado`. Requests, responses, validações HTTP e controllers ficam no adaptador web; `UsuariosFacade` e `DefaultUsuariosFacade` ficam no serviço interno de aplicação. O core separa domínio, interfaces e implementações de casos de uso, portas, validações e exceções, sem depender de Spring, Jakarta, HTTP ou JPA. `UsuariosConfiguration` monta o caso de uso por injeção de dependências. A fachada delimita a transação write. As entidades de usuários preservam seus nomes de tabelas. A V11 adiciona somente a tabela do módulo compliance, sem alterar as tabelas existentes.
 
 O caso de uso solicita a publicação por `PublicarUsuarioCriadoGateway`. Seu adaptador usa `ApplicationEventPublisher` na mesma transação. Assim o core não importa Spring. Importar diretamente esse publisher no core contrariaria sua independência de frameworks.
 
@@ -113,12 +104,12 @@ Nome, email, telefone, senha, tipo, perfil correspondente, endereço e comprovan
 - **400**: campos inválidos, perfil incompatível ou corpo malformado.
 - **409**: email/CPF/CNPJ já cadastrado, inclusive colisões concorrentes protegidas pelas unicidades PostgreSQL.
 
-Nenhum parâmetro permite escolher papel administrativo; o cadastro cria CLIENTE ativo. A verificação de credenciais local está disponível no [fluxo de login](login.md); JWT está implementado sem sessão HTTP; OAuth continua pendente. A senha só entra no request/comando, é codificada com BCrypt e sai do core para persistência apenas como hash. Respostas e eventos não transportam senha ou hash. Spring Security protege a API com Bearer JWT.
+O cadastro público cria CLIENTE ativo. O campo `papel` aceita ADMIN ou DONO apenas quando a requisição é autenticada por um usuário DONO; a autorização é aplicada no adaptador HTTP. A verificação de credenciais local está disponível no [fluxo de login](login.md); JWT está implementado sem sessão HTTP; OAuth continua pendente. A senha só entra no request/comando, é codificada com BCrypt e sai do core para persistência apenas como hash. Respostas e eventos não transportam senha ou hash. Spring Security protege a API com Bearer JWT.
 
 ## Transação e eventos
 
 ```text
-HTTP -> UsuariosFacade (interface pública)
+HTTP -> UsuariosFacade (porta interna do serviço de aplicação)
      -> DefaultUsuariosFacade (@Transactional write)
      -> CriarUsuario.execute
         -> validações e unicidades no write

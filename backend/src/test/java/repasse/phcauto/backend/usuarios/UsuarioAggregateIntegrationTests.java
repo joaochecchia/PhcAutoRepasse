@@ -23,9 +23,13 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.json.JsonMapper;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
-import repasse.phcauto.backend.usuarios.request.AtualizarUsuarioRequest;
-import repasse.phcauto.backend.usuarios.request.EnderecoPatchRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.AtualizarUsuarioRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.EnderecoPatchRequest;
 
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.CriarUsuarioRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.EnderecoRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.response.UsuarioResponse;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade;
 @SpringBootTest(properties = {"app.projection.bootstrap=false", "app.projection.retry-delay=1s"})
 @AutoConfigureMockMvc
 @org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")

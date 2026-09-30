@@ -20,7 +20,7 @@ O domínio permanece em Java puro. Os eventos desta implementação são eventos
 
 ## Entidades e repositories
 
-As entidades JPA estendem os modelos abstratos do domínio. Identidade fica em usuarios/internal/infrastructure, catálogo em anuncios/internal/infrastructure, planos em planos/internal/infrastructure e compliance em seu próprio módulo; somente a assinatura e vendas ainda permanecem em infra/database. As anotações JPA ficam na infraestrutura de cada módulo, e o mesmo mapeamento de colunas é usado pelas duas unidades JPA.
+As entidades JPA estendem os modelos abstratos do domínio. Identidade fica em `usuarios/internal/infrastructure/adapter/out/persistence`, catálogo em `anuncios/internal/infrastructure/adapter/out/persistence`, planos em `planos/internal/infrastructure/adapter/out/persistence` e compliance no adaptador de persistência do próprio módulo; somente a assinatura e vendas ainda permanecem em infra/database. As anotações JPA ficam na infraestrutura de cada módulo, e o mesmo mapeamento de colunas é usado pelas duas unidades JPA.
 
 - `*WriteRepository`: operações JPA na origem. Também deve ser usado para consultas que exigem leitura consistente logo após uma gravação.
 - `*ReadRepository`: busca por ID, existência, contagem e listagem paginada no banco de leitura. Não expõe `save` ou `delete`.

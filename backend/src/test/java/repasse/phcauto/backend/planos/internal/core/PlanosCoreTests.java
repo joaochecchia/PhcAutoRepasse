@@ -8,6 +8,17 @@ import java.time.ZoneOffset;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 
+import repasse.phcauto.backend.planos.internal.core.domain.NovoPlano;
+import repasse.phcauto.backend.planos.internal.core.domain.PlanoDados;
+import repasse.phcauto.backend.planos.internal.core.domain.PlanoPatch;
+import repasse.phcauto.backend.planos.internal.core.exception.PlanoInvalidoException;
+import repasse.phcauto.backend.planos.internal.core.exception.PlanoNaoEncontradoException;
+import repasse.phcauto.backend.planos.internal.core.gateway.PlanoGateway;
+import repasse.phcauto.backend.planos.internal.core.usecase.AtualizarPlano;
+import repasse.phcauto.backend.planos.internal.core.usecase.BuscarPlano;
+import repasse.phcauto.backend.planos.internal.core.usecase.CriarPlano;
+import repasse.phcauto.backend.planos.internal.core.usecase.ExcluirPlano;
+import repasse.phcauto.backend.planos.internal.core.usecase.ListarPlanos;
 class PlanosCoreTests {
     private final Instant agora = Instant.parse("2026-09-29T12:00:00Z");
 

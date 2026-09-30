@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.*;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.controller.UsuariosController;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.controller.UsuariosController;
 
 class UsuariosEndpointsArchitectureTests {
     @Test void somenteControllerDoAgregadoExpoePfPjEEndereco() {

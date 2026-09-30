@@ -99,10 +99,10 @@ public class PersistenceConfig {
         factory.setDataSource(source);
         factory.setPersistenceUnitName(unit);
         factory.setPackagesToScan("repasse.phcauto.backend.infra.database.entity",
-                "repasse.phcauto.backend.usuarios.internal.infrastructure.entity",
-                "repasse.phcauto.backend.anuncios.internal.infrastructure.entity",
-                "repasse.phcauto.backend.planos.internal.infrastructure.entity",
-                "repasse.phcauto.backend.compliance.internal.infrastructure.entity");
+                "repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity",
+                "repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity",
+                "repasse.phcauto.backend.planos.internal.infrastructure.adapter.out.persistence.entity",
+                "repasse.phcauto.backend.compliance.internal.infrastructure.adapter.out.persistence.entity");
         factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of(
                 "hibernate.hbm2ddl.auto", "validate",

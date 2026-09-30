@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import org.junit.jupiter.api.Test;
 
+import repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade;
 class UsuariosArchitectureTests {
     @Test void coreNaoDependeDeFrameworksNemInfraestrutura() {
         var classes = new ClassFileImporter().importPackages("repasse.phcauto.backend.usuarios");
@@ -13,7 +14,7 @@ class UsuariosArchitectureTests {
                 .should().dependOnClassesThat().resideInAnyPackage("org.springframework..", "jakarta..",
                         "org.hibernate..", "..infrastructure..", "..infra..").check(classes);
     }
-    @Test void fachadaPublicaEContratoSemSpring() {
+    @Test void fachadaDeAplicacaoPermaneceSemSpring() {
         assertTrue(UsuariosFacade.class.isInterface());
         assertFalse(UsuariosFacade.class.isAnnotationPresent(org.springframework.stereotype.Service.class));
         assertFalse(UsuariosFacade.class.isAnnotationPresent(org.springframework.transaction.annotation.Transactional.class));

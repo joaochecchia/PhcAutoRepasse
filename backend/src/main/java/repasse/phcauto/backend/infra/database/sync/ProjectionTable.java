@@ -1,35 +1,38 @@
 package repasse.phcauto.backend.infra.database.sync;
 
 import java.util.List;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.*;
-import repasse.phcauto.backend.compliance.internal.infrastructure.entity.AceiteTermosEntity;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.EnderecoUsuarioEntity;
+import repasse.phcauto.backend.compliance.internal.infrastructure.adapter.out.persistence.entity.AceiteTermosEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.EnderecoUsuarioEntity;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.VeiculoCaracteristicaJpaId;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.VeiculoCaracteristicaJpaId;
 import repasse.phcauto.backend.infra.database.entity.assinaturas.AssinaturaEntity;
-import repasse.phcauto.backend.planos.internal.infrastructure.entity.PlanoEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.AnuncioEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.BarcoEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.CaminhaoEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.CaminhoneteEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.CaracteristicaEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.CarroEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.EnderecoAnuncioEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.FotoEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.LinhaAmarelaEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.MotoEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.MotorBarcoEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.VeiculoCaracteristicaEntity;
-import repasse.phcauto.backend.anuncios.internal.infrastructure.entity.VeiculoEntity;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.UsuarioEntity;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.UsuarioPfEntity;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.UsuarioPjEntity;
+import repasse.phcauto.backend.planos.internal.infrastructure.adapter.out.persistence.entity.PlanoEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.AnuncioEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.BarcoEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.CaminhaoEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.CaminhoneteEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.CaracteristicaEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.CarroEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.EnderecoAnuncioEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.FotoEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.LinhaAmarelaEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.MotoEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.MotorBarcoEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.VeiculoCaracteristicaEntity;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity.VeiculoEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.UsuarioEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.UsuarioPfEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.UsuarioPjEntity;
 import repasse.phcauto.backend.infra.database.entity.vendas.CompraEntity;
 import repasse.phcauto.backend.infra.database.entity.vendas.EventoGatewayEntity;
 import repasse.phcauto.backend.infra.database.entity.vendas.PagamentoEntity;
 
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.DadosCompraPfEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.DadosCompraPjEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.IdentidadeExternaEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.UsuarioAdminEntity;
 /** Allowlist dos mapeamentos que compõem a projeção. */
 public enum ProjectionTable {
     ACEITES_TERMOS("compliance.aceites_termos", AceiteTermosEntity.class, List.of("id"), List.of("uuid"),

@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import repasse.phcauto.backend.domain.model.identidade.*;
-import repasse.phcauto.backend.usuarios.CriarUsuarioRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.CriarUsuarioRequest;
+import repasse.phcauto.backend.domain.model.identidade.PapelUsuario;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.security.RegistroUsuarioAuthorization;
 class RegistroUsuarioAuthorizationTests {
     private final RegistroUsuarioAuthorization regra=new RegistroUsuarioAuthorization();
     @Test void clientePermanecePublicoMasPrivilegiadosExigemDono() {

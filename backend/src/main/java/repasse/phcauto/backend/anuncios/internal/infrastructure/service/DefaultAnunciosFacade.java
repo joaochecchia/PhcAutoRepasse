@@ -4,8 +4,22 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import repasse.phcauto.backend.anuncios.*;
-import repasse.phcauto.backend.anuncios.internal.core.*;
-
+import repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioCriadoResultado;
+import repasse.phcauto.backend.anuncios.internal.core.domain.AtualizarAnuncioCommand;
+import repasse.phcauto.backend.anuncios.internal.core.domain.BuscarAnunciosFiltro;
+import repasse.phcauto.backend.anuncios.internal.core.domain.CriarAnuncioCommand;
+import repasse.phcauto.backend.anuncios.internal.core.domain.PaginaAnuncios;
+import repasse.phcauto.backend.anuncios.internal.core.exception.AnuncioInvalidoException;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.AtualizarAnuncioUseCase;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.BuscarAnunciosUseCase;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.CriarAnuncioUseCase;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.ExcluirAnuncioUseCase;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.AtualizarAnuncioRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.BuscarAnunciosRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.CriarAnuncioRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioResponse;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioBuscaResponse;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.PaginaAnunciosResponse;
 @Service
 public class DefaultAnunciosFacade implements AnunciosFacade {
     private final BuscarAnunciosUseCase buscarAnuncios;
@@ -19,7 +33,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
 
     @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
-    public PaginaAnuncios buscar(BuscarAnunciosRequest r) {
+    public PaginaAnunciosResponse buscar(BuscarAnunciosRequest r) {
         if (r == null) r = new BuscarAnunciosRequest(null,null,null,null,null,null,null,null,null,null,
                 null,null,null,null,null,null,null,null,null,null,null,null,null,null);
         var filtro = new BuscarAnunciosFiltro(r.tipoVeiculo(), r.cidade(), r.uf(), r.marca(), r.tipoPessoa(),
@@ -27,7 +41,16 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 r.cambio(), r.combustivel(), r.motorizacao(), r.condicao(), r.tipoDirecao(), r.tracao(),
                 r.ipvaPago(), r.blindado(), r.numeroPortas(), r.cilindradaLitros(), r.tipoFreio(),
                 r.carroceria(), r.pagina() == null ? 0 : r.pagina(), r.tamanho() == null ? 20 : r.tamanho());
-        return buscarAnuncios.execute(filtro);
+        var pagina = buscarAnuncios.execute(filtro);
+        var itens = pagina.anuncios().stream().map(item -> new AnuncioBuscaResponse(
+                item.anuncioId(), item.veiculoId(), item.anuncianteId(), item.tipoVeiculo(),
+                item.fabricante(), item.modelo(), item.anoFabricacao(), item.anoModelo(), item.condicao(),
+                item.titulo(), item.tipoPreco(), item.precoCentavos(), item.cidade(), item.uf(),
+                item.tipoPessoa(), item.nomePerfil(), item.cambio(), item.combustivel(),
+                item.motorizacao(), item.tipoDirecao(), item.tracao(), item.ipvaPago(),
+                item.blindado(), item.numeroPortas(), item.cilindradaLitros(), item.cilindradas(),
+                item.tipoFreio(), item.carroceria())).toList();
+        return new PaginaAnunciosResponse(itens, pagina.total(), pagina.pagina(), pagina.tamanho());
     }
 
     @Override

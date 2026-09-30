@@ -1,18 +1,25 @@
 package repasse.phcauto.backend.usuarios.internal.infrastructure.service;
 
 import java.util.UUID;
-import repasse.phcauto.backend.usuarios.CriarUsuarioRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.CriarUsuarioRequest;
 import repasse.phcauto.backend.compliance.ComplianceFacade;
-import repasse.phcauto.backend.compliance.RegistrarAceiteCadastroRequest;
-import repasse.phcauto.backend.usuarios.UsuarioResponse;
-import repasse.phcauto.backend.usuarios.UsuariosFacade;
+import repasse.phcauto.backend.compliance.RegistrarAceiteCadastroCommand;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.response.UsuarioResponse;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import repasse.phcauto.backend.usuarios.internal.core.*;
-import repasse.phcauto.backend.usuarios.request.AtualizarUsuarioRequest;
-import repasse.phcauto.backend.usuarios.response.EnderecoUsuarioResponse;
-import repasse.phcauto.backend.usuarios.response.UsuarioDetalhadoResponse;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.AtualizarUsuarioRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.response.EnderecoUsuarioResponse;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.response.UsuarioDetalhadoResponse;
 
+import repasse.phcauto.backend.usuarios.internal.core.domain.CriarUsuarioCommand;
+import repasse.phcauto.backend.usuarios.internal.core.domain.EnderecoCadastro;
+import repasse.phcauto.backend.usuarios.internal.core.domain.UsuarioCompleto;
+import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroInvalidoException;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.AtualizarUsuarioUseCase;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.BuscarUsuarioUseCase;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.CriarUsuarioUseCase;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.ExcluirUsuarioUseCase;
 @Service
 public class DefaultUsuariosFacade implements UsuariosFacade {
     private final CriarUsuarioUseCase criarUsuario;
@@ -43,7 +50,7 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
                 request.cnpj(), request.razaoSocial(), endereco, request.papel());
         var resultado = criarUsuario.execute(command);
         if (resultado.papel() != repasse.phcauto.backend.domain.model.identidade.PapelUsuario.DONO) {
-            compliance.registrarAceiteCadastro(new RegistrarAceiteCadastroRequest(
+            compliance.registrarAceiteCadastro(new RegistrarAceiteCadastroCommand(
                     resultado.id(), request.aceitouTermos(), request.aceiteTermosEm(),
                     request.versaoTermosUso(), request.versaoPoliticaPrivacidade(), enderecoRede));
         }
@@ -60,7 +67,16 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
     @Override
     @Transactional(transactionManager = "writeTransactionManager")
     public UsuarioDetalhadoResponse atualizar(UUID usuarioId, AtualizarUsuarioRequest request) {
-        return response(atualizarUsuario.execute(usuarioId, request));
+        var enderecoRequest = request.endereco();
+        var enderecoPatch = enderecoRequest == null ? null
+                : new repasse.phcauto.backend.usuarios.internal.core.domain.AtualizarUsuarioCommand.EnderecoUsuarioPatch(
+                        enderecoRequest.cep(), enderecoRequest.cidade(), enderecoRequest.bairro(),
+                        enderecoRequest.rua(), enderecoRequest.numero(), enderecoRequest.complemento(),
+                        enderecoRequest.uf());
+        var command = new repasse.phcauto.backend.usuarios.internal.core.domain.AtualizarUsuarioCommand(
+                request.nome(), request.email(), request.telefone(), request.senha(), request.cpf(),
+                request.dataNascimento(), request.cnpj(), request.razaoSocial(), enderecoPatch);
+        return response(atualizarUsuario.execute(usuarioId, command));
     }
 
     @Override

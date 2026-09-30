@@ -10,8 +10,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import repasse.phcauto.backend.compliance.AceiteInvalidoException;
-import repasse.phcauto.backend.compliance.RegistrarAceiteCadastroRequest;
+import repasse.phcauto.backend.compliance.RegistrarAceiteCadastroCommand;
 
+import repasse.phcauto.backend.compliance.internal.core.domain.AceiteTermos;
+import repasse.phcauto.backend.compliance.internal.core.domain.VersoesDocumentosVigentes;
+import repasse.phcauto.backend.compliance.internal.core.gateway.AceiteTermosGateway;
+import repasse.phcauto.backend.compliance.internal.core.usecase.RegistrarAceite;
 class RegistrarAceiteTests {
     private final AceiteTermosGateway gateway = mock(AceiteTermosGateway.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-09-29T12:00:00Z"), ZoneOffset.UTC);
@@ -23,7 +27,7 @@ class RegistrarAceiteTests {
         UUID usuarioId = UUID.randomUUID();
         Instant clique = clock.instant().minusSeconds(30);
 
-        useCase.execute(new RegistrarAceiteCadastroRequest(usuarioId, true, clique,
+        useCase.execute(new RegistrarAceiteCadastroCommand(usuarioId, true, clique,
                 "2.1", "3.0", "203.0.113.10"));
 
         var captor = ArgumentCaptor.forClass(AceiteTermos.class);
@@ -41,13 +45,13 @@ class RegistrarAceiteTests {
     void rejeitaAusenciaDeAceiteVersaoDivergenteHorarioInvalidoERedeVazia() {
         UUID id = UUID.randomUUID();
         assertThrows(AceiteInvalidoException.class, () -> useCase.execute(
-                new RegistrarAceiteCadastroRequest(id, false, clock.instant(), "2.1", "3.0", "127.0.0.1")));
+                new RegistrarAceiteCadastroCommand(id, false, clock.instant(), "2.1", "3.0", "127.0.0.1")));
         assertThrows(AceiteInvalidoException.class, () -> useCase.execute(
-                new RegistrarAceiteCadastroRequest(id, true, clock.instant(), "antiga", "3.0", "127.0.0.1")));
+                new RegistrarAceiteCadastroCommand(id, true, clock.instant(), "antiga", "3.0", "127.0.0.1")));
         assertThrows(AceiteInvalidoException.class, () -> useCase.execute(
-                new RegistrarAceiteCadastroRequest(id, true, clock.instant().minusSeconds(86_401), "2.1", "3.0", "127.0.0.1")));
+                new RegistrarAceiteCadastroCommand(id, true, clock.instant().minusSeconds(86_401), "2.1", "3.0", "127.0.0.1")));
         assertThrows(AceiteInvalidoException.class, () -> useCase.execute(
-                new RegistrarAceiteCadastroRequest(id, true, clock.instant(), "2.1", "3.0", " ")));
+                new RegistrarAceiteCadastroCommand(id, true, clock.instant(), "2.1", "3.0", " ")));
         verifyNoInteractions(gateway);
     }
 }

@@ -3,9 +3,19 @@ package repasse.phcauto.backend.planos.internal.infrastructure.service;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import repasse.phcauto.backend.planos.*;
-import repasse.phcauto.backend.planos.internal.core.*;
-
+import repasse.phcauto.backend.planos.internal.core.domain.NovoPlano;
+import repasse.phcauto.backend.planos.internal.core.domain.PlanoDados;
+import repasse.phcauto.backend.planos.internal.core.domain.PlanoPatch;
+import repasse.phcauto.backend.planos.internal.core.exception.PlanoInvalidoException;
+import repasse.phcauto.backend.planos.internal.core.usecase.AtualizarPlanoUseCase;
+import repasse.phcauto.backend.planos.internal.core.usecase.BuscarPlanoUseCase;
+import repasse.phcauto.backend.planos.internal.core.usecase.CriarPlanoUseCase;
+import repasse.phcauto.backend.planos.internal.core.usecase.ExcluirPlanoUseCase;
+import repasse.phcauto.backend.planos.internal.core.usecase.ListarPlanosUseCase;
+import repasse.phcauto.backend.planos.internal.infrastructure.adapter.in.web.request.AtualizarPlanoRequest;
+import repasse.phcauto.backend.planos.internal.infrastructure.adapter.in.web.request.CriarPlanoRequest;
+import repasse.phcauto.backend.planos.internal.infrastructure.adapter.in.web.response.PlanoListaResponse;
+import repasse.phcauto.backend.planos.internal.infrastructure.adapter.in.web.response.PlanoResponse;
 @Service
 public class DefaultPlanosFacade implements PlanosFacade {
     private final CriarPlanoUseCase criar;

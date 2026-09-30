@@ -22,6 +22,14 @@ import org.springframework.transaction.support.TransactionTemplate;
 import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
 import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.AtualizarAnuncioRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.BuscarAnunciosRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.CriarAnuncioRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.EnderecoAnuncioPatchRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.EnderecoAnuncioRequest;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioBuscaResponse;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioResponse;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.service.AnunciosFacade;
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "ANUNCIOS_INTEGRATION_TEST", matches = "true")
 class AnunciosIntegrationTests {

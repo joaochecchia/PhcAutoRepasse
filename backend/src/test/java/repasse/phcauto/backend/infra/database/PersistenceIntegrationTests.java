@@ -25,15 +25,55 @@ import repasse.phcauto.backend.domain.model.identidade.*;
 import repasse.phcauto.backend.domain.model.assinaturas.*;
 import repasse.phcauto.backend.domain.model.catalogo.*;
 import repasse.phcauto.backend.domain.model.vendas.*;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.entity.UsuarioEntity;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.UsuarioEntity;
 import repasse.phcauto.backend.infra.database.repository.read.ReadOnlyRepository;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.repository.write.UsuarioWriteRepository;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.repository.write.UsuarioWriteRepository;
 
 import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Answers.RETURNS_DEFAULTS;
 
+import repasse.phcauto.backend.domain.model.assinaturas.Assinatura;
+import repasse.phcauto.backend.domain.model.assinaturas.Plano;
+import repasse.phcauto.backend.domain.model.assinaturas.StatusAssinatura;
+import repasse.phcauto.backend.domain.model.catalogo.Anuncio;
+import repasse.phcauto.backend.domain.model.catalogo.Barco;
+import repasse.phcauto.backend.domain.model.catalogo.Caminhao;
+import repasse.phcauto.backend.domain.model.catalogo.Caminhonete;
+import repasse.phcauto.backend.domain.model.catalogo.Caracteristica;
+import repasse.phcauto.backend.domain.model.catalogo.Carro;
+import repasse.phcauto.backend.domain.model.catalogo.EnderecoAnuncio;
+import repasse.phcauto.backend.domain.model.catalogo.Foto;
+import repasse.phcauto.backend.domain.model.catalogo.LinhaAmarela;
+import repasse.phcauto.backend.domain.model.catalogo.Moto;
+import repasse.phcauto.backend.domain.model.catalogo.MotorBarco;
+import repasse.phcauto.backend.domain.model.catalogo.StatusAnuncio;
+import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
+import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
+import repasse.phcauto.backend.domain.model.catalogo.Veiculo;
+import repasse.phcauto.backend.domain.model.catalogo.VeiculoCaracteristica;
+import repasse.phcauto.backend.domain.model.identidade.DadosCompraPf;
+import repasse.phcauto.backend.domain.model.identidade.DadosCompraPj;
+import repasse.phcauto.backend.domain.model.identidade.EnderecoUsuario;
+import repasse.phcauto.backend.domain.model.identidade.IdentidadeExterna;
+import repasse.phcauto.backend.domain.model.identidade.PapelUsuario;
+import repasse.phcauto.backend.domain.model.identidade.ProvedorAutenticacao;
+import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
+import repasse.phcauto.backend.domain.model.identidade.Usuario;
+import repasse.phcauto.backend.domain.model.identidade.UsuarioAdministrador;
+import repasse.phcauto.backend.domain.model.identidade.UsuarioPf;
+import repasse.phcauto.backend.domain.model.identidade.UsuarioPj;
+import repasse.phcauto.backend.domain.model.vendas.Compra;
+import repasse.phcauto.backend.domain.model.vendas.EventoGateway;
+import repasse.phcauto.backend.domain.model.vendas.MetodoPagamento;
+import repasse.phcauto.backend.domain.model.vendas.Pagamento;
+import repasse.phcauto.backend.domain.model.vendas.StatusCompra;
+import repasse.phcauto.backend.domain.model.vendas.StatusPagamento;
+import repasse.phcauto.backend.infra.database.sync.ProjectionReconciler;
+import repasse.phcauto.backend.infra.database.sync.ProjectionTable;
+import repasse.phcauto.backend.infra.database.sync.PublicationRecovery;
+import repasse.phcauto.backend.infra.database.sync.RowChanged;
 @SpringBootTest(properties = {"app.projection.retry-delay=1s", "app.projection.bootstrap=false"})
 @EnabledIfEnvironmentVariable(named = "PERSISTENCE_INTEGRATION_TEST", matches = "true")
 class PersistenceIntegrationTests {
@@ -262,11 +302,11 @@ class PersistenceIntegrationTests {
             String area = fixture.type().getPackageName();
             String entityName = fixture.type().getName().replace("domain.model", "infra.database.entity") + "Entity";
             if (area.endsWith(".identidade")) {
-                entityName = "repasse.phcauto.backend.usuarios.internal.infrastructure.entity." + fixture.type().getSimpleName() + "Entity";
+                entityName = "repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity." + fixture.type().getSimpleName() + "Entity";
             } else if (area.endsWith(".catalogo")) {
-                entityName = "repasse.phcauto.backend.anuncios.internal.infrastructure.entity." + fixture.type().getSimpleName() + "Entity";
+                entityName = "repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity." + fixture.type().getSimpleName() + "Entity";
             } else if (fixture.type() == Plano.class) {
-                entityName = "repasse.phcauto.backend.planos.internal.infrastructure.entity.PlanoEntity";
+                entityName = "repasse.phcauto.backend.planos.internal.infrastructure.adapter.out.persistence.entity.PlanoEntity";
             }
             var entity = Class.forName(entityName).getMethod("criar", fixture.type()).invoke(null, model(fixture.type(), fixture.values()));
             Object saved = writeRepository(fixture.type()).saveAndFlush(entity);

@@ -27,8 +27,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.json.JsonMapper;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
-import repasse.phcauto.backend.usuarios.internal.core.CadastroDuplicadoException;
+import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroDuplicadoException;
 
+import repasse.phcauto.backend.usuarios.internal.core.usecase.Login;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.CriarUsuarioRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.EnderecoRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade;
 @SpringBootTest(properties = {"app.projection.bootstrap=false", "app.projection.retry-delay=1s"})
 @AutoConfigureMockMvc
 @org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
@@ -43,7 +47,7 @@ class UsuariosIntegrationTests {
     @Autowired @Qualifier("writeTransactionManager") PlatformTransactionManager transactions;
     @Autowired Receptor receptor;
     @org.springframework.test.context.bean.override.mockito.MockitoSpyBean
-    repasse.phcauto.backend.usuarios.internal.infrastructure.repository.write.EnderecoUsuarioWriteRepository enderecos;
+    repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.repository.write.EnderecoUsuarioWriteRepository enderecos;
 
     @TestConfiguration(proxyBeanMethods = false)
     static class EventConfig {
@@ -159,7 +163,7 @@ class UsuariosIntegrationTests {
         var request = request(TipoPessoa.PF, documento(TipoPessoa.PF));
         var id = new java.util.concurrent.atomic.AtomicReference<UUID>();
         org.mockito.Mockito.doAnswer(invocation -> {
-            repasse.phcauto.backend.usuarios.internal.infrastructure.entity.EnderecoUsuarioEntity entity = invocation.getArgument(0);
+            repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.EnderecoUsuarioEntity entity = invocation.getArgument(0);
             id.set(entity.getUsuarioId());
             throw new IllegalStateException("Falha de endereço simulada");
         }).when(enderecos).saveAndFlush(org.mockito.ArgumentMatchers.any());

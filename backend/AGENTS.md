@@ -13,27 +13,31 @@ Comunique-se com o usuário em português brasileiro.
 
 A arquitetura definida pelo usuário é Clean Architecture, com princípios SOLID e monólito modular. Preserve essa direção nas implementações.
 
-Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. As entidades JPA e os repositories de identidade, compliance, catálogo e planos ficam nos respectivos módulos. A entidade de assinatura e as entidades de vendas ainda permanecem na infraestrutura transitória. Há quatro controllers CRUD provisórios ocultos para essas áreas ainda não implementadas. A criação real de usuários está em `usuarios` e a criação real de anúncios está em `anuncios`, ambos com contratos e eventos públicos na raiz, core puro e controllers/adaptadores em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
+Estado atual: há infraestrutura de execução, documentação OpenAPI e contratos de domínio em Java puro. Por solicitação do usuário, os modelos são classes abstratas com getters, os tipos/status são enums e os casos de uso são interfaces. Estão separados em `identidade`, `assinaturas`, `catalogo` e `vendas` dentro de `domain/model` e `domain/usecases`. Há cinco interfaces CRUD segregadas em `domain/usecases/crud` e uma base abstrata `Abstract<Model>CrudUseCase` por modelo, com métodos ainda abstratos. Os modelos não implementam CRUD. A chave composta `VeiculoCaracteristicaId` é um record de Java puro. As entidades JPA e os repositories de identidade, compliance, catálogo e planos ficam nos respectivos módulos. A entidade de assinatura e as entidades de vendas ainda permanecem na infraestrutura transitória. Há quatro controllers CRUD provisórios ocultos para essas áreas ainda não implementadas. A criação real de usuários está em `usuarios` e a criação real de anúncios está em `anuncios`, ambos com eventos públicos mínimos na raiz, core puro segregado e adapters em `internal/infrastructure`. Os demais endpoints CRUD continuam provisórios. Consulte `docs/domain.md`; não apresentar os fluxos ou a modularização como concluídos.
 
-Pacote base: `repasse.phcauto.backend`.
+Pacote base: `repasse.phcauto.backend`. Os módulos implementados `usuarios`, `anuncios`, `planos` e `compliance` seguem esta convenção:
 
 ```text
-src/main/java/repasse/phcauto/backend/
-├── BackendApplication.java
-├── domain/
-│   ├── model/
-│   └── usecases/
-└── infra/
-    ├── controller/
-    ├── service/
-    ├── gateway/
-    ├── config/
-    └── database/
-        ├── entity/
-        └── repository/
+<modulo>/
+├── package-info.java
+├── eventos e contratos públicos estritamente intermodulares
+└── internal/
+    ├── core/
+    │   ├── domain/
+    │   ├── gateway/
+    │   ├── usecase/
+    │   ├── validation/
+    │   └── exception/
+    └── infrastructure/
+        ├── adapter/
+        │   ├── in/web/{controller,request,response,validation,exception}/
+        │   └── out/{persistence,event}/
+        ├── configuration/
+        ├── security/
+        └── service/
 ```
 
-Algumas dessas pastas estão vazias e podem não aparecer em um clone do Git.
+Use nomes de pacotes Java em minúsculas. Crie somente os subpacotes que tenham uma responsabilidade concreta. Requests e responses HTTP devem terminar em `Request` e `Response` e ficar no adaptador web; comandos e resultados puros ficam no core e não carregam esses nomes por serem contratos HTTP. Entidades JPA e repositories ficam em `adapter/out/persistence`. A raiz do módulo não deve acumular DTOs HTTP: ela contém apenas `package-info.java` e a API realmente necessária entre módulos, como eventos e a fachada de compliance.
 
 - Mantenha regras de negócio nos modelos e casos de uso, independentes de Spring, HTTP, JPA e Redis.
 - Defina contratos necessários aos casos de uso nas camadas internas; implemente os adaptadores na infraestrutura.
@@ -155,7 +159,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Implementações de gateway ficam na infraestrutura e podem usar repositories Spring Data. Não expor `JpaRepository`, entidades JPA ou detalhes de read/write aos casos de uso.
 - Não criar `BaseGateway` CRUD por antecedência. Extrações compartilhadas só devem ocorrer quando existir repetição técnica real, estável e sem regras de negócio.
 - O CRUD abstrato existente é provisório. Ao implementar fluxos reais, preferir contratos menores e remover operações que não sejam justificadas pelo negócio.
-- Os controllers legados provisórios restantes retornam apenas um envelope `HashMap` com as chaves `menssage` e `Body`; não injetam casos de uso, gateways ou repositories. O controller legado de usuário e os endpoints diretos de PF, PJ e endereço foram removidos; essas operações passam pelo agregado exposto por `UsuariosController` em `usuarios/internal/infrastructure/controller`. Não interpretar as mensagens dos controllers legados como persistência concluída.
+- Os controllers legados provisórios restantes retornam apenas um envelope `HashMap` com as chaves `menssage` e `Body`; não injetam casos de uso, gateways ou repositories. O controller legado de usuário e os endpoints diretos de PF, PJ e endereço foram removidos; essas operações passam pelo agregado exposto por `UsuariosController` em `usuarios/internal/infrastructure/adapter/in/web/controller`. Não interpretar as mensagens dos controllers legados como persistência concluída.
 - `CrudHttpResponseFactory` centraliza apenas a montagem técnica do envelope e remove senha, hashes, tokens e segredos do corpo devolvido. Ele não é um `BaseController` e não contém regras de negócio.
 - A aplicação usa @Modulithic e detecção explicitly-annotated. Assinatura e vendas ainda são módulos transitórios; usuarios, anuncios, compliance e planos são módulos por capacidade, com entidades, repositories e adaptadores em internal/infrastructure. Identidade e catálogo não mantêm módulos HTTP legados paralelos.
 
@@ -193,10 +197,10 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Criação concreta no módulo usuarios
 
-- API pública na raiz `usuarios`; core Java puro em `usuarios/internal/core`; entidades, repositories read/write e adaptadores em `usuarios/internal/infrastructure`.
-- `CriarUsuarioUseCase.execute` é implementado por `CriarUsuario`. `UsuariosFacade` é uma interface pública sem Spring; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, delimita a transação write; `JpaUsuarioGateway` grava usuário, PF ou PJ e endereço. Consultas de unicidade usam write. Concorrência também é protegida por constraints.
+- A raiz de `usuarios` expõe somente eventos intermodulares; o core Java puro é segregado em `domain`, `gateway`, `usecase`, `validation` e `exception`; HTTP, persistência, configuração, segurança e serviços ficam nos adaptadores de `internal/infrastructure`.
+- `CriarUsuarioUseCase.execute` é implementado por `CriarUsuario`. `UsuariosFacade` é uma porta interna do serviço de aplicação; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, delimita a transação write; `JpaUsuarioGateway` grava usuário, PF ou PJ e endereço. Consultas de unicidade usam write. Concorrência também é protegida por constraints.
 - O caso de uso publica por `PublicarUsuarioCriadoGateway`; o adaptador usa ApplicationEventPublisher. Não importar Spring no core.
-- POST `/api/v1/usuarios/registrar` retorna UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como BCrypt; papel fixo CLIENTE.
+- POST `/api/v1/usuarios/registrar` retorna UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como BCrypt. O cadastro público cria CLIENTE; somente DONO autenticado pode registrar ADMIN ou DONO.
 - Evento público `usuarios.UsuarioCriado` e RowChanged são publicados na transação. A recuperação aceita ambos e UsuarioAlterado. Não publicar UsuarioAlterado(CADASTRADO) adicionalmente no novo fluxo.
 - Login com JWT, atualização e exclusão estão implementados; OAuth e efeitos posteriores continuam pendentes. Não criar listeners vazios nem registros essenciais de cadastro de forma assíncrona.
 - `USUARIOS_INTEGRATION_TEST=true` habilita integração real de cadastro; usar bancos isolados. Nenhuma migration foi alterada para mover as entidades.
@@ -213,8 +217,8 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Login local
 
-- POST `/api/v1/usuarios/login` recebe `usuarios.request.LoginRequest` e retorna `usuarios.response.LoginResponse` com mensagem, accessToken, tokenType e expiresIn, HTTP 200. Request/response são NamedInterfaces públicas.
-- `LoginUseCase.execute(LoginRequest)` é implementado por `Login`, com dependência injetada exclusivamente em `AutenticacaoGateway`; o core não importa Spring/JPA.
+- POST `/api/v1/usuarios/login` recebe `usuarios.internal.infrastructure.adapter.in.web.request.LoginRequest` e retorna `usuarios.internal.infrastructure.adapter.in.web.response.LoginResponse` com mensagem, accessToken, tokenType e expiresIn, HTTP 200. São contratos HTTP internos ao adaptador web, não interfaces públicas entre módulos.
+- `LoginUseCase.execute(LoginCommand)` é implementado por `Login`; o adaptador converte `LoginRequest` para o comando puro, com dependência injetada exclusivamente em `AutenticacaoGateway`; o core não importa Spring/JPA.
 - `DatabaseAutenticacaoGateway` consulta write em transação read-only e valida hash/status; não consultar a projeção para autenticação. Senha nunca é comparada como texto puro.
 - PasswordEncoder compartilhado grava BCrypt e aceita PBKDF2 legado. Conta inexistente/inativa/sem senha local, hash inválido e email ambíguo retornam a mesma CredenciaisInvalidasException (401).
 - O sucesso emite JWT sem sessão HTTP. OAuth2 Google/Facebook continua pendente; ver `docs/login.md`.
@@ -287,7 +291,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Módulo de planos
 
-- `planos` é um módulo independente do Spring Modulith. A raiz contém requests, responses e `PlanosFacade`; regras puras ficam em `planos/internal/core`; controller, fachada transacional, entidade e repositories ficam em `planos/internal/infrastructure`.
+- `planos` é um módulo independente do Spring Modulith. Requests/responses ficam em `internal/infrastructure/adapter/in/web`, a fachada de aplicação em `internal/infrastructure/service`, regras puras nos subpacotes de `internal/core` e persistência em `adapter/out/persistence`.
 - O CRUD real usa `/api/v1/assinaturas/planos`: POST cria, GET por ID consulta, GET lista por `offset`/`limite`, PATCH altera parcialmente e DELETE remove. O antigo controller provisório com PUT foi removido.
 - Nome é obrigatório, normalizado e único. Valor e limite não podem ser negativos; período, quando informado, deve estar entre 1 e 32767 meses. Campos opcionais ausentes no PATCH são preservados; o contrato atual não usa `null` para limpar valores.
 - Todas as operações usam o banco write para consistência imediata. `RowChanged` continua projetando a tabela no read. Exclusão de plano referenciado por assinatura retorna conflito e faz rollback.

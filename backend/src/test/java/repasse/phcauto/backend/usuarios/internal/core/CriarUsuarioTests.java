@@ -9,6 +9,17 @@ import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
 import repasse.phcauto.backend.domain.model.identidade.PapelUsuario;
 import repasse.phcauto.backend.usuarios.UsuarioCriado;
 
+import repasse.phcauto.backend.usuarios.internal.core.domain.CriarUsuarioCommand;
+import repasse.phcauto.backend.usuarios.internal.core.domain.DadosNovoUsuario;
+import repasse.phcauto.backend.usuarios.internal.core.domain.EnderecoCadastro;
+import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroDuplicadoException;
+import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroInvalidoException;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.HashSenhaGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.PublicarUsuarioCriadoGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.UsuarioGateway;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.CriarUsuario;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.CriarUsuarioUseCase;
+import repasse.phcauto.backend.usuarios.internal.core.validation.ValidacaoCadastro;
 class CriarUsuarioTests {
     private final UsuarioGateway usuarios = mock(UsuarioGateway.class);
     private final HashSenhaGateway senhas = mock(HashSenhaGateway.class);

@@ -13,6 +13,17 @@ import repasse.phcauto.backend.anuncios.AnuncioAtualizado;
 import repasse.phcauto.backend.anuncios.AnuncioExcluido;
 import repasse.phcauto.backend.domain.model.catalogo.*;
 
+import repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioCriadoResultado;
+import repasse.phcauto.backend.anuncios.internal.core.domain.AtualizarAnuncioCommand;
+import repasse.phcauto.backend.anuncios.internal.core.domain.CriarAnuncioCommand;
+import repasse.phcauto.backend.anuncios.internal.core.exception.AnuncioInvalidoException;
+import repasse.phcauto.backend.anuncios.internal.core.gateway.AtualizarAnuncioGateway;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.AtualizarAnuncio;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.ExcluirAnuncio;
+import repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo;
+import repasse.phcauto.backend.domain.model.catalogo.StatusAnuncio;
+import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
+import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 class ManterAnuncioTests {
     private final Instant agora=Instant.parse("2026-09-28T12:00:00Z");
     private final Clock clock=Clock.fixed(agora, ZoneOffset.UTC);

@@ -9,9 +9,20 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import repasse.phcauto.backend.domain.event.identidade.UsuarioAlterado;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
-import repasse.phcauto.backend.usuarios.request.AtualizarUsuarioRequest;
-import repasse.phcauto.backend.usuarios.request.EnderecoPatchRequest;
+import repasse.phcauto.backend.usuarios.internal.core.domain.AtualizarUsuarioCommand;
+import repasse.phcauto.backend.usuarios.internal.core.domain.AtualizarUsuarioCommand.EnderecoUsuarioPatch;
 
+import repasse.phcauto.backend.usuarios.internal.core.domain.AlteracoesUsuario;
+import repasse.phcauto.backend.usuarios.internal.core.domain.EnderecoUsuarioDados;
+import repasse.phcauto.backend.usuarios.internal.core.domain.UsuarioCompleto;
+import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroInvalidoException;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.AtualizarUsuarioGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.ConsultarUsuarioGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.ExcluirUsuarioGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.HashSenhaGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.PublicarUsuarioAlteradoGateway;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.AtualizarUsuario;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.ExcluirUsuario;
 class ManterUsuarioTests {
     private static final UUID ID = UUID.randomUUID();
     private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-09-25T12:00:00Z"), ZoneOffset.UTC);
@@ -32,8 +43,8 @@ class ManterUsuarioTests {
         when(atualizacoes.atualizar(eq(ID), any(), eq(CLOCK.instant()))).thenReturn(pf());
         var useCase = new AtualizarUsuario(consultas, atualizacoes, senhas, eventos, CLOCK);
 
-        useCase.execute(ID, new AtualizarUsuarioRequest(null, null, null, null, null, null,
-                null, null, new EnderecoPatchRequest(null, "Campinas", null, null, null, "", null)));
+        useCase.execute(ID, new AtualizarUsuarioCommand(null, null, null, null, null, null,
+                null, null, new EnderecoUsuarioPatch(null, "Campinas", null, null, null, "", null)));
 
         var captor = ArgumentCaptor.forClass(AlteracoesUsuario.class);
         var ordem = inOrder(atualizacoes, eventos);
@@ -54,7 +65,7 @@ class ManterUsuarioTests {
         when(senhas.gerar("nova-senha")).thenReturn("novo-hash");
         when(atualizacoes.atualizar(eq(ID), any(), any())).thenReturn(pf());
         new AtualizarUsuario(consultas, atualizacoes, senhas, eventos, CLOCK).execute(ID,
-                new AtualizarUsuarioRequest(null, null, null, "nova-senha", null, null,
+                new AtualizarUsuarioCommand(null, null, null, "nova-senha", null, null,
                         null, null, null));
         var captor = ArgumentCaptor.forClass(AlteracoesUsuario.class);
         verify(atualizacoes).atualizar(eq(ID), captor.capture(), any());
@@ -68,9 +79,9 @@ class ManterUsuarioTests {
         var useCase = new AtualizarUsuario(consultas, mock(AtualizarUsuarioGateway.class),
                 mock(HashSenhaGateway.class), mock(PublicarUsuarioAlteradoGateway.class), CLOCK);
         assertThrows(CadastroInvalidoException.class, () -> useCase.execute(ID,
-                new AtualizarUsuarioRequest(null, null, null, null, null, null, null, null, null)));
+                new AtualizarUsuarioCommand(null, null, null, null, null, null, null, null, null)));
         assertThrows(CadastroInvalidoException.class, () -> useCase.execute(ID,
-                new AtualizarUsuarioRequest(null, null, null, null, null, null,
+                new AtualizarUsuarioCommand(null, null, null, null, null, null,
                         "11222333000181", null, null)));
     }
 
