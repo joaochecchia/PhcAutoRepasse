@@ -21,18 +21,18 @@ public record AnuncioResponse(UUID id, UUID veiculoId, UUID anuncianteId, TipoVe
     public record CarroResponse(Integer quilometragem, String carroceria, String cambio,
             String combustivel, String tracao, String motorizacao, String tipoDirecao,
             BigDecimal cilindradaLitros, Integer numeroPortas,
-            Integer numeroLugares, String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
+            Integer numeroLugares, String placa, Boolean placaCompletaVisivel, Boolean unicoDono, Boolean ipvaPago,
             Boolean licenciado, Boolean blindado) implements DetalhesVeiculoResponse { }
     public record MotoResponse(Integer quilometragem, Integer cilindradas, String categoria,
-            String partida, String refrigeracao, String cambio, String combustivel, String finalPlaca,
+            String partida, String refrigeracao, String cambio, String combustivel, String placa, Boolean placaCompletaVisivel,
             Boolean ipvaPago, Boolean licenciado) implements DetalhesVeiculoResponse { }
     public record CaminhaoResponse(Integer quilometragem, String configuracao, String carroceria,
             String cambio, String combustivel, String tracao, String tipoDirecao, Integer numeroEixos,
-            Integer capacidadeCargaKg, Integer pesoBrutoTotalKg, String implemento, String finalPlaca,
+            Integer capacidadeCargaKg, Integer pesoBrutoTotalKg, String implemento, String placa, Boolean placaCompletaVisivel,
             Boolean ipvaPago, Boolean licenciado) implements DetalhesVeiculoResponse { }
     public record CaminhoneteResponse(Integer quilometragem, String tipoCabine, String carroceria,
             String cambio, String combustivel, String tracao, String motorizacao, String tipoDirecao,
-            BigDecimal cilindradaLitros, Integer capacidadeCargaKg, Integer numeroPortas, String finalPlaca, Boolean unicoDono,
+            BigDecimal cilindradaLitros, Integer capacidadeCargaKg, Integer numeroPortas, String placa, Boolean placaCompletaVisivel, Boolean unicoDono,
             Boolean ipvaPago, Boolean licenciado, Boolean blindado) implements DetalhesVeiculoResponse { }
     public record BarcoResponse(BigDecimal tamanhoPes, String estilo, String materialCasco,
             Integer capacidadePessoas, Integer numeroCabines, Integer horasUso,

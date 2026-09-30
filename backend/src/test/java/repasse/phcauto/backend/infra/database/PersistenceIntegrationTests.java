@@ -383,7 +383,8 @@ class PersistenceIntegrationTests {
                 entry("getMotorizacao", "teste"),
                 entry("getNumeroPortas", 2),
                 entry("getNumeroLugares", 2),
-                entry("getFinalPlaca", "1"),
+                entry("getPlaca", "ABC1D23"),
+                entry("getExibirPlacaCompleta", Boolean.FALSE),
                 entry("getUnicoDono", Boolean.TRUE),
                 entry("getIpvaPago", Boolean.TRUE),
                 entry("getLicenciado", Boolean.TRUE),
@@ -398,7 +399,8 @@ class PersistenceIntegrationTests {
                 entry("getRefrigeracao", "teste"),
                 entry("getCambio", "teste"),
                 entry("getCombustivel", "teste"),
-                entry("getFinalPlaca", "1"),
+                entry("getPlaca", "ABC1D23"),
+                entry("getExibirPlacaCompleta", Boolean.FALSE),
                 entry("getIpvaPago", Boolean.TRUE),
                 entry("getLicenciado", Boolean.TRUE))));
         fixtures.add(veiculoExtra("caminhoes", TipoVeiculo.CAMINHAO));
@@ -414,7 +416,8 @@ class PersistenceIntegrationTests {
                 entry("getCapacidadeCargaKg", 2),
                 entry("getPesoBrutoTotalKg", 2),
                 entry("getImplemento", "teste"),
-                entry("getFinalPlaca", "1"),
+                entry("getPlaca", "ABC1D23"),
+                entry("getExibirPlacaCompleta", Boolean.FALSE),
                 entry("getIpvaPago", Boolean.TRUE),
                 entry("getLicenciado", Boolean.TRUE))));
         fixtures.add(veiculoExtra("caminhonetes", TipoVeiculo.CAMINHONETE));
@@ -429,7 +432,8 @@ class PersistenceIntegrationTests {
                 entry("getMotorizacao", "teste"),
                 entry("getCapacidadeCargaKg", 2),
                 entry("getNumeroPortas", 2),
-                entry("getFinalPlaca", "1"),
+                entry("getPlaca", "ABC1D23"),
+                entry("getExibirPlacaCompleta", Boolean.FALSE),
                 entry("getUnicoDono", Boolean.TRUE),
                 entry("getIpvaPago", Boolean.TRUE),
                 entry("getLicenciado", Boolean.TRUE))));

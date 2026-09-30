@@ -52,9 +52,11 @@ public class CaminhoneteEntity extends Caminhonete {
     @Column(name = "numero_portas", nullable = true)
     private Integer numeroPortas;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(name = "final_placa", nullable = true, length = 1, columnDefinition = "char(1)")
-    private String finalPlaca;
+    @Column(name = "placa", nullable = true, length = 7)
+    private String placa;
+
+    @Column(name = "exibir_placa_completa", nullable = false)
+    private Boolean exibirPlacaCompleta;
 
     @Column(name = "unico_dono", nullable = true)
     private Boolean unicoDono;
@@ -89,7 +91,8 @@ public class CaminhoneteEntity extends Caminhonete {
         entity.cilindradaLitros = dados.getCilindradaLitros();
         entity.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         entity.numeroPortas = dados.getNumeroPortas();
-        entity.finalPlaca = dados.getFinalPlaca();
+        entity.placa = dados.getPlaca();
+        entity.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         entity.unicoDono = dados.getUnicoDono();
         entity.ipvaPago = dados.getIpvaPago();
         entity.licenciado = dados.getLicenciado();
@@ -113,7 +116,8 @@ public class CaminhoneteEntity extends Caminhonete {
         this.cilindradaLitros = dados.getCilindradaLitros();
         this.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         this.numeroPortas = dados.getNumeroPortas();
-        this.finalPlaca = dados.getFinalPlaca();
+        this.placa = dados.getPlaca();
+        this.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         this.unicoDono = dados.getUnicoDono();
         this.ipvaPago = dados.getIpvaPago();
         this.licenciado = dados.getLicenciado();
@@ -157,7 +161,10 @@ public class CaminhoneteEntity extends Caminhonete {
     public Integer getNumeroPortas() { return numeroPortas; }
 
     @Override
-    public String getFinalPlaca() { return finalPlaca; }
+    public String getPlaca() { return placa; }
+
+    @Override
+    public Boolean getExibirPlacaCompleta() { return exibirPlacaCompleta; }
 
     @Override
     public Boolean getUnicoDono() { return unicoDono; }

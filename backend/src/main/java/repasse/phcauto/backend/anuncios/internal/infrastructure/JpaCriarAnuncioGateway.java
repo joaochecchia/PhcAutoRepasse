@@ -119,7 +119,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();} public String getTracao(){return d.tracao();}
         public String getMotorizacao(){return d.motorizacao();} public String getTipoDirecao(){return d.tipoDirecao();}
         public BigDecimal getCilindradaLitros(){return d.cilindradaLitros();} public Integer getNumeroPortas(){return d.numeroPortas();}
-        public Integer getNumeroLugares(){return d.numeroLugares();} public String getFinalPlaca(){return upper(d.finalPlaca());}
+        public Integer getNumeroLugares(){return d.numeroLugares();} public String getPlaca(){return upper(d.placa());} public Boolean getExibirPlacaCompleta(){return d.exibirPlacaCompleta();}
         public Boolean getUnicoDono(){return d.unicoDono();} public Boolean getIpvaPago(){return d.ipvaPago();}
         public Boolean getLicenciado(){return d.licenciado();} public Boolean getBlindado(){return d.blindado();}
     }
@@ -127,7 +127,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         private final UUID id; private final CriarAnuncioCommand.Moto d; MotoDados(UUID id,CriarAnuncioCommand.Moto d){this.id=id;this.d=d;}
         public UUID getVeiculoId(){return id;} public Integer getQuilometragem(){return d.quilometragem();} public Integer getCilindradas(){return d.cilindradas();}
         public String getCategoria(){return d.categoria();} public String getPartida(){return d.partida();} public String getRefrigeracao(){return d.refrigeracao();}
-        public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();} public String getFinalPlaca(){return upper(d.finalPlaca());}
+        public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();} public String getPlaca(){return upper(d.placa());} public Boolean getExibirPlacaCompleta(){return d.exibirPlacaCompleta();}
         public Boolean getIpvaPago(){return d.ipvaPago();} public Boolean getLicenciado(){return d.licenciado();}
     }
     static final class CaminhaoDados extends Caminhao {
@@ -135,7 +135,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         public UUID getVeiculoId(){return id;} public Integer getQuilometragem(){return d.quilometragem();} public String getConfiguracao(){return d.configuracao();}
         public String getCarroceria(){return d.carroceria();} public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();}
         public String getTracao(){return d.tracao();} public String getTipoDirecao(){return d.tipoDirecao();} public Integer getNumeroEixos(){return d.numeroEixos();} public Integer getCapacidadeCargaKg(){return d.capacidadeCargaKg();}
-        public Integer getPesoBrutoTotalKg(){return d.pesoBrutoTotalKg();} public String getImplemento(){return d.implemento();} public String getFinalPlaca(){return upper(d.finalPlaca());}
+        public Integer getPesoBrutoTotalKg(){return d.pesoBrutoTotalKg();} public String getImplemento(){return d.implemento();} public String getPlaca(){return upper(d.placa());} public Boolean getExibirPlacaCompleta(){return d.exibirPlacaCompleta();}
         public Boolean getIpvaPago(){return d.ipvaPago();} public Boolean getLicenciado(){return d.licenciado();}
     }
     static final class CaminhoneteDados extends Caminhonete {
@@ -144,7 +144,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         public String getCarroceria(){return d.carroceria();} public String getCambio(){return d.cambio();} public String getCombustivel(){return d.combustivel();}
         public String getTracao(){return d.tracao();} public String getMotorizacao(){return d.motorizacao();} public String getTipoDirecao(){return d.tipoDirecao();}
         public BigDecimal getCilindradaLitros(){return d.cilindradaLitros();} public Integer getCapacidadeCargaKg(){return d.capacidadeCargaKg();}
-        public Integer getNumeroPortas(){return d.numeroPortas();} public String getFinalPlaca(){return upper(d.finalPlaca());} public Boolean getUnicoDono(){return d.unicoDono();}
+        public Integer getNumeroPortas(){return d.numeroPortas();} public String getPlaca(){return upper(d.placa());} public Boolean getExibirPlacaCompleta(){return d.exibirPlacaCompleta();} public Boolean getUnicoDono(){return d.unicoDono();}
         public Boolean getIpvaPago(){return d.ipvaPago();} public Boolean getLicenciado(){return d.licenciado();} public Boolean getBlindado(){return d.blindado();}
     }
     static final class BarcoDados extends Barco {

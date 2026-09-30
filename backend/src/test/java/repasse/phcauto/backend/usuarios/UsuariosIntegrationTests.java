@@ -31,6 +31,7 @@ import repasse.phcauto.backend.usuarios.internal.core.CadastroDuplicadoException
 
 @SpringBootTest(properties = {"app.projection.bootstrap=false", "app.projection.retry-delay=1s"})
 @AutoConfigureMockMvc
+@org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
 @Import(UsuariosIntegrationTests.EventConfig.class)
 @EnabledIfEnvironmentVariable(named = "USUARIOS_INTEGRATION_TEST", matches = "true")
 class UsuariosIntegrationTests {
@@ -76,7 +77,7 @@ class UsuariosIntegrationTests {
     @Test void criaPfEPjPeloHttpComPerfilEnderecoHashEProjecao() throws Exception {
         for (var tipo : TipoPessoa.values()) {
             var request = request(tipo, documento(tipo));
-            var result = mvc.perform(post("/api/v1/usuarios").contentType("application/json")
+            var result = mvc.perform(post("/api/v1/usuarios/registrar").contentType("application/json")
                     .content(payload(request)))
                     .andExpect(status().isCreated()).andExpect(jsonPath("senha").doesNotExist())
                     .andExpect(jsonPath("senhaHash").doesNotExist()).andReturn();
@@ -104,7 +105,7 @@ class UsuariosIntegrationTests {
                     " p on p.usuario_id=u.id join identidade.enderecos_usuario e on e.usuario_id=u.id where u.id=?", Integer.class, id) == 1);
             await(() -> receptor.recebeu(id));
             assertEquals(tipo, receptor.evento(id).tipoPessoa());
-            mvc.perform(post("/api/v1/usuarios").contentType("application/json").content(payload(request)))
+            mvc.perform(post("/api/v1/usuarios/registrar").contentType("application/json").content(payload(request)))
                     .andExpect(status().isConflict());
         }
     }
@@ -129,10 +130,10 @@ class UsuariosIntegrationTests {
 
     @Test void requisicaoInvalidaNaoPersisteNemExpoeSenha() throws Exception {
         var request = request(TipoPessoa.PF, "11111111111");
-        mvc.perform(post("/api/v1/usuarios").contentType("application/json").content(payload(request)))
+        mvc.perform(post("/api/v1/usuarios/registrar").contentType("application/json").content(payload(request)))
                 .andExpect(status().isBadRequest()).andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(request.senha()))));
         assertEquals(0, new JdbcTemplate(write).queryForObject("select count(*) from identidade.usuarios where email=?", Integer.class, request.email()));
-        mvc.perform(post("/api/v1/usuarios").contentType("application/json").content("{}"))
+        mvc.perform(post("/api/v1/usuarios/registrar").contentType("application/json").content("{}"))
                 .andExpect(status().isBadRequest());
     }
 

@@ -51,9 +51,11 @@ public class CaminhaoEntity extends Caminhao {
     @Column(name = "implemento", nullable = true, length = 100)
     private String implemento;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(name = "final_placa", nullable = true, length = 1, columnDefinition = "char(1)")
-    private String finalPlaca;
+    @Column(name = "placa", nullable = true, length = 7)
+    private String placa;
+
+    @Column(name = "exibir_placa_completa", nullable = false)
+    private Boolean exibirPlacaCompleta;
 
     @Column(name = "ipva_pago", nullable = true)
     private Boolean ipvaPago;
@@ -82,7 +84,8 @@ public class CaminhaoEntity extends Caminhao {
         entity.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         entity.pesoBrutoTotalKg = dados.getPesoBrutoTotalKg();
         entity.implemento = dados.getImplemento();
-        entity.finalPlaca = dados.getFinalPlaca();
+        entity.placa = dados.getPlaca();
+        entity.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         entity.ipvaPago = dados.getIpvaPago();
         entity.licenciado = dados.getLicenciado();
         return entity;
@@ -104,7 +107,8 @@ public class CaminhaoEntity extends Caminhao {
         this.capacidadeCargaKg = dados.getCapacidadeCargaKg();
         this.pesoBrutoTotalKg = dados.getPesoBrutoTotalKg();
         this.implemento = dados.getImplemento();
-        this.finalPlaca = dados.getFinalPlaca();
+        this.placa = dados.getPlaca();
+        this.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         this.ipvaPago = dados.getIpvaPago();
         this.licenciado = dados.getLicenciado();
     }
@@ -146,7 +150,10 @@ public class CaminhaoEntity extends Caminhao {
     public String getImplemento() { return implemento; }
 
     @Override
-    public String getFinalPlaca() { return finalPlaca; }
+    public String getPlaca() { return placa; }
+
+    @Override
+    public Boolean getExibirPlacaCompleta() { return exibirPlacaCompleta; }
 
     @Override
     public Boolean getIpvaPago() { return ipvaPago; }

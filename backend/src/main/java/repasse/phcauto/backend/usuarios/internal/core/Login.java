@@ -10,8 +10,8 @@ public final class Login implements LoginUseCase {
         this.autenticacao = Objects.requireNonNull(autenticacao);
     }
 
-    @Override public void execute(LoginRequest request) {
+    @Override public UsuarioAutenticado execute(LoginRequest request) {
         if (request == null) throw new IllegalArgumentException("Credenciais obrigatórias");
-        autenticacao.autenticar(request.email(), request.senha());
+        return autenticacao.autenticar(request.email(), request.senha());
     }
 }

@@ -87,27 +87,27 @@ public record CriarAnuncioRequest(
             @Size(max=60) String cambio, @Size(max=60) String combustivel, @Size(max=40) String tracao,
             @Size(max=100) String motorizacao, @Size(max=60) String tipoDirecao,
             @Positive BigDecimal cilindradaLitros, @Positive Integer numeroPortas, @Positive Integer numeroLugares,
-            @Pattern(regexp="[A-Za-z0-9]") String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
+            @NotBlank @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa, @NotNull Boolean exibirPlacaCompleta, Boolean unicoDono, Boolean ipvaPago,
             Boolean licenciado, Boolean blindado) { }
 
     public record MotoRequest(@PositiveOrZero Integer quilometragem, @Positive Integer cilindradas,
             @Size(max=60) String categoria, @Size(max=40) String partida, @Size(max=40) String refrigeracao,
             @Size(max=60) String cambio, @Size(max=60) String combustivel,
-            @Pattern(regexp="[A-Za-z0-9]") String finalPlaca, Boolean ipvaPago, Boolean licenciado) { }
+            @NotBlank @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa, @NotNull Boolean exibirPlacaCompleta, Boolean ipvaPago, Boolean licenciado) { }
 
     public record CaminhaoRequest(@PositiveOrZero Integer quilometragem, @Size(max=80) String configuracao,
             @Size(max=80) String carroceria, @Size(max=60) String cambio, @Size(max=60) String combustivel,
             @Size(max=40) String tracao, @Size(max=60) String tipoDirecao,
             @Positive Integer numeroEixos, @Positive Integer capacidadeCargaKg,
             @Positive Integer pesoBrutoTotalKg, @Size(max=100) String implemento,
-            @Pattern(regexp="[A-Za-z0-9]") String finalPlaca, Boolean ipvaPago, Boolean licenciado) { }
+            @NotBlank @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa, @NotNull Boolean exibirPlacaCompleta, Boolean ipvaPago, Boolean licenciado) { }
 
     public record CaminhoneteRequest(@PositiveOrZero Integer quilometragem, @Size(max=50) String tipoCabine,
             @Size(max=60) String carroceria, @Size(max=60) String cambio, @Size(max=60) String combustivel,
             @Size(max=40) String tracao, @Size(max=100) String motorizacao,
             @Size(max=60) String tipoDirecao, @Positive BigDecimal cilindradaLitros,
             @Positive Integer capacidadeCargaKg, @Positive Integer numeroPortas,
-            @Pattern(regexp="[A-Za-z0-9]") String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
+            @NotBlank @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa, @NotNull Boolean exibirPlacaCompleta, Boolean unicoDono, Boolean ipvaPago,
             Boolean licenciado, Boolean blindado) { }
 
     public record BarcoRequest(@Positive BigDecimal tamanhoPes, @Size(max=80) String estilo,

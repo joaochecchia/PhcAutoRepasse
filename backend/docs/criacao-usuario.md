@@ -49,7 +49,7 @@ Os demais módulos ainda têm estrutura transitória. O sincronizador compartilh
 
 ## Endpoint
 
-`POST /api/v1/usuarios` substitui a criação provisória e é a única rota de cadastro. O novo contrato é tipado e retorna `UsuarioResponse`, sem o envelope HashMap anterior. As outras operações provisórias não passaram a persistir dados.
+`POST /api/v1/usuarios/registrar` substitui a criação provisória e é a única rota de cadastro. O novo contrato é tipado e retorna `UsuarioResponse`, sem o envelope HashMap anterior. As outras operações provisórias não passaram a persistir dados.
 
 Exemplo PF:
 
@@ -113,7 +113,7 @@ Nome, email, telefone, senha, tipo, perfil correspondente, endereço e comprovan
 - **400**: campos inválidos, perfil incompatível ou corpo malformado.
 - **409**: email/CPF/CNPJ já cadastrado, inclusive colisões concorrentes protegidas pelas unicidades PostgreSQL.
 
-Nenhum parâmetro permite escolher papel administrativo; o cadastro cria CLIENTE ativo. A verificação de credenciais local está disponível no [fluxo de login](login.md); sessão, tokens e OAuth continuam pendentes. A senha só entra no request/comando, é codificada com PBKDF2 do Spring Security Crypto e sai do core para persistência apenas como hash. Respostas e eventos não transportam senha ou hash. A dependência crypto não instala filtros de autenticação HTTP.
+Nenhum parâmetro permite escolher papel administrativo; o cadastro cria CLIENTE ativo. A verificação de credenciais local está disponível no [fluxo de login](login.md); JWT está implementado sem sessão HTTP; OAuth continua pendente. A senha só entra no request/comando, é codificada com BCrypt e sai do core para persistência apenas como hash. Respostas e eventos não transportam senha ou hash. Spring Security protege a API com Bearer JWT.
 
 ## Transação e eventos
 
@@ -159,3 +159,13 @@ A integração grava dados sintéticos; não apontar para produção. Verifica H
 Para executar o código atualizado no contêiner, reconstrua o backend com `docker compose up -d --build backend` usando as portas/variáveis do ambiente atual.
 
 Detalhes do comprovante, versões vigentes e limites operacionais estão em [compliance](compliance.md).
+
+## Autenticação HTTP com JWT
+
+O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` retorna `mensagem`, `accessToken`, `tokenType` (Bearer) e `expiresIn` (segundos). Envie `Authorization: Bearer <accessToken>` nas operações protegidas. A configuração é stateless, sem sessão HTTP.
+
+Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
+
+Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
+
+Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.

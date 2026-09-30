@@ -18,19 +18,23 @@ public final class ValidarDadosTecnicosAnuncio {
             CondicaoVeiculo condicao, CriarAnuncioCommand.DetalhesVeiculo detalhes) {
         Integer km = null;
         if (detalhes instanceof CriarAnuncioCommand.Carro d) {
+            placa(d.placa(), d.exibirPlacaCompleta());
             km = d.quilometragem(); quilometragem(km);
             texto(d.carroceria(), "carroceria"); texto(d.cambio(), "cambio");
             texto(d.combustivel(), "combustivel"); texto(d.motorizacao(), "motorizacao");
             positivo(d.cilindradaLitros(), "cilindradaLitros"); positivo(d.numeroPortas(), "numeroPortas");
         } else if (detalhes instanceof CriarAnuncioCommand.Moto d) {
+            placa(d.placa(), d.exibirPlacaCompleta());
             km = d.quilometragem(); quilometragem(km); positivo(d.cilindradas(), "cilindradas");
             texto(d.categoria(), "categoria"); texto(d.cambio(), "cambio"); texto(d.combustivel(), "combustivel");
         } else if (detalhes instanceof CriarAnuncioCommand.Caminhao d) {
+            placa(d.placa(), d.exibirPlacaCompleta());
             km = d.quilometragem(); quilometragem(km);
             texto(d.configuracao(), "configuracao"); texto(d.carroceria(), "carroceria");
             texto(d.cambio(), "cambio"); texto(d.combustivel(), "combustivel");
             positivo(d.numeroEixos(), "numeroEixos");
         } else if (detalhes instanceof CriarAnuncioCommand.Caminhonete d) {
+            placa(d.placa(), d.exibirPlacaCompleta());
             km = d.quilometragem(); quilometragem(km);
             texto(d.tipoCabine(), "tipoCabine"); texto(d.carroceria(), "carroceria");
             texto(d.cambio(), "cambio"); texto(d.combustivel(), "combustivel");
@@ -49,6 +53,11 @@ public final class ValidarDadosTecnicosAnuncio {
     }
     private static void positivo(Number valor, String campo) {
         if (valor == null || valor.doubleValue() <= 0) throw new AnuncioInvalidoException(campo + " deve ser positivo");
+    }
+    private static void placa(String valor, Boolean exibirCompleta) {
+        if (valor == null || !valor.matches("[A-Z]{3}[0-9][A-Z0-9][0-9]{2}"))
+            throw new AnuncioInvalidoException("placa deve conter os 7 caracteres no padrão brasileiro, sem pontuação");
+        if (exibirCompleta == null) throw new AnuncioInvalidoException("exibirPlacaCompleta é obrigatório");
     }
     private static void quilometragem(Integer valor) {
         if (valor == null || valor < 0) throw new AnuncioInvalidoException("quilometragem deve ser informada e não negativa");

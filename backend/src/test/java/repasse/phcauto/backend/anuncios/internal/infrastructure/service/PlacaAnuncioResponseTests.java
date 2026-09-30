@@ -1,0 +1,37 @@
+package repasse.phcauto.backend.anuncios.internal.infrastructure.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import repasse.phcauto.backend.anuncios.*;
+import repasse.phcauto.backend.anuncios.internal.core.*;
+import repasse.phcauto.backend.domain.model.catalogo.*;
+
+class PlacaAnuncioResponseTests {
+    @Test void retornaSomenteFinalQuandoAnuncianteOcultaPlaca() {
+        assertThat(criar(false).detalhes()).isInstanceOfSatisfying(AnuncioResponse.CarroResponse.class,
+                carro -> assertThat(carro.placa()).isEqualTo("3"));
+    }
+
+    @Test void retornaPlacaNormalizadaQuandoAnuncianteAutoriza() {
+        assertThat(criar(true).detalhes()).isInstanceOfSatisfying(AnuncioResponse.CarroResponse.class, carro -> {
+            assertThat(carro.placa()).isEqualTo("ABC1D23");
+            assertThat(carro.placaCompletaVisivel()).isTrue();
+        });
+    }
+
+    private AnuncioResponse criar(boolean exibir) {
+        CriarAnuncioUseCase criar = command -> new AnuncioCriadoResultado(UUID.randomUUID(), UUID.randomUUID(),
+                command, StatusAnuncio.PUBLICADO, Instant.EPOCH, Instant.EPOCH);
+        var facade = new DefaultAnunciosFacade(f -> null, criar, (id, patch) -> null, id -> { });
+        var endereco = new EnderecoAnuncioRequest("74000000", "Goiânia", "Centro", "Rua", "1", null, "GO");
+        var carro = new CriarAnuncioRequest.CarroRequest(10, "SUV", "AUTOMATICO", "FLEX", null,
+                "2.0", null, new BigDecimal("2.0"), 4, 5, "abc1d23", exibir,
+                true, true, true, false);
+        return facade.criar(new CriarAnuncioRequest(UUID.randomUUID(), TipoVeiculo.CARRO, "Fabricante", "Modelo",
+                null, 2025, 2026, "Preto", null, CondicaoVeiculo.USADO, "ABS", "Título", null,
+                TipoPreco.FIXO, 100L, false, true, endereco, carro, null, null, null, null, null));
+    }
+}

@@ -50,9 +50,11 @@ public class CarroEntity extends Carro {
     @Column(name = "numero_lugares", nullable = true)
     private Integer numeroLugares;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(name = "final_placa", nullable = true, length = 1, columnDefinition = "char(1)")
-    private String finalPlaca;
+    @Column(name = "placa", nullable = true, length = 7)
+    private String placa;
+
+    @Column(name = "exibir_placa_completa", nullable = false)
+    private Boolean exibirPlacaCompleta;
 
     @Column(name = "unico_dono", nullable = true)
     private Boolean unicoDono;
@@ -86,7 +88,8 @@ public class CarroEntity extends Carro {
         entity.cilindradaLitros = dados.getCilindradaLitros();
         entity.numeroPortas = dados.getNumeroPortas();
         entity.numeroLugares = dados.getNumeroLugares();
-        entity.finalPlaca = dados.getFinalPlaca();
+        entity.placa = dados.getPlaca();
+        entity.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         entity.unicoDono = dados.getUnicoDono();
         entity.ipvaPago = dados.getIpvaPago();
         entity.licenciado = dados.getLicenciado();
@@ -109,7 +112,8 @@ public class CarroEntity extends Carro {
         this.cilindradaLitros = dados.getCilindradaLitros();
         this.numeroPortas = dados.getNumeroPortas();
         this.numeroLugares = dados.getNumeroLugares();
-        this.finalPlaca = dados.getFinalPlaca();
+        this.placa = dados.getPlaca();
+        this.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         this.unicoDono = dados.getUnicoDono();
         this.ipvaPago = dados.getIpvaPago();
         this.licenciado = dados.getLicenciado();
@@ -150,7 +154,10 @@ public class CarroEntity extends Carro {
     public Integer getNumeroLugares() { return numeroLugares; }
 
     @Override
-    public String getFinalPlaca() { return finalPlaca; }
+    public String getPlaca() { return placa; }
+
+    @Override
+    public Boolean getExibirPlacaCompleta() { return exibirPlacaCompleta; }
 
     @Override
     public Boolean getUnicoDono() { return unicoDono; }

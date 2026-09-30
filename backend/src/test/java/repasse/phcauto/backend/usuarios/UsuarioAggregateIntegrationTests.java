@@ -28,6 +28,7 @@ import repasse.phcauto.backend.usuarios.request.EnderecoPatchRequest;
 
 @SpringBootTest(properties = {"app.projection.bootstrap=false", "app.projection.retry-delay=1s"})
 @AutoConfigureMockMvc
+@org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
 @EnabledIfEnvironmentVariable(named = "USUARIOS_INTEGRATION_TEST", matches = "true")
 class UsuarioAggregateIntegrationTests {
     @Autowired MockMvc mvc;
@@ -181,7 +182,7 @@ class UsuarioAggregateIntegrationTests {
                 true, Instant.now(), "1.0", "1.0");
         var body = json.valueToTree(request);
         ((tools.jackson.databind.node.ObjectNode) body).put("senha", request.senha());
-        var result = mvc.perform(post("/api/v1/usuarios").contentType("application/json")
+        var result = mvc.perform(post("/api/v1/usuarios/registrar").contentType("application/json")
                         .content(json.writeValueAsString(body)))
                 .andExpect(status().isCreated()).andReturn();
         return json.readValue(result.getResponse().getContentAsString(), UsuarioResponse.class);

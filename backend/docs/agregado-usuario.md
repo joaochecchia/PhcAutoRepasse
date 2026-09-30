@@ -79,3 +79,13 @@ ordem entre persistência e evento, hash de nova senha, PATCH vazio e campos inc
 ## CPF, CNPJ e CEP
 
 A API recebe, persiste e retorna CPF, CNPJ e CEP somente com números: CPF possui 11 dígitos, CNPJ possui 14 e CEP possui 8. O frontend é responsável apenas pela máscara visual. A migration V5 aplica as mesmas restrições nos bancos write e read.
+
+## Autenticação HTTP com JWT
+
+O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` retorna `mensagem`, `accessToken`, `tokenType` (Bearer) e `expiresIn` (segundos). Envie `Authorization: Bearer <accessToken>` nas operações protegidas. A configuração é stateless, sem sessão HTTP.
+
+Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
+
+Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
+
+Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.

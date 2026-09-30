@@ -310,13 +310,13 @@ Veja [fluxo, garantias e testes de eventos de usuário](backend/docs/eventos-usu
 
 ## Cadastro local implementado
 
-`POST /api/v1/usuarios` cria usuário, perfil PF ou PJ e endereço na mesma transação, codifica a senha com PBKDF2 e publica UsuarioCriado. Retorna 201 com resposta tipada sem credenciais; erros de validação retornam 400 e duplicidades 409. Os quatro controllers CRUD provisórios de assinatura e vendas permanecem ocultos do Swagger até que esses fluxos sejam implementados.
+`POST /api/v1/usuarios/registrar` cria usuário, perfil PF ou PJ e endereço na mesma transação, codifica a senha com BCrypt e publica UsuarioCriado. Retorna 201 com resposta tipada sem credenciais; erros de validação retornam 400 e duplicidades 409. Os quatro controllers CRUD provisórios de assinatura e vendas permanecem ocultos do Swagger até que esses fluxos sejam implementados.
 
 Veja [contratos, exemplos completos PF/PJ, arquitetura e testes](backend/docs/criacao-usuario.md). OAuth não está implementado; o login local de verificação de credenciais está disponível. Para testar o cadastro com PostgreSQL real, habilite USUARIOS_INTEGRATION_TEST=true em bancos isolados.
 
 ## Login local
 
-`POST /api/v1/usuarios/login` recebe email/senha e responde HTTP 200 com `{"mensagem":"Login realizado com sucesso"}`. Valida o hash no banco principal; credenciais inválidas retornam 401 e entrada inválida 400. Não cria sessão ou token nesta etapa.
+`POST /api/v1/usuarios/login` recebe email/senha e responde HTTP 200 com mensagem, accessToken, tokenType e expiresIn. Valida o hash no banco principal; credenciais inválidas retornam 401 e entrada inválida 400. Emite JWT Bearer, sem criar sessão HTTP.
 
 `POST /api/v1/anuncios` cria o veículo, sua especialização, o endereço próprio e o anúncio na mesma transação. Aceita CARRO, MOTO, CAMINHAO, CAMINHONETE, BARCO e LINHA_AMARELA. A resposta pública expõe somente a cidade da localização. Consulte [criação de anúncio](backend/docs/criacao-anuncio.md).
 
@@ -334,3 +334,17 @@ Cada linha alterada ou removida gera o evento técnico que atualiza o banco read
 O módulo independente `planos` oferece o CRUD persistente em `/api/v1/assinaturas/planos`: POST, GET por ID, GET paginado por `offset` e `limite`, PATCH parcial e DELETE. As respostas são tipadas; criação retorna 201, exclusão retorna 204, registros ausentes retornam 404 e conflitos de nome ou dependências retornam 409.
 
 O PATCH preserva os campos que não forem enviados. Atualmente, um valor `null` também significa ausência de alteração; a limpeza explícita dos campos opcionais deverá receber um contrato próprio caso essa necessidade comercial seja aprovada. Consulte [documentação do módulo](backend/docs/planos.md).
+
+## Autenticação HTTP com JWT
+
+O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` retorna `mensagem`, `accessToken`, `tokenType` (Bearer) e `expiresIn` (segundos). Envie `Authorization: Bearer <accessToken>` nas operações protegidas. A configuração é stateless, sem sessão HTTP.
+
+Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
+
+Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
+
+Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
+
+### Placa dos veículos
+
+Carro, moto, caminhão e caminhonete recebem `placa` completa e `exibirPlacaCompleta` no POST de anúncios. A resposta retorna a placa completa somente quando o anunciante autoriza; caso contrário, retorna apenas o último caractere. O PATCH possui DTOs parciais próprios. Consulte [a documentação do fluxo](backend/docs/criacao-anuncio.md).

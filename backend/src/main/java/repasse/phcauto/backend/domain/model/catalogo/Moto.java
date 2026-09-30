@@ -33,7 +33,9 @@ public abstract class Moto {
     public abstract String getCombustivel();
 
     /** Opcional no modelo inicial; pode retornar null. */
-    public abstract String getFinalPlaca();
+    public abstract String getPlaca();
+
+    public abstract Boolean getExibirPlacaCompleta();
 
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Boolean getIpvaPago();

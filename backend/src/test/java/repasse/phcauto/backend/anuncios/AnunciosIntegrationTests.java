@@ -79,7 +79,7 @@ class AnunciosIntegrationTests {
         tx.executeWithoutResult(status -> {
             var patch = new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título que será desfeito",null,
                     null,null,null,null,new EnderecoAnuncioPatchRequest(null,"Cidade desfeita",null,null,null,null,null),
-                    new CriarAnuncioRequest.CarroRequest(999,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
+                    new AtualizarAnuncioRequest.CarroPatchRequest(999,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
                     null,null,null,null,null);
             anuncios.atualizar(criado.id(), patch);
             status.setRollbackOnly();
@@ -100,7 +100,7 @@ class AnunciosIntegrationTests {
         var patch=new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título alterado",null,
                 TipoPreco.SOB_CONSULTA,null,false,null,
                 new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,null),
-                new CriarAnuncioRequest.CarroRequest(250,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
+                new AtualizarAnuncioRequest.CarroPatchRequest(250,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
                 null,null,null,null,null);
         var atualizado=anuncios.atualizar(criado.id(),patch);
         assertThat(atualizado.titulo()).isEqualTo("Título alterado");
@@ -162,10 +162,10 @@ class AnunciosIntegrationTests {
         var endereco = new EnderecoAnuncioRequest("74000000","Goiânia","Centro","Rua 1","10",null,"GO");
         return new CriarAnuncioRequest(usuarioId,tipo,"Fabricante","Modelo",null,2025,2026,"Preto",null,repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO,"DISCO",
                 "Anúncio "+tipo,null,TipoPreco.FIXO,100_000L,true,true,endereco,
-                tipo==TipoVeiculo.CARRO?new CriarAnuncioRequest.CarroRequest(10,"SUV","AUTOMATICO","FLEX",null,"2.0",null,new java.math.BigDecimal("2.0"),4,null,null,null,null,null,null):null,
-                tipo==TipoVeiculo.MOTO?new CriarAnuncioRequest.MotoRequest(10,160,"STREET",null,null,"MANUAL","GASOLINA",null,null,null):null,
-                tipo==TipoVeiculo.CAMINHAO?new CriarAnuncioRequest.CaminhaoRequest(10,"TOCO","BAU","MANUAL","DIESEL",null,null,2,null,null,null,null,null,null):null,
-                tipo==TipoVeiculo.CAMINHONETE?new CriarAnuncioRequest.CaminhoneteRequest(10,"DUPLA","PICKUP","AUTOMATICO","DIESEL",null,"2.8",null,new java.math.BigDecimal("2.8"),null,4,null,null,null,null,null):null,
+                tipo==TipoVeiculo.CARRO?new CriarAnuncioRequest.CarroRequest(10,"SUV","AUTOMATICO","FLEX",null,"2.0",null,new java.math.BigDecimal("2.0"),4,null,"ABC1D23",false,null,null,null,null):null,
+                tipo==TipoVeiculo.MOTO?new CriarAnuncioRequest.MotoRequest(10,160,"STREET",null,null,"MANUAL","GASOLINA","DEF2E34",true,null,null):null,
+                tipo==TipoVeiculo.CAMINHAO?new CriarAnuncioRequest.CaminhaoRequest(10,"TOCO","BAU","MANUAL","DIESEL",null,null,2,null,null,null,"GHI3F45",false,null,null):null,
+                tipo==TipoVeiculo.CAMINHONETE?new CriarAnuncioRequest.CaminhoneteRequest(10,"DUPLA","PICKUP","AUTOMATICO","DIESEL",null,"2.8",null,new java.math.BigDecimal("2.8"),null,4,"JKL4G56",false,null,null,null,null):null,
                 tipo==TipoVeiculo.BARCO?new CriarAnuncioRequest.BarcoRequest(null,null,null,null,null,null,null,List.of()):null,
                 tipo==TipoVeiculo.LINHA_AMARELA?new CriarAnuncioRequest.LinhaAmarelaRequest(null,null,null,null,null,null,null):null);
     }

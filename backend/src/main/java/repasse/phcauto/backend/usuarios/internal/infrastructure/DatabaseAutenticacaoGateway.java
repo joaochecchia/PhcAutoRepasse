@@ -1,35 +1,25 @@
 package repasse.phcauto.backend.usuarios.internal.infrastructure;
 
 import java.util.UUID;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
-import repasse.phcauto.backend.usuarios.internal.core.AutenticacaoGateway;
-import repasse.phcauto.backend.usuarios.internal.core.CredenciaisInvalidasException;
+import repasse.phcauto.backend.usuarios.internal.core.*;
 
 @Component
 public class DatabaseAutenticacaoGateway implements AutenticacaoGateway {
-    private final UsuarioCredenciaisReader credenciais;
-    private final PasswordEncoder senhas;
-    private final String hashSimulado;
-
-    public DatabaseAutenticacaoGateway(UsuarioCredenciaisReader credenciais, PasswordEncoder senhas) {
-        this.credenciais = credenciais;
-        this.senhas = senhas;
-        this.hashSimulado = senhas.encode(UUID.randomUUID().toString());
+    private final AuthenticationManager authenticationManager;
+    public DatabaseAutenticacaoGateway(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
     }
-
     @Override
-    public void autenticar(String email, String senha) {
-        var credencial = credenciais.carregar(email);
-        String hash = credencial.senhaHash();
-        boolean confere;
+    public UsuarioAutenticado autenticar(String email, String senha) {
         try {
-            confere = senhas.matches(senha, hash == null ? hashSimulado : hash);
-        } catch (IllegalArgumentException hashIncompativel) {
-            senhas.matches(senha, hashSimulado);
-            throw new CredenciaisInvalidasException();
-        }
-        if (!credencial.encontrada() || !credencial.ativa() || hash == null || !confere) {
+            var auth = authenticationManager.authenticate(
+                    UsernamePasswordAuthenticationToken.unauthenticated(email, senha));
+            var papel = auth.getAuthorities().iterator().next().getAuthority().substring(5);
+            return new UsuarioAutenticado(UUID.fromString(auth.getName()), papel);
+        } catch (AuthenticationException | IllegalArgumentException error) {
             throw new CredenciaisInvalidasException();
         }
     }

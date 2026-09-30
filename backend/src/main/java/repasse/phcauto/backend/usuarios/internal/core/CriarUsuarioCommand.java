@@ -14,8 +14,8 @@ public record CriarUsuarioCommand(TipoPessoa tipoPessoa, String nome, String ema
         if (!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) throw new CadastroInvalidoException("Email inválido");
         telefone = ValidacaoCadastro.texto(telefone, "Telefone", 32);
         if (!telefone.matches("\\+?[1-9][0-9]{9,14}")) throw new CadastroInvalidoException("Telefone inválido");
-        if (senha == null || senha.isBlank() || senha.length() < 8 || senha.length() > 128) {
-            throw new CadastroInvalidoException("Senha deve ter entre 8 e 128 caracteres");
+        if (senha == null || senha.isBlank() || senha.length() < 8 || senha.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new CadastroInvalidoException("Senha deve ter pelo menos 8 caracteres e no máximo 72 bytes UTF-8");
         }
         if (tipoPessoa == TipoPessoa.PF) {
             if (!ValidacaoCadastro.documentoValido(cpf, true)) throw new CadastroInvalidoException("CPF inválido");

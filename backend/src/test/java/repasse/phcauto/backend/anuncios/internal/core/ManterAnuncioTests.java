@@ -45,7 +45,7 @@ class ManterAnuncioTests {
         UUID a=UUID.randomUUID(),v=UUID.randomUUID(),u=UUID.randomUUID();
         var c=new CriarAnuncioCommand(u,TipoVeiculo.CARRO,"F","M",null,2025,2026,null,null,CondicaoVeiculo.USADO,"DISCO","T",null,TipoPreco.FIXO,1L,false,true,
                 new CriarAnuncioCommand.Endereco("74000000","Goiânia","Centro","Rua","1",null,"GO"),
-                new CriarAnuncioCommand.Carro(1,null,null,null,null,null,null,null,null,null,null,null,null,null,null));
+                new CriarAnuncioCommand.Carro(1,null,null,null,null,null,null,null,null,null,"ABC1D23",false,null,null,null,null));
         return new AnuncioCriadoResultado(a,v,c,StatusAnuncio.PUBLICADO,agora,agora);
     }
 }

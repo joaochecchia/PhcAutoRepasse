@@ -20,12 +20,18 @@ class LoginHttpTests {
     private MockMvc mvc;
 
     @BeforeEach void configurar() {
-        var gateway = new DatabaseAutenticacaoGateway(new UsuarioCredenciaisReader(repository), encoder);
-        mvc = MockMvcBuilders.standaloneSetup(new LoginController(new Login(gateway)))
+        var manager = new AutenticacaoConfiguration().authenticationManager(new UsuarioDetailsService(repository), encoder);
+        var gateway = new DatabaseAutenticacaoGateway(manager);
+        var jwtEncoder = org.springframework.security.oauth2.jwt.NimbusJwtEncoder.withSecretKey(
+                new javax.crypto.spec.SecretKeySpec(new byte[32], "HmacSHA256")).build();
+        var service = new JwtLoginService(new Login(gateway), jwtEncoder, java.time.Clock.systemUTC(), "phcauto", 900);
+        mvc = MockMvcBuilders.standaloneSetup(new LoginController(service))
                 .setControllerAdvice(new LoginExceptionHandler()).build();
     }
     private UsuarioEntity usuario(String hash, boolean ativo) {
         var usuario = mock(UsuarioEntity.class);
+        when(usuario.getId()).thenReturn(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        when(usuario.getPapel()).thenReturn(repasse.phcauto.backend.domain.model.identidade.PapelUsuario.CLIENTE);
         when(usuario.getSenhaHash()).thenReturn(hash);
         when(usuario.getAtivo()).thenReturn(ativo);
         return usuario;
@@ -34,12 +40,16 @@ class LoginHttpTests {
         return mvc.perform(post("/api/v1/usuarios/login").contentType("application/json")
                 .content("{\"email\":\"CLIENTE@example.com\",\"senha\":\""+senha+"\"}"));
     }
-    @Test void autenticaHashDoCadastroERetornaSomenteMensagem() throws Exception {
+    @Test void autenticaHashDoCadastroERetornaJwt() throws Exception {
         String hash = new UsuariosConfiguration().hashSenhaGateway(encoder).gerar("Senha-123");
         doReturn(List.of(usuario(hash, true))).when(repository).findTop2ByEmailIgnoreCase("cliente@example.com");
         login("Senha-123").andExpect(status().isOk())
-                .andExpect(content().json("{\"mensagem\":\"Login realizado com sucesso\"}"))
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.mensagem").value("Login realizado com sucesso"))
+                .andExpect(jsonPath("$.accessToken").isString())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").value(900))
+                .andExpect(jsonPath("$.senha").doesNotExist())
+                .andExpect(header().string("Cache-Control", "no-store"));
     }
     @Test void senhaIncorretaRecebe401() throws Exception {
         doReturn(List.of(usuario(encoder.encode("correta"), true))).when(repository).findTop2ByEmailIgnoreCase(anyString());
@@ -61,6 +71,15 @@ class LoginHttpTests {
         mvc.perform(post("/api/v1/usuarios/login").contentType("application/json").content("{}"))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(repository);
+    }
+    @Test void aceitaPbkdf2Legado() throws Exception {
+        String hash = "{pbkdf2@SpringSecurity_v5_8}" +
+                org.springframework.security.crypto.password.Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8().encode("Senha-123");
+        doReturn(List.of(usuario(hash, true))).when(repository).findTop2ByEmailIgnoreCase(anyString());
+        login("Senha-123").andExpect(status().isOk());
+    }
+    @Test void novosHashesUsamBcrypt() {
+        assertTrue(encoder.encode("Senha-123").startsWith("{bcrypt}$2"));
     }
     @Test void aceitaBcryptIdentificadoSemMudarCore() throws Exception {
         String hash = "{bcrypt}" + new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("Senha-123");

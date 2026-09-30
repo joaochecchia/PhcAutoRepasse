@@ -46,8 +46,8 @@ public final class AtualizarUsuario implements AtualizarUsuarioUseCase {
         }
         String senhaHash = null;
         if (request.senha() != null) {
-            if (request.senha().isBlank() || request.senha().length() < 8 || request.senha().length() > 128) {
-                throw new CadastroInvalidoException("Senha deve ter entre 8 e 128 caracteres");
+            if (request.senha().isBlank() || request.senha().length() < 8 || request.senha().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+                throw new CadastroInvalidoException("Senha deve ter pelo menos 8 caracteres e no máximo 72 bytes UTF-8");
             }
             senhaHash = senhas.gerar(request.senha());
         }

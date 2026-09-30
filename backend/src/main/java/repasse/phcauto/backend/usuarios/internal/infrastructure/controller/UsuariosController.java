@@ -19,24 +19,28 @@ public class UsuariosController {
 
     public UsuariosController(UsuariosFacade usuarios) { this.usuarios = usuarios; }
 
-    @PostMapping
-    public ResponseEntity<UsuarioResponse> criar(@Valid @RequestBody CriarUsuarioRequest request,
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    @PostMapping("/registrar")
+    public ResponseEntity<UsuarioResponse> registrar(@Valid @RequestBody CriarUsuarioRequest request,
             HttpServletRequest httpRequest) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(usuarios.criar(request, httpRequest.getRemoteAddr()));
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or authentication.name == #usuarioId.toString()")
     @GetMapping("/{usuarioId}")
     public ResponseEntity<UsuarioDetalhadoResponse> buscar(@PathVariable UUID usuarioId) {
         return ResponseEntity.ok(usuarios.buscar(usuarioId));
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or authentication.name == #usuarioId.toString()")
     @PatchMapping("/{usuarioId}")
     public ResponseEntity<UsuarioDetalhadoResponse> atualizar(@PathVariable UUID usuarioId,
             @RequestBody AtualizarUsuarioRequest request) {
         return ResponseEntity.ok(usuarios.atualizar(usuarioId, request));
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or authentication.name == #usuarioId.toString()")
     @DeleteMapping("/{usuarioId}")
     public ResponseEntity<Void> excluir(@PathVariable UUID usuarioId) {
         usuarios.excluir(usuarioId);

@@ -38,9 +38,11 @@ public class MotoEntity extends Moto {
     @Column(name = "combustivel", nullable = true, length = 60)
     private String combustivel;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(name = "final_placa", nullable = true, length = 1, columnDefinition = "char(1)")
-    private String finalPlaca;
+    @Column(name = "placa", nullable = true, length = 7)
+    private String placa;
+
+    @Column(name = "exibir_placa_completa", nullable = false)
+    private Boolean exibirPlacaCompleta;
 
     @Column(name = "ipva_pago", nullable = true)
     private Boolean ipvaPago;
@@ -65,7 +67,8 @@ public class MotoEntity extends Moto {
         entity.refrigeracao = dados.getRefrigeracao();
         entity.cambio = dados.getCambio();
         entity.combustivel = dados.getCombustivel();
-        entity.finalPlaca = dados.getFinalPlaca();
+        entity.placa = dados.getPlaca();
+        entity.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         entity.ipvaPago = dados.getIpvaPago();
         entity.licenciado = dados.getLicenciado();
         return entity;
@@ -83,7 +86,8 @@ public class MotoEntity extends Moto {
         this.refrigeracao = dados.getRefrigeracao();
         this.cambio = dados.getCambio();
         this.combustivel = dados.getCombustivel();
-        this.finalPlaca = dados.getFinalPlaca();
+        this.placa = dados.getPlaca();
+        this.exibirPlacaCompleta = dados.getExibirPlacaCompleta();
         this.ipvaPago = dados.getIpvaPago();
         this.licenciado = dados.getLicenciado();
     }
@@ -113,7 +117,10 @@ public class MotoEntity extends Moto {
     public String getCombustivel() { return combustivel; }
 
     @Override
-    public String getFinalPlaca() { return finalPlaca; }
+    public String getPlaca() { return placa; }
+
+    @Override
+    public Boolean getExibirPlacaCompleta() { return exibirPlacaCompleta; }
 
     @Override
     public Boolean getIpvaPago() { return ipvaPago; }

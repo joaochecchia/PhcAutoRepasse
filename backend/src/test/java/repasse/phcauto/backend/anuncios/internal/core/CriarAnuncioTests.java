@@ -61,11 +61,18 @@ class CriarAnuncioTests {
 
     @Test void rejeitaDadosTecnicosObrigatoriosAusentes() {
         var incompleto = new CriarAnuncioCommand.Carro(1, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null);
+                null, null, null, "ABC1D23", false, null, null, null, null);
         assertThatThrownBy(() -> useCase.execute(command(TipoVeiculo.CARRO, incompleto, true, TipoPreco.FIXO, 1L)))
                 .isInstanceOf(AnuncioInvalidoException.class)
                 .hasMessageContaining("carroceria");
         assertThat(gateway.salvamentos).isZero();
+    }
+
+    @Test void exigePlacaCompletaNosVeiculosEmplacados() {
+        var invalido = new CriarAnuncioCommand.Carro(1, "SUV", "AUTOMATICO", "FLEX", null, "2.0", null,
+                new java.math.BigDecimal("2.0"), 4, 5, "D23", false, null, null, null, null);
+        assertThatThrownBy(() -> useCase.execute(command(TipoVeiculo.CARRO, invalido, true, TipoPreco.FIXO, 1L)))
+                .isInstanceOf(AnuncioInvalidoException.class).hasMessageContaining("7 caracteres");
     }
 
     @Test void rejeitaQuilometragemPositivaParaVeiculoZeroKm() {
@@ -90,10 +97,10 @@ class CriarAnuncioTests {
 
     private CriarAnuncioCommand.DetalhesVeiculo detalhes(TipoVeiculo tipo) {
         return switch (tipo) {
-            case CARRO -> new CriarAnuncioCommand.Carro(1,"SUV","AUTOMATICO","FLEX",null,"2.0",null,new java.math.BigDecimal("2.0"),4,null,null,null,null,null,null);
-            case MOTO -> new CriarAnuncioCommand.Moto(1,160,"STREET",null,null,"MANUAL","GASOLINA",null,null,null);
-            case CAMINHAO -> new CriarAnuncioCommand.Caminhao(1,"TOCO","BAU","MANUAL","DIESEL",null,null,2,null,null,null,null,null,null);
-            case CAMINHONETE -> new CriarAnuncioCommand.Caminhonete(1,"DUPLA","PICKUP","AUTOMATICO","DIESEL",null,"2.8",null,new java.math.BigDecimal("2.8"),null,4,null,null,null,null,null);
+            case CARRO -> new CriarAnuncioCommand.Carro(1,"SUV","AUTOMATICO","FLEX",null,"2.0",null,new java.math.BigDecimal("2.0"),4,null,"ABC1D23",false,null,null,null,null);
+            case MOTO -> new CriarAnuncioCommand.Moto(1,160,"STREET",null,null,"MANUAL","GASOLINA","DEF2E34",true,null,null);
+            case CAMINHAO -> new CriarAnuncioCommand.Caminhao(1,"TOCO","BAU","MANUAL","DIESEL",null,null,2,null,null,null,"GHI3F45",false,null,null);
+            case CAMINHONETE -> new CriarAnuncioCommand.Caminhonete(1,"DUPLA","PICKUP","AUTOMATICO","DIESEL",null,"2.8",null,new java.math.BigDecimal("2.8"),null,4,"JKL4G56",false,null,null,null,null);
             case BARCO -> new CriarAnuncioCommand.Barco(null,null,null,null,null,null,null,List.of());
             case LINHA_AMARELA -> new CriarAnuncioCommand.LinhaAmarela(null,null,null,null,null,null,null);
         };

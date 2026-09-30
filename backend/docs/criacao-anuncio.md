@@ -60,3 +60,11 @@ Enquanto a autenticação HTTP não estiver pronta, `anuncianteId` vem no reques
 - `publicarAgora=true` publica e `false` volta para rascunho. Se omitido, o status existente é preservado.
 - `DELETE /api/v1/anuncios/{anuncioId}` remove fotos, características, especialização, veículo e endereço dentro da mesma transação. Compras vinculadas bloqueiam a exclusão com HTTP 409.
 - Atualização e exclusão publicam eventos de negócio e as mudanças de todas as linhas continuam sendo projetadas no banco read por `RowChanged`.
+
+## Placa completa e visibilidade
+
+Carros, motos, caminhões e caminhonetes exigem `placa` completa no cadastro, com 7 caracteres e sem pontuação, aceitando os formatos brasileiro antigo e Mercosul. O backend normaliza a placa para letras maiúsculas antes de persistir. O request de criação exige também `exibirPlacaCompleta`; no PATCH ambos os campos são opcionais e os demais dados do veículo podem ser alterados isoladamente.
+
+A placa completa sempre fica armazenada. `exibirPlacaCompleta=true` devolve a placa completa em `detalhes.placa`; quando falso, a resposta devolve somente o último caractere. `detalhes.placaCompletaVisivel` informa qual regra foi aplicada. A API nunca depende do frontend para ocultar a placa. Registros anteriores à V13 permanecem com `placa` nula até que sejam corrigidos; a coluna legada `final_placa` foi preservada nesta etapa para uma implantação compatível.
+
+A migration comum V13 adiciona `placa` e `exibir_placa_completa` às quatro tabelas e a projeção Modulith replica os dois campos. Próximas migrations devem usar V14 ou superior.

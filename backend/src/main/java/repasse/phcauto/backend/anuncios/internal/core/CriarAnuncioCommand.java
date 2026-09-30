@@ -20,22 +20,22 @@ public record CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, St
 
     public record Carro(Integer quilometragem, String carroceria, String cambio, String combustivel,
             String tracao, String motorizacao, String tipoDirecao, BigDecimal cilindradaLitros, Integer numeroPortas, Integer numeroLugares,
-            String finalPlaca, Boolean unicoDono, Boolean ipvaPago, Boolean licenciado,
+            String placa, Boolean exibirPlacaCompleta, Boolean unicoDono, Boolean ipvaPago, Boolean licenciado,
             Boolean blindado) implements DetalhesVeiculo { }
 
     public record Moto(Integer quilometragem, Integer cilindradas, String categoria, String partida,
-            String refrigeracao, String cambio, String combustivel, String finalPlaca,
+            String refrigeracao, String cambio, String combustivel, String placa, Boolean exibirPlacaCompleta,
             Boolean ipvaPago, Boolean licenciado) implements DetalhesVeiculo { }
 
     public record Caminhao(Integer quilometragem, String configuracao, String carroceria, String cambio,
             String combustivel, String tracao, String tipoDirecao, Integer numeroEixos, Integer capacidadeCargaKg,
-            Integer pesoBrutoTotalKg, String implemento, String finalPlaca, Boolean ipvaPago,
+            Integer pesoBrutoTotalKg, String implemento, String placa, Boolean exibirPlacaCompleta, Boolean ipvaPago,
             Boolean licenciado) implements DetalhesVeiculo { }
 
     public record Caminhonete(Integer quilometragem, String tipoCabine, String carroceria, String cambio,
             String combustivel, String tracao, String motorizacao, String tipoDirecao,
             BigDecimal cilindradaLitros, Integer capacidadeCargaKg,
-            Integer numeroPortas, String finalPlaca, Boolean unicoDono, Boolean ipvaPago,
+            Integer numeroPortas, String placa, Boolean exibirPlacaCompleta, Boolean unicoDono, Boolean ipvaPago,
             Boolean licenciado, Boolean blindado) implements DetalhesVeiculo { }
 
     public record Barco(BigDecimal tamanhoPes, String estilo, String materialCasco,

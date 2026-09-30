@@ -13,10 +13,11 @@ import repasse.phcauto.backend.usuarios.internal.core.*;
 @Configuration(proxyBeanMethods = false)
 class UsuariosConfiguration {
     @Bean PasswordEncoder usuarioPasswordEncoder() {
-        // TODO: ao adotar BCryptPasswordEncoder para novos hashes, manter PBKDF2 para contas existentes.
-        return new DelegatingPasswordEncoder("pbkdf2@SpringSecurity_v5_8", Map.of(
+        var encoder = new DelegatingPasswordEncoder("bcrypt", Map.of(
                 "pbkdf2@SpringSecurity_v5_8", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8(),
                 "bcrypt", new BCryptPasswordEncoder()));
+        encoder.setDefaultPasswordEncoderForMatches(new BCryptPasswordEncoder());
+        return encoder;
     }
 
     @Bean HashSenhaGateway hashSenhaGateway(PasswordEncoder encoder) { return encoder::encode; }

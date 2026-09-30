@@ -2,6 +2,9 @@ package repasse.phcauto.backend.anuncios;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Pattern;
+import java.math.BigDecimal;
 import jakarta.validation.constraints.Size;
 import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
 
@@ -23,13 +26,39 @@ public record AtualizarAnuncioRequest(
         Boolean aceitaTroca,
         Boolean publicarAgora,
         @Valid EnderecoAnuncioPatchRequest endereco,
-        @Valid CriarAnuncioRequest.CarroRequest carro,
-        @Valid CriarAnuncioRequest.MotoRequest moto,
-        @Valid CriarAnuncioRequest.CaminhaoRequest caminhao,
-        @Valid CriarAnuncioRequest.CaminhoneteRequest caminhonete,
+        @Valid CarroPatchRequest carro,
+        @Valid MotoPatchRequest moto,
+        @Valid CaminhaoPatchRequest caminhao,
+        @Valid CaminhonetePatchRequest caminhonete,
         @Valid CriarAnuncioRequest.BarcoRequest barco,
         @Valid CriarAnuncioRequest.LinhaAmarelaRequest linhaAmarela) {
 
+    public record CarroPatchRequest(@PositiveOrZero Integer quilometragem, @Size(max=60) String carroceria,
+            @Size(max=60) String cambio, @Size(max=60) String combustivel, @Size(max=40) String tracao,
+            @Size(max=100) String motorizacao, @Size(max=60) String tipoDirecao,
+            @Positive BigDecimal cilindradaLitros, @Positive Integer numeroPortas, @Positive Integer numeroLugares,
+            @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa,
+            Boolean exibirPlacaCompleta, Boolean unicoDono, Boolean ipvaPago, Boolean licenciado, Boolean blindado) { }
+
+    public record MotoPatchRequest(@PositiveOrZero Integer quilometragem, @Positive Integer cilindradas,
+            @Size(max=60) String categoria, @Size(max=40) String partida, @Size(max=40) String refrigeracao,
+            @Size(max=60) String cambio, @Size(max=60) String combustivel,
+            @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa,
+            Boolean exibirPlacaCompleta, Boolean ipvaPago, Boolean licenciado) { }
+
+    public record CaminhaoPatchRequest(@PositiveOrZero Integer quilometragem, @Size(max=80) String configuracao,
+            @Size(max=80) String carroceria, @Size(max=60) String cambio, @Size(max=60) String combustivel,
+            @Size(max=40) String tracao, @Size(max=60) String tipoDirecao, @Positive Integer numeroEixos,
+            @Positive Integer capacidadeCargaKg, @Positive Integer pesoBrutoTotalKg, @Size(max=100) String implemento,
+            @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa,
+            Boolean exibirPlacaCompleta, Boolean ipvaPago, Boolean licenciado) { }
+
+    public record CaminhonetePatchRequest(@PositiveOrZero Integer quilometragem, @Size(max=50) String tipoCabine,
+            @Size(max=60) String carroceria, @Size(max=60) String cambio, @Size(max=60) String combustivel,
+            @Size(max=40) String tracao, @Size(max=100) String motorizacao, @Size(max=60) String tipoDirecao,
+            @Positive BigDecimal cilindradaLitros, @Positive Integer capacidadeCargaKg, @Positive Integer numeroPortas,
+            @Pattern(regexp="(?i)[A-Z]{3}[0-9][A-Z0-9][0-9]{2}") String placa,
+            Boolean exibirPlacaCompleta, Boolean unicoDono, Boolean ipvaPago, Boolean licenciado, Boolean blindado) { }
 
     @jakarta.validation.constraints.AssertTrue(message = "Informe no máximo um bloco de dados específicos")
     @com.fasterxml.jackson.annotation.JsonIgnore
@@ -38,7 +67,6 @@ public record AtualizarAnuncioRequest(
                 + (caminhao != null ? 1 : 0) + (caminhonete != null ? 1 : 0)
                 + (barco != null ? 1 : 0) + (linhaAmarela != null ? 1 : 0) <= 1;
     }
-
     @jakarta.validation.constraints.AssertTrue(message = "Informe ao menos um campo para atualizar")
     @com.fasterxml.jackson.annotation.JsonIgnore
     public boolean isPossuiAlgumaAlteracao() {

@@ -196,9 +196,9 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - API pública na raiz `usuarios`; core Java puro em `usuarios/internal/core`; entidades, repositories read/write e adaptadores em `usuarios/internal/infrastructure`.
 - `CriarUsuarioUseCase.execute` é implementado por `CriarUsuario`. `UsuariosFacade` é uma interface pública sem Spring; `DefaultUsuariosFacade`, em `internal/infrastructure/service`, delimita a transação write; `JpaUsuarioGateway` grava usuário, PF ou PJ e endereço. Consultas de unicidade usam write. Concorrência também é protegida por constraints.
 - O caso de uso publica por `PublicarUsuarioCriadoGateway`; o adaptador usa ApplicationEventPublisher. Não importar Spring no core.
-- POST `/api/v1/usuarios` retorna UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como PBKDF2; papel fixo CLIENTE.
+- POST `/api/v1/usuarios/registrar` retorna UsuarioResponse, 201, sem senha/hash. Novo contrato descrito em `docs/criacao-usuario.md`. Senha só no request/comando e persistida como BCrypt; papel fixo CLIENTE.
 - Evento público `usuarios.UsuarioCriado` e RowChanged são publicados na transação. A recuperação aceita ambos e UsuarioAlterado. Não publicar UsuarioAlterado(CADASTRADO) adicionalmente no novo fluxo.
-- Login local de verificação de credenciais está implementado; sessão/token, OAuth, atualização, exclusão e efeitos posteriores continuam pendentes. Não criar listeners vazios nem registros essenciais de cadastro de forma assíncrona.
+- Login com JWT, atualização e exclusão estão implementados; OAuth e efeitos posteriores continuam pendentes. Não criar listeners vazios nem registros essenciais de cadastro de forma assíncrona.
 - `USUARIOS_INTEGRATION_TEST=true` habilita integração real de cadastro; usar bancos isolados. Nenhuma migration foi alterada para mover as entidades.
 
 ## Agregado de usuário
@@ -213,11 +213,11 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Login local
 
-- POST `/api/v1/usuarios/login` recebe `usuarios.request.LoginRequest` e retorna `usuarios.response.LoginResponse` somente com mensagem, HTTP 200. Request/response são NamedInterfaces públicas.
+- POST `/api/v1/usuarios/login` recebe `usuarios.request.LoginRequest` e retorna `usuarios.response.LoginResponse` com mensagem, accessToken, tokenType e expiresIn, HTTP 200. Request/response são NamedInterfaces públicas.
 - `LoginUseCase.execute(LoginRequest)` é implementado por `Login`, com dependência injetada exclusivamente em `AutenticacaoGateway`; o core não importa Spring/JPA.
 - `DatabaseAutenticacaoGateway` consulta write em transação read-only e valida hash/status; não consultar a projeção para autenticação. Senha nunca é comparada como texto puro.
-- PasswordEncoder compartilhado mantém PBKDF2 e aceita BCrypt identificado. Conta inexistente/inativa/sem senha local, hash inválido e email ambíguo retornam a mesma CredenciaisInvalidasException (401).
-- O sucesso não estabelece sessão ou token. OAuth2 e Spring Security HTTP continuam pendentes; ver `docs/login.md`.
+- PasswordEncoder compartilhado grava BCrypt e aceita PBKDF2 legado. Conta inexistente/inativa/sem senha local, hash inválido e email ambíguo retornam a mesma CredenciaisInvalidasException (401).
+- O sucesso emite JWT sem sessão HTTP. OAuth2 Google/Facebook continua pendente; ver `docs/login.md`.
 
 ## Criação concreta no módulo anuncios
 
@@ -276,7 +276,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Compliance e restrição etária
 
-- O módulo `compliance` registra o comprovante do aceite no mesmo fluxo transacional de `POST /api/v1/usuarios`.
+- O módulo `compliance` registra o comprovante do aceite no mesmo fluxo transacional de `POST /api/v1/usuarios/registrar`.
 - O request de cadastro exige `aceitouTermos=true`, `aceiteTermosEm`, `versaoTermosUso` e `versaoPoliticaPrivacidade`. O IP/identificador de rede vem de `HttpServletRequest.getRemoteAddr()`, nunca do corpo enviado pelo cliente.
 - As versões aceitas precisam coincidir com `TERMOS_USO_VERSAO_ATUAL` e `POLITICA_PRIVACIDADE_VERSAO_ATUAL`; os defaults locais são `1.0`. Atualize as variáveis junto com a publicação dos documentos.
 - `compliance.aceites_termos` preserva usuário, instante declarado do clique, versões, endereço de rede e instante de registro no servidor. Não existe endpoint público de leitura desses dados.
@@ -295,8 +295,26 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Benefícios futuros de planos e assinaturas
 
-- V12 comum adiciona `planos.limite_vistorias_cautelares` e os snapshots `assinaturas.limite_anuncios_contratado` e `assinaturas.limite_vistorias_cautelares_contratado`. Próximas migrations devem usar V13 ou superior.
+- V12 comum adiciona `planos.limite_vistorias_cautelares` e os snapshots `assinaturas.limite_anuncios_contratado` e `assinaturas.limite_vistorias_cautelares_contratado`. Próximas migrations devem usar V14 ou superior.
 - `planos.limite_anuncios` e `planos.limite_vistorias_cautelares` descrevem benefícios comerciais. Nulo significa ainda não definido, zero significa que o benefício não está incluído e valor positivo representa o limite oferecido.
 - Ao implementar o futuro módulo de assinaturas, copie preço e limites do plano para a assinatura no momento da contratação. Mudanças posteriores no plano não devem alterar benefícios já contratados.
 - Esses campos não aplicam limites atualmente. Não bloquear criação/publicação de anúncios, não criar consumo de vistoria e não presumir renovação, saldo ou permissão até os respectivos casos de uso serem definidos.
 - Contadores de uso não ficam na linha da assinatura nesta preparação. O futuro fluxo deve definir eventos/registros próprios para consumo e estorno, especialmente para vistorias cautelares.
+
+## Autenticação HTTP com JWT
+
+O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` retorna `mensagem`, `accessToken`, `tokenType` (Bearer) e `expiresIn` (segundos). Envie `Authorization: Bearer <accessToken>` nas operações protegidas. A configuração é stateless, sem sessão HTTP.
+
+Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
+
+Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
+
+Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
+
+## Placa completa e visibilidade
+
+Carros, motos, caminhões e caminhonetes exigem `placa` completa no cadastro, com 7 caracteres e sem pontuação, aceitando os formatos brasileiro antigo e Mercosul. O backend normaliza a placa para letras maiúsculas antes de persistir. O request de criação exige também `exibirPlacaCompleta`; no PATCH ambos os campos são opcionais e os demais dados do veículo podem ser alterados isoladamente.
+
+A placa completa sempre fica armazenada. `exibirPlacaCompleta=true` devolve a placa completa em `detalhes.placa`; quando falso, a resposta devolve somente o último caractere. `detalhes.placaCompletaVisivel` informa qual regra foi aplicada. A API nunca depende do frontend para ocultar a placa. Registros anteriores à V13 permanecem com `placa` nula até que sejam corrigidos; a coluna legada `final_placa` foi preservada nesta etapa para uma implantação compatível.
+
+A migration comum V13 adiciona `placa` e `exibir_placa_completa` às quatro tabelas e a projeção Modulith replica os dois campos. Próximas migrations devem usar V14 ou superior.

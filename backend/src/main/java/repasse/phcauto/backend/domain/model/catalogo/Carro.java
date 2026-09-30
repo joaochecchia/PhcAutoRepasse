@@ -40,7 +40,9 @@ public abstract class Carro {
     public abstract Integer getNumeroLugares();
 
     /** Opcional no modelo inicial; pode retornar null. */
-    public abstract String getFinalPlaca();
+    public abstract String getPlaca();
+
+    public abstract Boolean getExibirPlacaCompleta();
 
     /** Opcional no modelo inicial; pode retornar null. */
     public abstract Boolean getUnicoDono();

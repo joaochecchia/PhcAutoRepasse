@@ -12,7 +12,7 @@ public record CriarUsuarioRequest(
         @NotBlank @Size(max = 160) String nome,
         @NotBlank @Email @Size(max = 254) String email,
         @NotBlank @Pattern(regexp = "\\+?[1-9][0-9]{9,14}") String telefone,
-        @NotBlank @Size(min = 8, max = 128)
+        @NotBlank @Size(min = 8, max = 72)
         @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String senha,
         String cpf, LocalDate dataNascimento, String cnpj, String razaoSocial,
         @Valid @NotNull EnderecoRequest endereco,
