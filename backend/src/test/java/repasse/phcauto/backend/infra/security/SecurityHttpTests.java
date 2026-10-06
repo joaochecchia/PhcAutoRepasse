@@ -57,6 +57,9 @@ class SecurityHttpTests {
         var valid = token("CLIENTE", "phcauto", Instant.now().plusSeconds(300), encoder);
         mvc.perform(get("/api/v1/usuarios/00000000-0000-0000-0000-000000000001").header("Authorization", "Bearer " + valid))
                 .andExpect(status().isOk()).andExpect(cookie().doesNotExist("JSESSIONID"));
+        mvc.perform(get("/api/v1/usuarios/00000000-0000-0000-0000-000000000001")
+                        .cookie(new jakarta.servlet.http.Cookie("PHC_AUTH", valid)))
+                .andExpect(status().isOk()).andExpect(cookie().doesNotExist("JSESSIONID"));
         mvc.perform(get("/api/v1/assinaturas/planos").header("Authorization", "Bearer " + valid)).andExpect(status().isForbidden());
         var admin = token("ADMIN", "phcauto", Instant.now().plusSeconds(300), encoder);
         mvc.perform(get("/api/v1/assinaturas/planos").header("Authorization", "Bearer " + admin)).andExpect(status().isOk());

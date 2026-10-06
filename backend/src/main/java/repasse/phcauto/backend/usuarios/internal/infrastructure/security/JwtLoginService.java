@@ -7,7 +7,6 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import repasse.phcauto.backend.usuarios.internal.core.usecase.LoginUseCase;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.LoginRequest;
-import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.response.LoginResponse;
 
 import repasse.phcauto.backend.usuarios.internal.core.usecase.Login;
 @Service
@@ -23,13 +22,13 @@ public class JwtLoginService {
         if (ttl <= 0 || ttl > 86400) throw new IllegalArgumentException("JWT_TTL_SECONDS deve estar entre 1 e 86400");
         this.login = login; this.encoder = encoder; this.clock = applicationClock; this.issuer = issuer; this.ttl = ttl;
     }
-    public LoginResponse execute(LoginRequest request) {
+    public LoginAutenticado execute(LoginRequest request) {
         var usuario = login.execute(new repasse.phcauto.backend.usuarios.internal.core.domain.LoginCommand(request.email(), request.senha()));
         var now = clock.instant();
         var claims = JwtClaimsSet.builder().issuer(issuer).subject(usuario.id().toString())
                 .issuedAt(now).expiresAt(now.plusSeconds(ttl)).claim("roles", java.util.List.of(usuario.papel())).build();
         var token = encoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
-        return new LoginResponse("Login realizado com sucesso", token, "Bearer", ttl);
+        return new LoginAutenticado(usuario.id(), usuario.papel(), token, ttl);
     }
 }

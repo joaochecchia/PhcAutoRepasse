@@ -424,6 +424,8 @@ input::placeholder {
   z-index: 2;
 }
 .search-box {
+  position: relative;
+  overflow: visible;
   border-radius: 11px;
   background: var(--surface);
   box-shadow: 0 7px 30px #00000008;
@@ -438,8 +440,13 @@ input::placeholder {
 }
 .vehicle-tabs {
   display: flex;
-  gap: 26px;
+  gap: clamp(12px, 1.7vw, 26px);
   align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.vehicle-tabs::-webkit-scrollbar {
+  display: none;
 }
 .vehicle-tabs button,
 .vehicle-tabs select {
@@ -454,6 +461,7 @@ input::placeholder {
   color: var(--muted);
   border-bottom: 2px solid transparent;
   min-height: 56px;
+  white-space: nowrap;
 }
 .vehicle-tabs select {
   max-width: 120px;
@@ -475,6 +483,7 @@ input::placeholder {
   padding: 20px 0 17px;
 }
 .brand-search {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -501,7 +510,7 @@ input::placeholder {
   font-weight: 650;
   margin-bottom: 5px;
 }
-.brand-search select {
+.brand-search input {
   border: 0;
   width: 100%;
   color: var(--text);
@@ -509,6 +518,55 @@ input::placeholder {
   padding: 0;
   font-size: 13px;
   outline-offset: 1px;
+}
+.brand-search input::placeholder {
+  color: var(--text);
+  opacity: 0.9;
+}
+.vehicle-suggestions {
+  position: absolute;
+  z-index: 12;
+  left: -1px;
+  right: -1px;
+  top: calc(100% + 8px);
+  max-height: 330px;
+  overflow-y: auto;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 18px 45px #00000020;
+}
+.vehicle-suggestions button {
+  width: 100%;
+  padding: 10px 11px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+.vehicle-suggestions button:hover,
+.vehicle-suggestions button[aria-selected="true"] {
+  background: var(--surface-2);
+}
+.vehicle-suggestions button > span {
+  font-size: 12px;
+  font-weight: 700;
+}
+.vehicle-suggestions button small {
+  margin: 0;
+  font-size: 8px;
+  color: var(--muted);
+}
+.vehicle-suggestions > p {
+  padding: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.location-control {
+  position: relative;
+  flex: 0 0 auto;
 }
 .location-search {
   height: 64px;
@@ -520,6 +578,128 @@ input::placeholder {
   border: 1px solid var(--border);
   border-radius: 6px;
   text-align: left;
+  width: 100%;
+}
+.location-panel {
+  position: absolute;
+  z-index: 13;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(390px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px #00000025;
+}
+.location-panel-head,
+.location-choice,
+.location-device {
+  display: flex;
+  align-items: center;
+}
+.location-panel-head {
+  justify-content: space-between;
+  margin-bottom: 13px;
+}
+.location-panel-head small {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--red);
+  margin-bottom: 4px;
+}
+.location-panel-head strong {
+  font-family: var(--heading);
+  font-size: 17px;
+}
+.location-choice,
+.location-device {
+  width: 100%;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: left;
+}
+.location-choice.selected {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 6%, var(--surface));
+}
+.location-choice > svg,
+.location-device > svg:first-child {
+  color: var(--red);
+  flex-shrink: 0;
+}
+.location-choice span,
+.location-device span {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+.location-choice strong,
+.location-device strong {
+  font-size: 11px;
+}
+.location-choice small,
+.location-device small {
+  font-size: 9px;
+  color: var(--muted);
+}
+.location-fields {
+  display: grid;
+  grid-template-columns: 1fr 78px;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+.location-fields label {
+  display: grid;
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.location-fields input,
+.location-fields select {
+  height: 39px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+}
+.location-cep {
+  grid-column: 1 / -1;
+}
+.location-error {
+  margin: 0 0 9px;
+  color: var(--red);
+  font-size: 10px;
+}
+.location-apply {
+  width: 100%;
+  min-height: 40px;
+  justify-content: center;
+}
+.location-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+.location-divider::before,
+.location-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--border);
+  flex: 1;
+}
+.location-device > svg:last-child {
+  color: var(--muted);
 }
 .location-search > svg:first-child {
   color: var(--muted);
@@ -768,6 +948,20 @@ input::placeholder {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+.vehicle-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  margin: -4px 0 12px;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+}
+.vehicle-location svg {
+  color: var(--red);
+  flex-shrink: 0;
 }
 .price {
   font-family: var(--heading);
@@ -1350,7 +1544,7 @@ label select {
 .brand-search {
   flex-direction: row;
 }
-.brand-search select {
+.brand-search input {
   min-height: 0;
 }
 .hero-links {
@@ -1661,18 +1855,19 @@ label select {
     display: block;
   }
   .vehicle-tabs {
-    gap: 20px;
-    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    justify-content: space-between;
+    gap: 0 10px;
+    overflow: visible;
+    padding: 7px 0;
   }
   .vehicle-tabs button,
   .vehicle-tabs select {
     font-size: 10px;
     white-space: nowrap;
-    min-height: 54px;
-    padding: 17px 0 14px;
-  }
-  .vehicle-tabs button svg {
-    display: none;
+    min-height: 38px;
+    padding: 9px 0 7px;
   }
   .vehicle-tabs select {
     max-width: 71px;
@@ -1692,7 +1887,7 @@ label select {
     padding: 11px 12px;
     gap: 11px;
   }
-  .brand-search select {
+  .brand-search input {
     font-size: 12px;
   }
   .brand-search small {
@@ -1704,6 +1899,20 @@ label select {
     height: 52px;
     padding: 10px;
     gap: 7px;
+  }
+  .location-control {
+    flex: 1;
+    min-width: 0;
+  }
+  .location-panel {
+    position: fixed;
+    top: 50%;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    transform: translateY(-50%);
   }
   .location-search small {
     font-size: 6px;

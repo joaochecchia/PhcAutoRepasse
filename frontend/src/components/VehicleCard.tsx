@@ -52,17 +52,18 @@ export function VehicleCard({
           </span>
           <span>
             <Gauge size={14} />
-            {v.mileage} km
+            {v.mileage ? `${v.mileage} km` : "Não informada"}
           </span>
+        </div>
+        <div className="vehicle-location">
+          <MapPin size={14} />
+          <span>{v.location || "Localização não informada"}</span>
         </div>
         <div className="price">
           <small>R$</small> {v.price}
         </div>
         <div className="vehicle-bottom">
-          <span>
-            <MapPin size={14} />
-            {v.location}
-          </span>
+          <span>Ver anúncio completo</span>
           <button onClick={onOpen} aria-label={`Detalhes de ${v.model}`}>
             <ArrowUpRight size={19} />
           </button>

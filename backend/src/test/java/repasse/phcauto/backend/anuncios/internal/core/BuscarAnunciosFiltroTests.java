@@ -37,7 +37,7 @@ class BuscarAnunciosFiltroTests {
     }
 
     private static BuscarAnunciosFiltro filtro(Double latitude, Double longitude, int tamanho) {
-        return new BuscarAnunciosFiltro(null, "Goiânia", "GO", null, null, null,
+        return new BuscarAnunciosFiltro(null, "Goiânia", "GO", null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, latitude, longitude, 0, tamanho);
     }

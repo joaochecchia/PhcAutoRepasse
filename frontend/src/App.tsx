@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
   ArrowUpRight,
+  Bike,
   CarFront,
   ChevronLeft,
   ChevronRight,
@@ -12,9 +13,12 @@ import {
   Moon,
   Plus,
   Search,
+  Ship,
   ShieldCheck,
   SlidersHorizontal,
   Sun,
+  Tractor,
+  Truck,
   UserRound,
   X,
   Zap,
@@ -32,6 +36,15 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { AnnouncePage } from "./pages/AnnouncePage";
 import { VehiclePage, NotFoundPage } from "./pages/VehiclePage";
 import type { Draft } from "./components/FormFields";
+import {
+  apiErrorMessage,
+  authApi,
+  profileToDraft,
+  searchAds,
+  searchAdToVehicle,
+} from "./lib/backend";
+import type { Session } from "./lib/contracts";
+import { findAddressByCep } from "./lib/viacep";
 
 type Destination = "login" | "register" | "announce" | "plans";
 const initialFilters = (): Filters =>
@@ -43,21 +56,145 @@ export default function App() {
   const [route, setRoute] = useState(readRoute);
   const { page, id } = route;
   const [profileDraft, setProfileDraft] = useState<Draft>({ tipoPessoa: "PF" });
-  const vehicle = vehicles.find((v) => String(v.id) === id);
+  const [session, setSession] = useState<Session | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [announceIntent, setAnnounceIntent] = useState(false);
+  const [homeVehicles, setHomeVehicles] = useState<Vehicle[]>([]);
+  const [searchVehicles, setSearchVehicles] = useState<Vehicle[]>([]);
+  const [catalogError, setCatalogError] = useState("");
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchPage, setSearchPage] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const vehicle = [...searchVehicles, ...homeVehicles, ...vehicles].find(
+    (v) => v.id === id,
+  );
   const [dark, setDark] = useState(
     () => matchMedia("(prefers-color-scheme: dark)").matches,
   );
   const [menu, setMenu] = useState(false);
   const [dialog, setDialog] = useState<"plans" | null>(null);
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [applied, setApplied] = useState<Filters>(initialFilters);
   const [mobileFilters, setMobileFilters] = useState(false);
   const [brand, setBrand] = useState("");
+  const [model, setModel] = useState("");
+  const [vehicleQuery, setVehicleQuery] = useState("");
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [type, setType] = useState("CARRO");
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [locationMode, setLocationMode] = useState("BRASIL");
+  const [locationCity, setLocationCity] = useState("");
+  const [locationUf, setLocationUf] = useState("");
+  const [locationCep, setLocationCep] = useState("");
+  const [locationError, setLocationError] = useState("");
+  const [resolvingCep, setResolvingCep] = useState(false);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
-  const [previewState, setPreviewState] = useState("ready");
+  const homeRequestStarted = useRef(false);
+  const vehicleSearchRef = useRef<HTMLDivElement>(null);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const vehicleSuggestions = useMemo(() => {
+    const availableVehicles = [...homeVehicles, ...vehicles];
+    const brandNames = Array.from(
+      new Set([...brands.map(([name]) => name), ...availableVehicles.map((item) => item.brand)]),
+    );
+    const models = Array.from(
+      new Map(
+        availableVehicles.map((item) => [
+          `${item.brand.toLocaleLowerCase("pt-BR")}|${item.model.toLocaleLowerCase("pt-BR")}`,
+          { brand: item.brand, model: item.model },
+        ]),
+      ).values(),
+    );
+    const query = vehicleQuery.trim().toLocaleLowerCase("pt-BR");
+    const matches = (value: string) => !query || value.toLocaleLowerCase("pt-BR").includes(query);
+    return [
+      ...brandNames.filter(matches).map((name) => ({ kind: "brand" as const, label: name, brand: name, model: "" })),
+      ...models.filter((item) => matches(item.model)).map((item) => ({ kind: "model" as const, label: item.model, brand: "", model: item.model, context: item.brand })),
+      ...models.filter((item) => matches(`${item.brand} ${item.model}`)).map((item) => ({ kind: "both" as const, label: `${item.brand} ${item.model}`, brand: item.brand, model: item.model })),
+    ].slice(0, 10);
+  }, [homeVehicles, vehicleQuery]);
+
+  const locationLabel =
+    locationMode === "DISPOSITIVO"
+      ? "Perto de mim"
+      : locationMode === "CIDADE"
+        ? `${locationCity}, ${locationUf}`
+        : locationMode === "UF"
+          ? locationUf
+          : "Todo o Brasil";
+
+  useEffect(() => {
+    function closeFloatingPanels(event: PointerEvent) {
+      const target = event.target as Node;
+      if (!vehicleSearchRef.current?.contains(target)) {
+        setSuggestionsOpen(false);
+      }
+      if (!locationSearchRef.current?.contains(target)) {
+        setLocationOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", closeFloatingPanels);
+    return () => document.removeEventListener("pointerdown", closeFloatingPanels);
+  }, []);
+
+  function heroFilters(): Filters {
+    return {
+      tipoVeiculo: type,
+      marca: brand,
+      modelo: model,
+      termo: !brand && !model ? vehicleQuery.trim() : "",
+      modoLocalizacao: locationMode,
+      cidade: locationMode === "CIDADE" ? locationCity : "",
+      uf: locationMode === "CIDADE" || locationMode === "UF" ? locationUf : "",
+    };
+  }
+
+  function chooseVehicleSuggestion(item: (typeof vehicleSuggestions)[number]) {
+    setBrand(item.brand);
+    setModel(item.model);
+    setVehicleQuery(item.label);
+    setSuggestionsOpen(false);
+  }
+
+  async function applyTypedLocation() {
+    setLocationError("");
+    let city = locationCity.trim();
+    let uf = locationUf;
+    const cep = locationCep.replace(/\D/g, "");
+    if (cep) {
+      if (cep.length !== 8) {
+        setLocationError("Digite um CEP com 8 números.");
+        return;
+      }
+      setResolvingCep(true);
+      try {
+        const address = await findAddressByCep(cep);
+        city = address.localidade;
+        uf = address.uf;
+        setLocationCity(city);
+        setLocationUf(uf);
+      } catch {
+        setLocationError("Não foi possível localizar esse CEP.");
+        return;
+      } finally {
+        setResolvingCep(false);
+      }
+    }
+    if (city && !uf) {
+      setLocationError("Escolha a UF da cidade.");
+      return;
+    }
+    if (!city && !uf) {
+      setLocationError("Informe cidade, UF ou CEP.");
+      return;
+    }
+    setLocationCity(city);
+    setLocationUf(uf);
+    setLocationMode(city ? "CIDADE" : "UF");
+    setLocationOpen(false);
+  }
 
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
@@ -87,11 +224,59 @@ export default function App() {
     }
   }, [notice]);
   useEffect(() => {
-    if (loading) {
-      const t = setTimeout(() => setLoading(false), 450);
-      return () => clearTimeout(t);
+    authApi
+      .session()
+      .then(async (current) => {
+        setSession(current.autenticado ? current : null);
+        if (current.autenticado && current.usuarioId) {
+          const profile = await authApi.profile(current.usuarioId);
+          setProfileDraft(profileToDraft(profile));
+        }
+      })
+      .catch(() => setSession(null))
+      .finally(() => setAuthChecked(true));
+  }, []);
+
+  useEffect(() => {
+    if (homeRequestStarted.current) return;
+    homeRequestStarted.current = true;
+    setLoading(true);
+    searchAds({ modoLocalizacao: "BRASIL" }, 0, 20)
+      .then((result) => {
+        setHomeVehicles(result.carros.map(searchAdToVehicle));
+        setCatalogError("");
+      })
+      .catch((error) =>
+        setCatalogError(apiErrorMessage(error, "Não foi possível carregar os veículos.")),
+      )
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (page !== "search") return;
+    setLoading(true);
+    setCatalogError("");
+    searchAds(applied, 0, 52)
+      .then((result) => {
+        setSearchVehicles(result.carros.map(searchAdToVehicle));
+        setSearchTotal(result.total);
+        setSearchPage(0);
+        setHasNextPage(result.temProximaPagina);
+      })
+      .catch((error) => {
+        setSearchVehicles([]);
+        setCatalogError(apiErrorMessage(error, "Não foi possível realizar a busca."));
+      })
+      .finally(() => setLoading(false));
+  }, [page, applied]);
+
+  useEffect(() => {
+    if (!authChecked || session?.autenticado) return;
+    if (page === "profile" || page === "announce") {
+      setAnnounceIntent(true);
+      navigate("register");
     }
-  }, [loading]);
+  }, [authChecked, page, session]);
 
   function navigate(next: Page, values: Filters = {}, id?: string) {
     const query = new URLSearchParams(
@@ -101,7 +286,6 @@ export default function App() {
     setRoute({ page: next, id });
     setMenu(false);
     setMobileFilters(false);
-    setPreviewState("ready");
     if (next === "search") {
       setFilters(values);
       setApplied(values);
@@ -111,10 +295,13 @@ export default function App() {
   }
   function openDestination(d: Destination) {
     if (d === "plans") setDialog(d);
-    else navigate(d === "announce" ? "profile" : d);
+    else if (d === "announce") {
+      setAnnounceIntent(true);
+      navigate(session?.autenticado ? "profile" : "register");
+    } else navigate(d);
     setMenu(false);
   }
-  function save(id: number) {
+  function save(id: string) {
     const exists = favorites.includes(id);
     setFavorites((prev) =>
       exists ? prev.filter((v) => v !== id) : [...prev, id],
@@ -125,10 +312,13 @@ export default function App() {
         : "Salvo nos favoritos desta visita.",
     );
   }
+  const allKnownVehicles = [...searchVehicles, ...homeVehicles].filter(
+    (item, index, list) => list.findIndex((other) => other.id === item.id) === index,
+  );
   const shown =
     page === "favorites"
-      ? vehicles.filter((v) => favorites.includes(v.id))
-      : vehicles;
+      ? allKnownVehicles.filter((v) => favorites.includes(v.id))
+      : searchVehicles;
   const card = (v: Vehicle) => (
     <VehicleCard
       key={v.id}
@@ -138,6 +328,51 @@ export default function App() {
       onOpen={() => navigate("vehicle", {}, String(v.id))}
     />
   );
+
+  async function handleAuthenticated(current: Session, draft?: Draft) {
+    setSession(current);
+    if (draft) setProfileDraft(draft);
+    if (current.usuarioId) {
+      try {
+        setProfileDraft(profileToDraft(await authApi.profile(current.usuarioId)));
+      } catch {
+        // The registration draft remains available if the read projection has
+        // not received the newly created profile yet.
+      }
+    }
+    navigate(announceIntent || draft ? "profile" : "home");
+  }
+
+  async function logout() {
+    try {
+      await authApi.logout();
+    } finally {
+      setSession(null);
+      setProfileDraft({ tipoPessoa: "PF" });
+      setAnnounceIntent(false);
+      navigate("home");
+    }
+  }
+
+  async function loadMore() {
+    const nextPage = searchPage + 1;
+    setLoading(true);
+    try {
+      const result = await searchAds(applied, nextPage, 52);
+      setSearchVehicles((current) => [
+        ...current,
+        ...result.carros.map((ad, index) =>
+          searchAdToVehicle(ad, current.length + index),
+        ),
+      ]);
+      setSearchPage(nextPage);
+      setHasNextPage(result.temProximaPagina);
+    } catch (error) {
+      setCatalogError(apiErrorMessage(error, "Não foi possível carregar mais veículos."));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <>
@@ -200,12 +435,9 @@ export default function App() {
               {favorites.length > 0 && <b>{favorites.length}</b>}
             </button>
             <span className="header-divider" />
-            <button
-              className="login-link"
-              onClick={() => openDestination("login")}
-            >
+            <button className="login-link" onClick={() => session ? logout() : openDestination("login")}>
               <UserRound size={18} />
-              <span>Entrar</span>
+              <span>{session ? "Sair" : "Entrar"}</span>
             </button>
             <button
               className="button primary header-announce"
@@ -238,23 +470,44 @@ export default function App() {
             <button onClick={() => navigate("favorites")}>
               Favoritos ({favorites.length})
             </button>
-            <button onClick={() => openDestination("login")}>Entrar</button>
-            <button onClick={() => openDestination("register")}>
-              Criar conta
+            <button onClick={() => session ? logout() : openDestination("login")}>
+              {session ? "Sair" : "Entrar"}
             </button>
+            {!session && (
+              <button onClick={() => openDestination("register")}>
+                Criar conta
+              </button>
+            )}
           </nav>
         )}
       </header>
 
       <main id="conteudo" tabIndex={-1}>
         {page === "login" ? (
-          <LoginPage />
+          <LoginPage onAuthenticated={handleAuthenticated} />
         ) : page === "register" ? (
-          <RegisterPage />
+          <RegisterPage onAuthenticated={handleAuthenticated} />
         ) : page === "profile" ? (
-          <ProfilePage values={profileDraft} setValues={setProfileDraft} />
+          session?.usuarioId ? (
+            <ProfilePage
+              values={profileDraft}
+              setValues={setProfileDraft}
+              usuarioId={session.usuarioId}
+              onContinue={() => navigate("announce")}
+            />
+          ) : null
         ) : page === "announce" ? (
-          <AnnouncePage profile={profileDraft} />
+          session?.usuarioId ? (
+            <AnnouncePage
+              profile={profileDraft}
+              usuarioId={session.usuarioId}
+              onCreated={() => {
+                setNotice("Anúncio criado com sucesso.");
+                setAnnounceIntent(false);
+                navigate("search");
+              }}
+            />
+          ) : null
         ) : page === "vehicle" ? (
           vehicle ? (
             <VehiclePage
@@ -263,6 +516,7 @@ export default function App() {
               favorites={favorites}
               onSave={save}
               onOpen={(id) => navigate("vehicle", {}, String(id))}
+              related={allKnownVehicles}
             />
           ) : (
             <NotFoundPage />
@@ -332,33 +586,23 @@ export default function App() {
                     role="group"
                     aria-label="Tipo de veículo"
                   >
-                    {types.slice(0, 3).map(([v, label]) => (
+                    {types.map(([v, label]) => (
                       <button
                         key={v}
+                        type="button"
                         className={type === v ? "selected" : ""}
                         aria-pressed={type === v}
                         onClick={() => setType(v)}
                       >
-                        {v === "CARRO" && <CarFront size={19} />}
+                        {type === v && v === "CARRO" && <CarFront size={19} />}
+                        {type === v && v === "MOTO" && <Bike size={19} />}
+                        {type === v && v === "CAMINHONETE" && <CarFront size={19} />}
+                        {type === v && v === "CAMINHAO" && <Truck size={19} />}
+                        {type === v && v === "BARCO" && <Ship size={19} />}
+                        {type === v && v === "LINHA_AMARELA" && <Tractor size={19} />}
                         {label}
                       </button>
                     ))}
-                    <select
-                      aria-label="Outros tipos de veículo"
-                      value={
-                        types.slice(3).some((t) => t[0] === type) ? type : ""
-                      }
-                      onChange={(e) => setType(e.target.value)}
-                    >
-                      <option value="" disabled>
-                        Outros
-                      </option>
-                      {types.slice(3).map(([v, l]) => (
-                        <option value={v} key={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                   <span className="search-intro">
                     Qual vai ser o seu próximo?
@@ -368,53 +612,135 @@ export default function App() {
                   className="hero-search"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    navigate("search", {
-                      tipoVeiculo: type,
-                      marca: brand,
-                      modoLocalizacao: "BRASIL",
-                    });
+                    navigate("search", heroFilters());
                   }}
                 >
-                  <label className="brand-search">
+                  <div className="brand-search" ref={vehicleSearchRef}>
                     <Search size={22} />
                     <span>
                       <small>ENCONTRE SEU VEÍCULO</small>
-                      <select
-                        value={brand}
-                        onChange={(e) => setBrand(e.target.value)}
-                        aria-label="Escolha a marca"
-                      >
-                        <option value="">Qual marca você procura?</option>
-                        {[
-                          ...brands.map((b) => b[0]),
-                          "Audi",
-                          "Porsche",
-                          "Mercedes-Benz",
-                          "Ford",
-                        ].map((b) => (
-                          <option key={b}>{b}</option>
-                        ))}
-                      </select>
+                      <input
+                        value={vehicleQuery}
+                        onChange={(event) => {
+                          setVehicleQuery(event.target.value);
+                          setBrand("");
+                          setModel("");
+                          setSuggestionsOpen(true);
+                        }}
+                        onFocus={() => setSuggestionsOpen(true)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") setSuggestionsOpen(false);
+                        }}
+                        role="combobox"
+                        aria-label="Buscar por marca ou modelo"
+                        aria-controls="vehicle-suggestions"
+                        aria-expanded={suggestionsOpen}
+                        aria-autocomplete="list"
+                        placeholder="Digite uma marca ou modelo"
+                        autoComplete="off"
+                      />
                     </span>
-                  </label>
+                    {suggestionsOpen && (
+                      <div className="vehicle-suggestions" id="vehicle-suggestions" role="listbox">
+                        {vehicleSuggestions.length ? (
+                          vehicleSuggestions.map((item, index) => (
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={brand === item.brand && model === item.model}
+                              key={`${item.kind}-${item.label}-${index}`}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => chooseVehicleSuggestion(item)}
+                            >
+                              <span>{item.label}</span>
+                              <small>
+                                {item.kind === "brand"
+                                  ? "Marca"
+                                  : item.kind === "model"
+                                    ? `Modelo · ${item.context}`
+                                    : "Marca + modelo"}
+                              </small>
+                            </button>
+                          ))
+                        ) : (
+                          <p>Nenhuma sugestão encontrada.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="location-control" ref={locationSearchRef}>
                   <button
                     type="button"
                     className="location-search"
-                    onClick={() => {
-                      navigate("search", {
-                        tipoVeiculo: type,
-                        marca: brand,
-                        modoLocalizacao: "CIDADE",
-                      });
-                      setMobileFilters(true);
-                    }}
+                    onClick={() => setLocationOpen((open) => !open)}
+                    aria-expanded={locationOpen}
+                    aria-controls="location-panel"
                   >
                     <MapPin size={21} />
                     <span>
-                      <small>LOCALIZAÇÃO</small>Todo o Brasil
+                      <small>LOCALIZAÇÃO</small>{locationLabel}
                     </span>
                     <ChevronRight size={16} />
                   </button>
+                  {locationOpen && (
+                    <div className="location-panel" id="location-panel">
+                      <div className="location-panel-head">
+                        <div>
+                          <small>ONDE PROCURAR</small>
+                          <strong>Escolha sua localização</strong>
+                        </div>
+                        <button type="button" onClick={() => setLocationOpen(false)} aria-label="Fechar localização">
+                          <X size={17} />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className={locationMode === "BRASIL" ? "location-choice selected" : "location-choice"}
+                        onClick={() => {
+                          setLocationMode("BRASIL");
+                          setLocationOpen(false);
+                        }}
+                      >
+                        <MapPin size={18} />
+                        <span><strong>Todo o Brasil</strong><small>Ver anúncios de qualquer região</small></span>
+                      </button>
+                      <div className="location-fields">
+                        <label>
+                          Cidade
+                          <input value={locationCity} onChange={(event) => setLocationCity(event.target.value)} placeholder="Ex.: São Paulo" />
+                        </label>
+                        <label>
+                          UF
+                          <select value={locationUf} onChange={(event) => setLocationUf(event.target.value)}>
+                            <option value="">UF</option>
+                            {"AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ").map((uf) => <option key={uf}>{uf}</option>)}
+                          </select>
+                        </label>
+                        <label className="location-cep">
+                          CEP
+                          <input inputMode="numeric" value={locationCep} onChange={(event) => setLocationCep(event.target.value)} placeholder="00000-000" />
+                        </label>
+                      </div>
+                      {locationError && <p className="location-error" role="alert">{locationError}</p>}
+                      <button type="button" className="button secondary location-apply" disabled={resolvingCep} onClick={applyTypedLocation}>
+                        {resolvingCep ? "Localizando CEP…" : "Usar cidade, UF ou CEP"}
+                      </button>
+                      <div className="location-divider"><span>ou</span></div>
+                      <button
+                        type="button"
+                        className="location-device"
+                        onClick={() => {
+                          setLocationMode("DISPOSITIVO");
+                          setLocationOpen(false);
+                        }}
+                      >
+                        <MapPin size={18} />
+                        <span><strong>Usar minha localização</strong><small>O navegador pedirá sua permissão</small></span>
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  )}
+                  </div>
                   <button
                     type="submit"
                     className="button primary search-submit"
@@ -430,7 +756,7 @@ export default function App() {
                   </span>
                   <button
                     className="text-button"
-                    onClick={() => navigate("search", { tipoVeiculo: type })}
+                    onClick={() => navigate("search", heroFilters())}
                   >
                     Busca avançada
                     <SlidersHorizontal size={14} />
@@ -501,16 +827,27 @@ export default function App() {
                     <Zap size={15} />
                     Vitrine PHC
                   </span>
-                  <span className="demo-label">
-                    Catálogo demonstrativo · imagens ilustrativas
-                  </span>
+                  <span className="demo-label">Até 20 oportunidades recentes</span>
                 </div>
-                <div className="vehicle-grid">
-                  {vehicles.slice(0, 4).map(card)}
-                </div>
-                <div className="vehicle-grid second-row">
-                  {vehicles.slice(4).map(card)}
-                </div>
+                {loading && homeVehicles.length === 0 ? (
+                  <div className="vehicle-grid" aria-busy="true">
+                    {[1, 2, 3, 4].map((n) => <div className="skeleton-card" key={n}><div /><span /><span /><span /></div>)}
+                  </div>
+                ) : catalogError && homeVehicles.length === 0 ? (
+                  <div className="empty-state" role="alert">
+                    <CarFront size={40} />
+                    <h2>Não foi possível carregar a vitrine.</h2>
+                    <p>{catalogError}</p>
+                  </div>
+                ) : homeVehicles.length === 0 ? (
+                  <div className="empty-state">
+                    <CarFront size={40} />
+                    <h2>Ainda não há veículos publicados.</h2>
+                    <p>Os primeiros anúncios publicados aparecerão aqui.</p>
+                  </div>
+                ) : (
+                  <div className="vehicle-grid">{homeVehicles.slice(0, 20).map(card)}</div>
+                )}
               </div>
             </section>
             <section className="container sell-section">
@@ -634,15 +971,6 @@ export default function App() {
                         </span>
                       </button>
                     </div>
-                    <div className="preview-notice">
-                      <span className="red-dot" />
-                      <p>
-                        Você está explorando uma{" "}
-                        <strong>vitrine demonstrativa</strong>. Os filtros
-                        selecionados ficam preparados na interface; os
-                        resultados serão consultados após a integração.
-                      </p>
-                    </div>
                     <FilterChips
                       values={applied}
                       onRemove={(key) => {
@@ -656,9 +984,9 @@ export default function App() {
                 <div className="results-toolbar">
                   <span>
                     <strong>
-                      {previewState === "empty" ? 0 : shown.length}
+                      {page === "favorites" ? shown.length : searchTotal}
                     </strong>{" "}
-                    veículos {page === "favorites" ? "salvos" : "na prévia"}
+                    veículos {page === "favorites" ? "salvos" : "encontrados"}
                   </span>
                   {page === "search" && (
                     <>
@@ -669,23 +997,10 @@ export default function App() {
                         <SlidersHorizontal size={16} />
                         Filtros
                       </button>
-                      <label className="state-select">
-                        Prévia
-                        <select
-                          aria-label="Estado da prévia"
-                          value={previewState}
-                          onChange={(e) => setPreviewState(e.target.value)}
-                        >
-                          <option value="ready">Vitrine</option>
-                          <option value="loading">Carregando</option>
-                          <option value="empty">Sem resultados</option>
-                          <option value="error">Falha de conexão</option>
-                        </select>
-                      </label>
                     </>
                   )}
                 </div>
-                {previewState === "loading" || loading ? (
+                {loading && shown.length === 0 ? (
                   <div
                     className="vehicle-grid results-grid"
                     aria-label="Carregando veículos"
@@ -700,25 +1015,19 @@ export default function App() {
                       </div>
                     ))}
                   </div>
-                ) : previewState === "error" ? (
+                ) : catalogError && page === "search" ? (
                   <div className="empty-state" role="alert">
                     <CarFront size={40} />
                     <h2>Não foi possível carregar a vitrine.</h2>
-                    <p>
-                      Esta é uma simulação do estado de falha. Tente novamente
-                      para voltar à prévia.
-                    </p>
+                    <p>{catalogError}</p>
                     <button
                       className="button primary"
-                      onClick={() => {
-                        setPreviewState("ready");
-                        setLoading(true);
-                      }}
+                      onClick={() => navigate("search", applied)}
                     >
                       Tentar novamente
                     </button>
                   </div>
-                ) : !shown.length || previewState === "empty" ? (
+                ) : !shown.length ? (
                   <div className="empty-state">
                     <Heart size={40} />
                     <h2>
@@ -729,7 +1038,7 @@ export default function App() {
                     <p>
                       {page === "favorites"
                         ? "Toque no coração de um veículo para guardá-lo nesta visita."
-                        : "Experimente ampliar a busca ou remover alguns filtros. Este estado é demonstrativo."}
+                        : "Experimente ampliar a busca ou remover alguns filtros."}
                     </p>
                     <button
                       className="button primary"
@@ -744,17 +1053,14 @@ export default function App() {
                     {shown.map(card)}
                   </div>
                 )}
-                {shown.length > 0 && previewState === "ready" && !loading && (
+                {shown.length > 0 && !loading && (
                   <div className="catalog-end">
-                    <span>Você viu todos os veículos desta prévia.</span>
-                    <button
-                      className="text-button"
-                      onClick={() =>
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                      }
-                    >
-                      Voltar ao topo ↑
-                    </button>
+                    <span>{page === "search" && hasNextPage ? `${shown.length} de ${searchTotal} veículos` : "Você viu todos os veículos encontrados."}</span>
+                    {page === "search" && hasNextPage ? (
+                      <button className="button secondary" onClick={loadMore}>Carregar mais 52</button>
+                    ) : (
+                      <button className="text-button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Voltar ao topo ↑</button>
+                    )}
                   </div>
                 )}
               </div>
@@ -784,9 +1090,11 @@ export default function App() {
               Anunciar
             </button>
             <button onClick={() => openDestination("plans")}>Planos</button>
-            <button onClick={() => openDestination("register")}>
-              Criar conta
-            </button>
+            {!session?.autenticado && (
+              <button onClick={() => openDestination("register")}>
+                Criar conta
+              </button>
+            )}
           </nav>
           <button className="theme-footer" onClick={() => setDark(!dark)}>
             {dark ? <Sun size={16} /> : <Moon size={16} />}
@@ -795,9 +1103,7 @@ export default function App() {
         </div>
         <div className="container footer-bottom">
           <span>© {new Date().getFullYear()} PHC Auto Repasse.</span>
-          <span>
-            Prévia visual · Veículos, valores e fotografias ilustrativos.
-          </span>
+          <span>Dados dos anúncios enviados pelos anunciantes.</span>
         </div>
       </footer>
       {notice && (

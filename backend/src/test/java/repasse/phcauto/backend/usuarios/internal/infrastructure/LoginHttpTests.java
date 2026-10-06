@@ -31,7 +31,8 @@ class LoginHttpTests {
         var jwtEncoder = org.springframework.security.oauth2.jwt.NimbusJwtEncoder.withSecretKey(
                 new javax.crypto.spec.SecretKeySpec(new byte[32], "HmacSHA256")).build();
         var service = new JwtLoginService(new Login(gateway), jwtEncoder, java.time.Clock.systemUTC(), "phcauto", 900);
-        mvc = MockMvcBuilders.standaloneSetup(new LoginController(service))
+        mvc = MockMvcBuilders.standaloneSetup(new LoginController(service,
+                        new repasse.phcauto.backend.usuarios.internal.infrastructure.security.AuthCookieService(false)))
                 .setControllerAdvice(new LoginExceptionHandler()).build();
     }
     private UsuarioEntity usuario(String hash, boolean ativo) {
@@ -46,15 +47,18 @@ class LoginHttpTests {
         return mvc.perform(post("/api/v1/usuarios/login").contentType("application/json")
                 .content("{\"email\":\"CLIENTE@example.com\",\"senha\":\""+senha+"\"}"));
     }
-    @Test void autenticaHashDoCadastroERetornaJwt() throws Exception {
+    @Test void autenticaHashDoCadastroERetornaCookieHttpOnly() throws Exception {
         String hash = new UsuariosConfiguration().hashSenhaGateway(encoder).gerar("Senha-123");
         doReturn(List.of(usuario(hash, true))).when(repository).findTop2ByEmailIgnoreCase("cliente@example.com");
         login("Senha-123").andExpect(status().isOk())
-                .andExpect(jsonPath("$.mensagem").value("Login realizado com sucesso"))
-                .andExpect(jsonPath("$.accessToken").isString())
-                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.autenticado").value(true))
+                .andExpect(jsonPath("$.usuarioId").value("00000000-0000-0000-0000-000000000001"))
+                .andExpect(jsonPath("$.papel").value("CLIENTE"))
                 .andExpect(jsonPath("$.expiresIn").value(900))
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
                 .andExpect(jsonPath("$.senha").doesNotExist())
+                .andExpect(cookie().httpOnly("PHC_AUTH", true))
+                .andExpect(cookie().maxAge("PHC_AUTH", 900))
                 .andExpect(header().string("Cache-Control", "no-store"));
     }
     @Test void senhaIncorretaRecebe401() throws Exception {

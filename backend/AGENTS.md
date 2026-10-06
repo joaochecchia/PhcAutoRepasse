@@ -217,11 +217,11 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Login local
 
-- POST `/api/v1/usuarios/login` recebe `usuarios.internal.infrastructure.adapter.in.web.request.LoginRequest` e retorna `usuarios.internal.infrastructure.adapter.in.web.response.LoginResponse` com mensagem, accessToken, tokenType e expiresIn, HTTP 200. São contratos HTTP internos ao adaptador web, não interfaces públicas entre módulos.
+- POST `/api/v1/usuarios/login` valida as credenciais, grava o JWT no cookie `PHC_AUTH` com `HttpOnly` e retorna apenas metadados da sessão, sem expor o token ao JavaScript. GET `/sessao` consulta a identidade atual e POST `/logout` invalida o cookie.
 - `LoginUseCase.execute(LoginCommand)` é implementado por `Login`; o adaptador converte `LoginRequest` para o comando puro, com dependência injetada exclusivamente em `AutenticacaoGateway`; o core não importa Spring/JPA.
 - `DatabaseAutenticacaoGateway` consulta write em transação read-only e valida hash/status; não consultar a projeção para autenticação. Senha nunca é comparada como texto puro.
 - PasswordEncoder compartilhado grava BCrypt e aceita PBKDF2 legado. Conta inexistente/inativa/sem senha local, hash inválido e email ambíguo retornam a mesma CredenciaisInvalidasException (401).
-- O sucesso emite JWT sem sessão HTTP. OAuth2 Google/Facebook continua pendente; ver `docs/login.md`.
+- O sucesso emite JWT no cookie de sessão; o resolver continua aceitando Bearer para Swagger e clientes de API. OAuth2 Google/Facebook continua pendente; ver `docs/login.md`.
 
 ## Criação concreta no módulo anuncios
 
@@ -233,6 +233,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - `AnuncioResponse` expõe somente a cidade da localização. O endereço completo é persistido, mas não integra a resposta pública.
 - `AnuncioCriado` é o evento público de negócio. `RowChanged` continua sendo produzido pelos callbacks JPA e consumido pelo projetor Modulith para sincronizar todas as linhas no read. Registros essenciais não são criados assincronamente.
 - `ANUNCIOS_INTEGRATION_TEST=true` habilita o teste real dos seis tipos e da projeção; use bancos isolados.
+- Fotos de veículos são armazenadas em `src/main/resources/static/uploads/veiculos/usuarios/{usuarioId}/veiculos/{veiculoId}` fora do Docker; o Compose monta a mesma pasta em `/app/uploads/veiculos` e usa `LOCAL_UID`/`LOCAL_GID` para acesso não-root ao bind mount. O banco armazena somente a chave relativa. Cada anúncio aceita no máximo oito fotos, com posições de 0 a 7; a aplicação valida o limite e a migration V23 do write o reforça com trigger e lock transacional. Não versionar os uploads.
 
 ## Manutenção do agregado de anúncio
 
@@ -308,7 +309,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Autenticação HTTP com JWT
 
-O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` retorna `mensagem`, `accessToken`, `tokenType` (Bearer) e `expiresIn` (segundos). Envie `Authorization: Bearer <accessToken>` nas operações protegidas. A configuração é stateless, sem sessão HTTP.
+O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` grava `PHC_AUTH` como cookie `HttpOnly` e retorna somente metadados da sessão. Clientes de API também podem enviar `Authorization: Bearer <token>` nas operações protegidas.
 
 Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
 

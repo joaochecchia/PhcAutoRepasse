@@ -16,7 +16,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { vehicles, type Vehicle } from "../data/catalog";
+import type { Vehicle } from "../data/catalog";
 import { VehicleCard } from "../components/VehicleCard";
 import { PageBreadcrumb } from "./PageLayout";
 
@@ -25,11 +25,13 @@ export function VehiclePage({
   favorites,
   onSave,
   onOpen,
+  related,
 }: {
   vehicle: Vehicle;
-  favorites: number[];
-  onSave: (id: number) => void;
-  onOpen: (id: number) => void;
+  favorites: string[];
+  onSave: (id: string) => void;
+  onOpen: (id: string) => void;
+  related: Vehicle[];
 }) {
   const [zoom, setZoom] = useState(false);
   const [contact, setContact] = useState(false);
@@ -41,10 +43,10 @@ export function VehiclePage({
     ["Modelo", vehicle.model],
     ["Versão", vehicle.version],
     ["Ano de fabricação / modelo", vehicle.year],
-    ["Quilometragem", `${vehicle.mileage} km`],
+    ["Quilometragem", vehicle.mileage ? `${vehicle.mileage} km` : "Não informada"],
     ["Câmbio", vehicle.transmission],
     ["Combustível", vehicle.fuel],
-    ["Condição", "Usado · demonstrativo"],
+    ["Condição", vehicle.condition || "Não informada"],
     ["Cor", "Não informada"],
     ["Carroceria", "Não informada"],
     ["Motorização", "Não informada"],
@@ -114,10 +116,10 @@ export function VehiclePage({
           <div className={`vehicle-gallery ${zoom ? "is-zoomed" : ""}`}>
             <img
               src={`/images/${vehicle.image}.jpg`}
-              alt={`${vehicle.brand} ${vehicle.model} — fotografia ilustrativa`}
+              alt={`${vehicle.brand} ${vehicle.model}`}
             />
             <span className="gallery-caption">
-              <Camera size={15} />1 foto · ilustrativa
+              <Camera size={15} /> Imagem de referência
             </span>
             <button
               className="gallery-zoom"
@@ -138,7 +140,7 @@ export function VehiclePage({
             <div>
               <Gauge />
               <span>
-                Quilometragem<strong>{vehicle.mileage} km</strong>
+                Quilometragem<strong>{vehicle.mileage ? `${vehicle.mileage} km` : "Não informada"}</strong>
               </span>
             </div>
             <div>
@@ -158,13 +160,9 @@ export function VehiclePage({
             <span className="eyebrow">CONHEÇA OS DETALHES</span>
             <h2>Sobre este veículo</h2>
             <p>
-              Este {vehicle.brand} {vehicle.model} faz parte da vitrine
-              demonstrativa da PHC Auto. Aqui, o anunciante poderá descrever o
-              histórico do veículo, sua conservação, revisões e diferenciais.
-            </p>
-            <p>
-              Fotografia, preço e dados são ilustrativos. As informações que não
-              constam nesta prévia estão identificadas como não informadas.
+              Este {vehicle.brand} {vehicle.model} faz parte da vitrine da PHC
+              Auto. Consulte a ficha técnica e converse com o anunciante antes
+              de tomar sua decisão.
             </p>
           </section>
           <section className="vehicle-detail-section">
@@ -208,7 +206,7 @@ export function VehiclePage({
         </div>
         <aside className="vehicle-contact-aside">
           <div className="vehicle-contact-card">
-            <span className="eyebrow">VALOR ANUNCIADO · DEMONSTRATIVO</span>
+            <span className="eyebrow">VALOR ANUNCIADO</span>
             <div className="price">
               <small>R$</small> {vehicle.price}
             </div>
@@ -233,8 +231,8 @@ export function VehiclePage({
             </button>
             {contact && (
               <p className="inline-notice" role="status">
-                O contato estará disponível quando o serviço for conectado.
-                Nenhuma mensagem foi enviada.
+                Use os dados de contato disponibilizados pelo anunciante. O
+                envio de mensagens pela plataforma ainda não está disponível.
               </p>
             )}
             <p className="contact-note">
@@ -273,7 +271,7 @@ export function VehiclePage({
           </a>
         </div>
         <div className="vehicle-grid">
-          {vehicles
+          {related
             .filter((v) => v.id !== vehicle.id)
             .slice(0, 4)
             .map((v) => (

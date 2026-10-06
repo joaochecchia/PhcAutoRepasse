@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, FileText } from "lucide-react";
 import { AccountLayout } from "./PageLayout";
 import {
@@ -6,13 +6,38 @@ import {
   ProfileFields,
   type Draft,
 } from "../components/FormFields";
+import { apiErrorMessage, authApi } from "../lib/backend";
+import type { Session } from "../lib/contracts";
 
-export function RegisterPage() {
+export function RegisterPage({
+  onAuthenticated,
+}: {
+  onAuthenticated: (session: Session, values: Draft) => void;
+}) {
   const [values, setValues] = useState<Draft>({ tipoPessoa: "PF" });
-  const [submitted, setSubmitted] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [versions, setVersions] = useState<{
+    versaoTermosUso: string;
+    versaoPoliticaPrivacidade: string;
+  } | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
   const change = (key: string, value: string) =>
     setValues((prev) => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    authApi
+      .registrationConfig()
+      .then(setVersions)
+      .catch((requestError) =>
+        setError(
+          apiErrorMessage(
+            requestError,
+            "Não foi possível carregar os documentos vigentes.",
+          ),
+        ),
+      );
+  }, []);
   return (
     <AccountLayout
       wide
@@ -22,9 +47,22 @@ export function RegisterPage() {
     >
       <form
         className="page-form"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          setSubmitted(true);
+          setLoading(true);
+          setError("");
+          try {
+            if (!versions) throw new Error("DOCUMENTS_NOT_LOADED");
+            await authApi.register(values, versions);
+            const session = await authApi.login(values.email, values.senha);
+            onAuthenticated(session, values);
+          } catch (requestError) {
+            setError(
+              apiErrorMessage(requestError, "Não foi possível criar sua conta."),
+            );
+          } finally {
+            setLoading(false);
+          }
         }}
       >
         <div className="form-section-title">
@@ -56,10 +94,15 @@ export function RegisterPage() {
           <FileText size={19} />
           <div>
             <strong>Termos de uso e privacidade</strong>
-            <p>
-              Os documentos oficiais e o aceite estarão disponíveis antes da
-              ativação do cadastro.
-            </p>
+            <label className="check-label terms-check">
+              <input
+                type="checkbox"
+                checked={accepted}
+                onChange={(event) => setAccepted(event.target.checked)}
+                required
+              />
+              Li e aceito os Termos de Uso e a Política de Privacidade vigentes.
+            </label>
             <button
               className="text-button"
               type="button"
@@ -70,26 +113,24 @@ export function RegisterPage() {
             </button>
             {termsOpen && (
               <p className="inline-notice">
-                Esta prévia não coleta consentimento. Na versão conectada, você
-                poderá ler os documentos vigentes antes de aceitar. Nenhum
-                aceite é registrado aqui.
+                O momento deste aceite será enviado ao servidor junto com o
+                cadastro e registrado para fins de comprovação.
               </p>
             )}
           </div>
         </div>
-        <button className="button primary" type="submit">
-          Conferir cadastro
+        <button className="button primary" type="submit" disabled={loading || !accepted || !versions}>
+          {loading ? "Criando sua conta…" : "Criar conta e continuar"}
           <ArrowRight size={17} />
         </button>
-        {submitted && (
-          <p className="inline-notice" role="status">
-            Prévia preenchida. O cadastro e o aceite oficial ainda não estão
-            disponíveis. Nenhuma conta foi criada e nenhum dado foi enviado.
+        {error && (
+          <p className="inline-notice error-notice" role="alert">
+            {error}
           </p>
         )}
         <p className="preview-caption">
-          Dados mantidos apenas enquanto esta página estiver aberta. Validação e
-          criação da conta serão feitas pelo servidor.
+          Os dados serão validados pelo servidor. Após o cadastro, sua sessão
+          será iniciada por cookie HttpOnly.
         </p>
       </form>
       <p className="page-switch">

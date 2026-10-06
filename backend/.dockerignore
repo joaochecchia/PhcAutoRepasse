@@ -6,3 +6,4 @@
 !.mvn/**
 !src/
 !src/**
+src/main/resources/static/uploads/veiculos/**

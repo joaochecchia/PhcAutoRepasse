@@ -117,6 +117,12 @@ public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway {
         where.add("a.status = 'PUBLICADO'");
         igualEnum(where, p, "v.tipo", "tipo", f.tipoVeiculo());
         igualTexto(where, p, "v.fabricante", "marca", f.marca());
+        igualTexto(where, p, "v.modelo", "modelo", f.modelo());
+        if (texto(f.termo()) != null) {
+            where.add("(lower(v.fabricante) like :termo or lower(v.modelo) like :termo "
+                    + "or lower(concat(v.fabricante, ' ', v.modelo)) like :termo)");
+            p.addValue("termo", "%" + texto(f.termo()).toLowerCase(java.util.Locale.ROOT) + "%");
+        }
         igualEnum(where, p, "u.tipo_pessoa", "tipoPessoa", f.tipoPessoa());
         if (texto(f.perfil()) != null) {
             where.add("(lower(u.nome) like :perfil or lower(coalesce(pj.nome_fantasia, '')) like :perfil)");

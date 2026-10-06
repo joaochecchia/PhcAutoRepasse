@@ -14,6 +14,8 @@ public record BuscarAnunciosRequest(
         @Size(max = 120) String cidade,
         @Size(min = 2, max = 2) String uf,
         @Size(max = 100) String marca,
+        @Size(max = 120) String modelo,
+        @Size(max = 220) String termo,
         TipoPessoa tipoPessoa,
         @Size(max = 160) String perfil,
         @PositiveOrZero Long precoMinimoCentavos,

@@ -6,7 +6,7 @@ Todos os parâmetros são opcionais e combináveis:
 
 - `tipoVeiculo`: `CARRO`, `MOTO`, `CAMINHAO`, `CAMINHONETE`, `BARCO` ou `LINHA_AMARELA`.
 - `cidade`, `uf`, `latitude` e `longitude` para a busca por proximidade.
-- `marca`, `tipoPessoa` (`PF`/`PJ`) e `perfil` (nome da pessoa ou nome fantasia da loja).
+- `marca`, `modelo`, `termo` (marca/modelo livre), `tipoPessoa` (`PF`/`PJ`) e `perfil` (nome da pessoa ou nome fantasia da loja).
 - `precoMinimoCentavos` e `precoMaximoCentavos`, aceitos de forma independente.
 - `anoMinimo` e `anoMaximo`, aplicados ao ano do modelo e aceitos de forma independente.
 - `cambio`, `combustivel`, `motorizacao`, `condicao` (`ZERO_KM`/`USADO`).
@@ -17,12 +17,12 @@ A localização aceita `modoLocalizacao=DISPOSITIVO`, `ENDERECO_CADASTRADO`, `CI
 
 Dispositivo, cidade e endereço cadastrado procuram primeiro anúncios dentro de 100 km e ampliam para 200 km somente quando nenhum anúncio satisfaz todos os filtros em 100 km. A resposta informa `raioKmAplicado`, `temProximaPagina` e `distanciaKm`. O frontend incrementa `pagina` enquanto `temProximaPagina=true`; cada consulta retorna no máximo 52 itens.
 
-Textos de valores categóricos são comparados sem diferença entre letras maiúsculas e minúsculas. `perfil` aceita busca parcial. O endereço público contém somente cidade e UF.
+Textos são comparados sem diferença entre letras maiúsculas e minúsculas. `termo` aceita busca parcial por marca, modelo ou pela combinação dos dois; `perfil` aceita busca parcial por nome. O endereço público contém somente cidade e UF.
 
 Exemplo:
 
 ```http
-GET /api/v1/anuncios?tipoVeiculo=CARRO&cidade=Goiania&uf=GO&modoLocalizacao=CIDADE&marca=Chevrolet&pagina=0&tamanho=52
+GET /api/v1/anuncios?tipoVeiculo=CARRO&cidade=Goiania&uf=GO&modoLocalizacao=CIDADE&marca=Chevrolet&modelo=Onix&pagina=0&tamanho=52
 ```
 
 Resposta:

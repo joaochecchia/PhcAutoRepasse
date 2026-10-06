@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public interface FotoWriteRepository extends JpaRepository<FotoEntity, UUID> {
     java.util.List<FotoEntity> findByAnuncioId(UUID anuncioId);
+    long countByAnuncioId(UUID anuncioId);
 }

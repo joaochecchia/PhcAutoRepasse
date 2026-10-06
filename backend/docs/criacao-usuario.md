@@ -104,7 +104,7 @@ Nome, email, telefone, senha, tipo, perfil correspondente, endereço e comprovan
 - **400**: campos inválidos, perfil incompatível ou corpo malformado.
 - **409**: email/CPF/CNPJ já cadastrado, inclusive colisões concorrentes protegidas pelas unicidades PostgreSQL.
 
-O cadastro público cria CLIENTE ativo. O campo `papel` aceita ADMIN ou DONO apenas quando a requisição é autenticada por um usuário DONO; a autorização é aplicada no adaptador HTTP. A verificação de credenciais local está disponível no [fluxo de login](login.md); JWT está implementado sem sessão HTTP; OAuth continua pendente. A senha só entra no request/comando, é codificada com BCrypt e sai do core para persistência apenas como hash. Respostas e eventos não transportam senha ou hash. Spring Security protege a API com Bearer JWT.
+O cadastro público cria CLIENTE ativo. O campo `papel` aceita ADMIN ou DONO apenas quando a requisição é autenticada por um usuário DONO; a autorização é aplicada no adaptador HTTP. A verificação de credenciais local está disponível no [fluxo de login](login.md); o JWT é entregue em cookie `HttpOnly` e também pode ser enviado como Bearer por clientes de API; OAuth continua pendente. A senha só entra no request/comando, é codificada com BCrypt e sai do core para persistência apenas como hash. Respostas e eventos não transportam senha ou hash.
 
 ## Transação e eventos
 
@@ -153,7 +153,7 @@ Detalhes do comprovante, versões vigentes e limites operacionais estão em [com
 
 ## Autenticação HTTP com JWT
 
-O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` retorna `mensagem`, `accessToken`, `tokenType` (Bearer) e `expiresIn` (segundos). Envie `Authorization: Bearer <accessToken>` nas operações protegidas. A configuração é stateless, sem sessão HTTP.
+O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` grava `PHC_AUTH` como cookie `HttpOnly` e retorna somente metadados da sessão. Clientes de API também podem enviar `Authorization: Bearer <token>` nas operações protegidas.
 
 Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
 

@@ -59,6 +59,12 @@ Enquanto a autenticação HTTP não estiver pronta, `anuncianteId` vem no reques
 - `tipoPreco=SOB_CONSULTA` limpa o preço. Para `FIXO`, o preço final deve ser positivo.
 - `publicarAgora=true` publica e `false` volta para rascunho. Se omitido, o status existente é preservado.
 - `DELETE /api/v1/anuncios/{anuncioId}` remove fotos, características, especialização, veículo e endereço dentro da mesma transação. Compras vinculadas bloqueiam a exclusão com HTTP 409.
+
+## Fotos do veículo
+
+As fotos são recebidas em `POST /api/v1/anuncios/{anuncioId}/fotos` como multipart e os bytes ficam no sistema de arquivos. O PostgreSQL guarda apenas a chave relativa. Cada veículo aceita no máximo oito fotos, nas posições de `0` a `7`; o serviço valida antecipadamente e o banco reforça o limite sob bloqueio transacional.
+
+O caminho relativo segue `usuarios/{usuarioId}/veiculos/{veiculoId}/{fotoId}.{extensao}`. Fora do Docker, a raiz padrão é `src/main/resources/static/uploads/veiculos`. No Compose, essa mesma pasta do host é montada em `/app/uploads/veiculos`, permitindo inspecionar os arquivos diretamente no projeto. O backend usa `LOCAL_UID` e `LOCAL_GID` (ambos 1000 por padrão) para escrever no bind mount sem executar como root. O conteúdo enviado fica ignorado pelo Git e pelo contexto de build da imagem; somente `.gitkeep` preserva a pasta.
 - Atualização e exclusão publicam eventos de negócio e as mudanças de todas as linhas continuam sendo projetadas no banco read por `RowChanged`.
 
 ## Placa completa e visibilidade

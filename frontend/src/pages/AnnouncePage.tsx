@@ -10,7 +10,12 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { addressFields, Fields, type Draft } from "../components/FormFields";
+import {
+  AddressFields,
+  addressFields,
+  Fields,
+  type Draft,
+} from "../components/FormFields";
 import {
   commonVehicleFields,
   motorFields,
@@ -18,6 +23,12 @@ import {
 } from "../data/announcementFields";
 import { types } from "../data/catalog";
 import { PageBreadcrumb } from "./PageLayout";
+import {
+  adPayloadFromDraft,
+  apiErrorMessage,
+  createAd,
+  uploadAdPhoto,
+} from "../lib/backend";
 
 type Photo = { id: string; file: File; alt: string };
 function PhotoPreview({ file }: { file: File }) {
@@ -30,7 +41,15 @@ function PhotoPreview({ file }: { file: File }) {
   return <img src={url || undefined} alt="Prévia local da foto selecionada" />;
 }
 const stepLabels = ["Veículo", "Localização", "Fotos e anúncio", "Conferência"];
-export function AnnouncePage({ profile }: { profile: Draft }) {
+export function AnnouncePage({
+  profile,
+  usuarioId,
+  onCreated,
+}: {
+  profile: Draft;
+  usuarioId: string;
+  onCreated: (anuncioId: string) => void;
+}) {
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<Draft>({
     tipoVeiculo: "CARRO",
@@ -40,7 +59,8 @@ export function AnnouncePage({ profile }: { profile: Draft }) {
   const [motors, setMotors] = useState<Draft[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoError, setPhotoError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const initialStep = useRef(true);
   useEffect(() => {
@@ -117,10 +137,29 @@ export function AnnouncePage({ profile }: { profile: Draft }) {
       <div className="editor-layout">
         <form
           className="page-form page-panel"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (step < 3) setStep(step + 1);
-            else setSubmitted(true);
+            if (step < 3) {
+              setStep(step + 1);
+              return;
+            }
+            setSubmitting(true);
+            setSubmitError("");
+            try {
+              const anuncio = await createAd(
+                adPayloadFromDraft(values, motors, usuarioId),
+              );
+              for (const [index, photo] of photos.entries()) {
+                await uploadAdPhoto(anuncio.id, photo.file, index, photo.alt);
+              }
+              onCreated(anuncio.id);
+            } catch (requestError) {
+              setSubmitError(
+                apiErrorMessage(requestError, "Não foi possível criar o anúncio."),
+              );
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           <div className="form-section-title">
@@ -246,12 +285,7 @@ export function AnnouncePage({ profile }: { profile: Draft }) {
                   e complete os campos abaixo.
                 </p>
               )}
-              <Fields
-                fields={addressFields}
-                prefix="endereco."
-                values={values}
-                onChange={change}
-              />
+              <AddressFields values={values} onChange={change} />
               <p className="preview-caption">
                 O endereço pertence a este anúncio. A localização pública será
                 somente a cidade; rua, número e complemento não aparecem na
@@ -313,32 +347,36 @@ export function AnnouncePage({ profile }: { profile: Draft }) {
               <div className="form-section">
                 <h2>Fotos do veículo</h2>
                 <p className="field-note">
-                  Selecione imagens para visualizar nesta página. Nada será
-                  enviado.
+                  Selecione até 8 imagens. Elas serão enviadas somente ao criar
+                  o anúncio na última etapa.
                 </p>
                 <label className="photo-picker">
                   <Camera size={28} />
                   <span>Selecionar fotos</span>
-                  <small>JPEG, PNG ou WebP · prévia local</small>
+                  <small>JPEG ou PNG · até 8 fotos</small>
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/jpeg,image/png"
                     multiple
                     onChange={(e) => {
                       const files = Array.from(e.target.files || []);
                       const supported = files.filter((f) =>
-                        ["image/jpeg", "image/png", "image/webp"].includes(
+                        ["image/jpeg", "image/png"].includes(
                           f.type,
                         ),
                       );
+                      const available = Math.max(0, 8 - photos.length);
+                      const selected = supported.slice(0, available);
                       setPhotoError(
-                        supported.length !== files.length
-                          ? "Não foi possível visualizar um dos arquivos. Selecione imagens JPEG, PNG ou WebP."
-                          : "",
+                        supported.length > available
+                          ? "Cada anúncio aceita no máximo 8 fotos."
+                          : supported.length !== files.length
+                            ? "Formato não aceito. Selecione imagens JPEG ou PNG."
+                            : "",
                       );
                       setPhotos((prev) => [
                         ...prev,
-                        ...supported.map((file) => ({
+                        ...selected.map((file) => ({
                           id: crypto.randomUUID(),
                           file,
                           alt: "",
@@ -500,16 +538,9 @@ export function AnnouncePage({ profile }: { profile: Draft }) {
                 onChange={change}
               />
               <p className="inline-notice">
-                Prévia sem conexão. A disponibilidade para publicar, os dados
-                obrigatórios e a validação final serão confirmados pelo
-                servidor.
+                Ao concluir, os dados serão validados pelo servidor e as fotos
+                serão enviadas na ordem apresentada.
               </p>
-              {submitted && (
-                <p className="inline-notice" role="status">
-                  Conferência concluída nesta página. Nenhum anúncio foi salvo
-                  ou publicado; suas fotos e informações não foram enviadas.
-                </p>
-              )}
             </>
           )}
           <div className="page-form-actions">
@@ -527,11 +558,18 @@ export function AnnouncePage({ profile }: { profile: Draft }) {
                 Meus dados
               </a>
             )}
-            <button className="button primary" type="submit">
-              {step === 3 ? "Concluir prévia" : "Continuar"}
+            <button className="button primary" type="submit" disabled={submitting}>
+              {submitting
+                ? "Enviando anúncio…"
+                : step === 3
+                  ? "Criar anúncio"
+                  : "Continuar"}
               <ArrowRight size={17} />
             </button>
           </div>
+          {submitError && (
+            <p className="inline-notice error-notice" role="alert">{submitError}</p>
+          )}
         </form>
         <aside className="editor-aside">
           <div className="page-panel">
@@ -545,10 +583,10 @@ export function AnnouncePage({ profile }: { profile: Draft }) {
             </ul>
           </div>
           <div className="page-panel preview-panel">
-            <h3>Você está em uma prévia.</h3>
+            <h3>Dados protegidos pela sua sessão.</h3>
             <p>
-              Os dados ficam em memória enquanto esta página estiver aberta.
-              Nenhum rascunho, upload ou publicação será criado.
+              O servidor valida o perfil, os dados técnicos, a propriedade do
+              anúncio e a publicação.
             </p>
             <a href="#anunciar/dados" className="text-button">
               Revisar dados do anunciante

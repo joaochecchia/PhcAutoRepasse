@@ -12,6 +12,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import repasse.phcauto.backend.anuncios.internal.core.exception.AnuncioInvalidoException;
 import repasse.phcauto.backend.anuncios.internal.core.exception.AnuncioNaoEncontradoException;
@@ -22,6 +24,7 @@ import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.pers
 
 @Service
 public class FotoAnuncioService {
+    private static final int MAXIMO_FOTOS_POR_VEICULO = 8;
     private final Path raiz;
     private final long tamanhoMaximo;
     private final FotoWriteRepository fotos;
@@ -38,16 +41,22 @@ public class FotoAnuncioService {
 
     @Transactional(transactionManager = "writeTransactionManager")
     public FotoAnuncioResponse salvar(UUID anuncioId, MultipartFile arquivo, int posicao, String textoAlternativo) {
-        if (!anuncios.existsById(anuncioId)) throw new AnuncioNaoEncontradoException(anuncioId);
+        var anuncio = anuncios.findById(anuncioId).orElseThrow(() -> new AnuncioNaoEncontradoException(anuncioId));
+        if (fotos.countByAnuncioId(anuncioId) >= MAXIMO_FOTOS_POR_VEICULO) {
+            throw new AnuncioInvalidoException("Cada veículo pode ter no máximo 8 fotos");
+        }
         if (arquivo == null || arquivo.isEmpty()) throw new AnuncioInvalidoException("A foto é obrigatória");
         if (arquivo.getSize() > tamanhoMaximo) throw new AnuncioInvalidoException("A foto excede o limite permitido");
-        if (posicao < 0 || posicao > 32767) throw new AnuncioInvalidoException("Posição da foto inválida");
+        if (posicao < 0 || posicao >= MAXIMO_FOTOS_POR_VEICULO) {
+            throw new AnuncioInvalidoException("A posição da foto deve estar entre 0 e 7");
+        }
         byte[] conteudo;
         try { conteudo = arquivo.getBytes(); }
         catch (IOException e) { throw new AnuncioInvalidoException("Não foi possível ler a foto"); }
         String extensao = detectarExtensao(conteudo, arquivo.getContentType());
         UUID id = UUID.randomUUID();
-        String chave = "anuncios/" + anuncioId + "/" + id + extensao;
+        String chave = "usuarios/" + anuncio.getAnuncianteId()
+                + "/veiculos/" + anuncio.getVeiculoId() + "/" + id + extensao;
         Path destino = resolver(chave);
         try {
             Files.createDirectories(destino.getParent());
@@ -57,12 +66,24 @@ public class FotoAnuncioService {
                 Files.move(temporario, destino, StandardCopyOption.ATOMIC_MOVE);
             } finally { Files.deleteIfExists(temporario); }
             var foto = fotos.saveAndFlush(FotoEntity.nova(id, anuncioId, chave, posicao, textoAlternativo));
+            removerArquivoSeTransacaoFalhar(destino);
             return response(foto);
         } catch (RuntimeException | IOException e) {
             try { Files.deleteIfExists(destino); } catch (IOException ignored) { }
             if (e instanceof AnuncioInvalidoException invalida) throw invalida;
             throw new AnuncioInvalidoException("Não foi possível armazenar a foto");
         }
+    }
+
+    private void removerArquivoSeTransacaoFalhar(Path destino) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) {
+                    try { Files.deleteIfExists(destino); } catch (IOException ignored) { }
+                }
+            }
+        });
     }
 
     @Transactional(transactionManager = "writeTransactionManager", readOnly = true)

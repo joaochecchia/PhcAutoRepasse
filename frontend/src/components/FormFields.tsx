@@ -251,7 +251,7 @@ export function ProfileFields({
               </p>
             </div>
           </div>
-          <ProfileAddressFields values={values} onChange={onChange} />
+          <AddressFields values={values} onChange={onChange} />
         </section>
       )}
     </>
@@ -260,7 +260,7 @@ export function ProfileFields({
 
 type CepStatus = "idle" | "loading" | "success" | "error";
 
-function ProfileAddressFields({
+export function AddressFields({
   values,
   onChange,
 }: {

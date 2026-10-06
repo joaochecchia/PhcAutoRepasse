@@ -50,7 +50,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
 
     @Override
     public PaginaAnunciosResponse buscar(BuscarAnunciosRequest r, UUID usuarioAutenticadoId) {
-        if (r == null) r = new BuscarAnunciosRequest(null,null,null,null,null,null,null,null,null,null,
+        if (r == null) r = new BuscarAnunciosRequest(null,null,null,null,null,null,null,null,null,null,null,null,
                 null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null);
         Double latitude = r.latitude();
         Double longitude = r.longitude();
@@ -74,7 +74,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
             case UF -> { cidade = null; latitude = null; longitude = null; }
             case BRASIL -> { cidade = null; uf = null; latitude = null; longitude = null; }
         }
-        var filtro = new BuscarAnunciosFiltro(r.tipoVeiculo(), cidade, uf, r.marca(), r.tipoPessoa(),
+        var filtro = new BuscarAnunciosFiltro(r.tipoVeiculo(), cidade, uf, r.marca(), r.modelo(), r.termo(), r.tipoPessoa(),
                 r.perfil(), r.precoMinimoCentavos(), r.precoMaximoCentavos(), r.anoMinimo(), r.anoMaximo(),
                 r.cambio(), r.combustivel(), r.motorizacao(), r.condicao(), r.tipoDirecao(), r.tracao(),
                 r.ipvaPago(), r.blindado(), r.numeroPortas(), r.cilindradaLitros(), r.tipoFreio(),

@@ -63,7 +63,7 @@ class ModosLocalizacaoBuscaTests {
 
     private BuscarAnunciosRequest request(ModoLocalizacaoBusca modo, String cidade, String uf,
             Double latitude, Double longitude) {
-        return new BuscarAnunciosRequest(modo, null, cidade, uf, null, null, null, null, null, null,
+        return new BuscarAnunciosRequest(modo, null, cidade, uf, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null,
                 latitude, longitude, 0, 52);
     }

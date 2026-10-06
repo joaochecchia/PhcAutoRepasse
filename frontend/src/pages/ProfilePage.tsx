@@ -1,15 +1,22 @@
-import type { Dispatch, SetStateAction } from "react";
-import { ArrowRight, UserRound, CarFront, ShieldCheck } from "lucide-react";
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { ArrowRight, UserRound, ShieldCheck } from "lucide-react";
 import { ProfileFields, type Draft } from "../components/FormFields";
 import { PageBreadcrumb } from "./PageLayout";
+import { apiErrorMessage, authApi } from "../lib/backend";
 
 export function ProfilePage({
   values,
   setValues,
+  usuarioId,
+  onContinue,
 }: {
   values: Draft;
   setValues: Dispatch<SetStateAction<Draft>>;
+  usuarioId: string;
+  onContinue: () => void;
 }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   return (
     <section className="container dedicated-page">
       <PageBreadcrumb label="Dados do anunciante" />
@@ -22,10 +29,10 @@ export function ProfilePage({
             veículo.
           </p>
         </div>
-        <a href="#entrar" className="button secondary">
+        <span className="button secondary">
           <UserRound size={17} />
-          Já tenho uma conta
-        </a>
+          Sessão autenticada
+        </span>
       </div>
       <div className="workflow-trail">
         <span className="active">01 · Seus dados</span>
@@ -35,9 +42,18 @@ export function ProfilePage({
       <div className="editor-layout">
         <form
           className="page-form page-panel"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            window.location.hash = "anunciar/veiculo";
+            setSaving(true);
+            setError("");
+            try {
+              await authApi.updateProfile(usuarioId, values);
+              onContinue();
+            } catch (requestError) {
+              setError(apiErrorMessage(requestError, "Não foi possível atualizar seus dados."));
+            } finally {
+              setSaving(false);
+            }
           }}
         >
           <div className="form-section-title">
@@ -47,8 +63,8 @@ export function ProfilePage({
             <div>
               <h2>Dados do anunciante</h2>
               <p>
-                Prévia sem login: preencha os campos para experimentar o fluxo.
-                * Campos necessários no cadastro.
+                Confira os dados carregados da sua conta. * Campos necessários
+                no cadastro.
               </p>
             </div>
           </div>
@@ -62,11 +78,12 @@ export function ProfilePage({
             <a href="#inicio" className="button secondary">
               Voltar ao início
             </a>
-            <button className="button primary">
-              Continuar para o veículo
+            <button className="button primary" disabled={saving}>
+              {saving ? "Salvando…" : "Continuar para o veículo"}
               <ArrowRight size={17} />
             </button>
           </div>
+          {error && <p className="inline-notice error-notice" role="alert">{error}</p>}
         </form>
         <aside className="editor-aside">
           <div className="page-panel">
@@ -79,25 +96,9 @@ export function ProfilePage({
               vitrine pública mostra apenas a cidade do veículo.
             </p>
             <p>
-              Quando sua conta estiver conectada, esta etapa poderá trazer os
-              dados já cadastrados para conferência.
+              Estes dados foram carregados da sua conta e suas alterações serão
+              validadas pelo servidor antes de continuar.
             </p>
-            <a className="text-button" href="#cadastro">
-              Ainda não tem conta? Cadastre-se
-              <ArrowRight size={15} />
-            </a>
-          </div>
-          <div className="page-panel preview-panel">
-            <CarFront size={24} />
-            <h3>Só quer conhecer a tela?</h3>
-            <p>
-              Você também pode explorar o formulário do veículo sem preencher
-              dados pessoais nesta demonstração.
-            </p>
-            <a className="text-button" href="#anunciar/veiculo">
-              Ver formulário do veículo
-              <ArrowRight size={15} />
-            </a>
           </div>
         </aside>
       </div>

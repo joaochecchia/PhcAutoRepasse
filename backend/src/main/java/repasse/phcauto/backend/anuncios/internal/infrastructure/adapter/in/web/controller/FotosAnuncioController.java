@@ -23,7 +23,7 @@ public class FotosAnuncioController {
     @org.springframework.security.access.prepost.PreAuthorize("@anuncioAuthorization.podeAlterar(#anuncioId, authentication)")
     public ResponseEntity<FotoAnuncioResponse> enviar(@PathVariable UUID anuncioId,
             @RequestPart("arquivo") MultipartFile arquivo,
-            @RequestParam @Min(0) @Max(32767) int posicao,
+            @RequestParam @Min(0) @Max(7) int posicao,
             @RequestParam(required = false) @Size(max = 180) String textoAlternativo) {
         return ResponseEntity.status(HttpStatus.CREATED).body(fotos.salvar(anuncioId, arquivo, posicao, textoAlternativo));
     }

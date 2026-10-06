@@ -127,7 +127,7 @@ class AnunciosIntegrationTests {
         var criado = anuncios.criar(request(TipoVeiculo.CARRO));
         criados.add(criado);
         esperarProjecao(1);
-        var filtros = new BuscarAnunciosRequest(null, TipoVeiculo.CARRO, "goiânia", "go", "fabricante",
+        var filtros = new BuscarAnunciosRequest(null, TipoVeiculo.CARRO, "goiânia", "go", "fabricante", "modelo", null,
                 repasse.phcauto.backend.domain.model.identidade.TipoPessoa.PF, "Anunciante",
                 50_000L, 150_000L, 2025, 2026, "automatico", "flex", "2.0",
                 repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO, null, null,
@@ -155,7 +155,7 @@ class AnunciosIntegrationTests {
         read.update("update catalogo.enderecos_anuncio set municipio_codigo_ibge=5300108 where id=(select endereco_id from catalogo.anuncios where id=?)",
                 criado.id());
 
-        var filtros = new BuscarAnunciosRequest(null, TipoVeiculo.CARRO, "Goiânia", "GO", marcaUnica,
+        var filtros = new BuscarAnunciosRequest(null, TipoVeiculo.CARRO, "Goiânia", "GO", marcaUnica, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, -16.6869, -49.2648, 0, 52);
         var pagina = anuncios.buscar(filtros, null);

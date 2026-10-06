@@ -58,6 +58,11 @@ export const filterGroups: { title: string; fields: FilterField[] }[] = [
         ].map((s) => [s, s]),
       },
       {
+        key: "modelo",
+        label: "Modelo",
+        placeholder: "Ex.: Corolla, HB20, Polo",
+      },
+      {
         key: "condicao",
         label: "Condição",
         options: [

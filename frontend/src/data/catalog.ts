@@ -1,22 +1,25 @@
 export type Vehicle = {
-  id: number;
+  id: string;
   brand: string;
   model: string;
   version: string;
   price: string;
   year: string;
-  mileage: string;
+  mileage?: string;
   location: string;
   image: string;
   fuel: string;
   transmission: string;
   tag?: string;
   seller: string;
+  live?: boolean;
+  condition?: string;
+  type?: string;
 };
 // Editorial fixtures, not a client-side implementation of the catalog service.
 export const vehicles: Vehicle[] = [
   {
-    id: 1,
+    id: "1",
     brand: "PORSCHE",
     model: "Panamera",
     version: "4.0 V8 Turbo PDK",
@@ -31,7 +34,7 @@ export const vehicles: Vehicle[] = [
     seller: "PHC Auto",
   },
   {
-    id: 2,
+    id: "2",
     brand: "BMW",
     model: "M5",
     version: "4.4 V8 TwinPower Turbo",
@@ -45,7 +48,7 @@ export const vehicles: Vehicle[] = [
     seller: "Loja demonstrativa",
   },
   {
-    id: 3,
+    id: "3",
     brand: "MERCEDES-BENZ",
     model: "AMG GT",
     version: "4.0 V8 Biturbo Performance",
@@ -59,7 +62,7 @@ export const vehicles: Vehicle[] = [
     seller: "Loja demonstrativa",
   },
   {
-    id: 4,
+    id: "4",
     brand: "AUDI",
     model: "RS7",
     version: "4.0 V8 TFSI Sportback Quattro",
@@ -74,7 +77,7 @@ export const vehicles: Vehicle[] = [
     seller: "PHC Auto",
   },
   {
-    id: 5,
+    id: "5",
     brand: "PORSCHE",
     model: "911 Carrera",
     version: "3.0 Coupé PDK",
@@ -88,7 +91,7 @@ export const vehicles: Vehicle[] = [
     seller: "Anunciante demonstrativo",
   },
   {
-    id: 6,
+    id: "6",
     brand: "TOYOTA",
     model: "Camry",
     version: "3.5 V6 XLE",
@@ -102,7 +105,7 @@ export const vehicles: Vehicle[] = [
     seller: "Loja demonstrativa",
   },
   {
-    id: 7,
+    id: "7",
     brand: "FORD",
     model: "Expedition",
     version: "3.5 V6 EcoBoost Limited",
@@ -116,7 +119,7 @@ export const vehicles: Vehicle[] = [
     seller: "Loja demonstrativa",
   },
   {
-    id: 8,
+    id: "8",
     brand: "FORD",
     model: "Mustang",
     version: "5.0 V8 GT Premium",

@@ -88,8 +88,9 @@ class UsuariosIntegrationTests {
             var loginBody = json.createObjectNode().put("email", request.email().toUpperCase(java.util.Locale.ROOT))
                     .put("senha", request.senha());
             mvc.perform(post("/api/v1/usuarios/login").contentType("application/json").content(json.writeValueAsString(loginBody)))
-                    .andExpect(status().isOk()).andExpect(jsonPath("mensagem").value("Login realizado com sucesso"))
-                    .andExpect(jsonPath("$.length()").value(1));
+                    .andExpect(status().isOk()).andExpect(jsonPath("autenticado").value(true))
+                    .andExpect(jsonPath("accessToken").doesNotExist())
+                    .andExpect(cookie().httpOnly("PHC_AUTH", true));
             loginBody.put("senha", "senha-incorreta");
             mvc.perform(post("/api/v1/usuarios/login").contentType("application/json").content(json.writeValueAsString(loginBody)))
                     .andExpect(status().isUnauthorized());

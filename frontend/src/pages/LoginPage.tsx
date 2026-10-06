@@ -2,10 +2,13 @@ import { useState } from "react";
 import { ArrowRight, LockKeyhole } from "lucide-react";
 import { AccountLayout } from "./PageLayout";
 import { Fields, PasswordField } from "../components/FormFields";
+import { apiErrorMessage, authApi } from "../lib/backend";
+import type { Session } from "../lib/contracts";
 
-export function LoginPage() {
+export function LoginPage({ onAuthenticated }: { onAuthenticated: (session: Session) => void }) {
   const [values, setValues] = useState({ email: "", senha: "" });
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   return (
     <AccountLayout
       eyebrow="ENTRAR NA SUA CONTA"
@@ -14,9 +17,17 @@ export function LoginPage() {
     >
       <form
         className="page-form login-form"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          setSubmitted(true);
+          setLoading(true);
+          setError("");
+          try {
+            onAuthenticated(await authApi.login(values.email, values.senha));
+          } catch (requestError) {
+            setError(apiErrorMessage(requestError, "E-mail ou senha inválidos."));
+          } finally {
+            setLoading(false);
+          }
         }}
       >
         <Fields
@@ -37,19 +48,19 @@ export function LoginPage() {
           value={values.senha}
           onChange={(senha) => setValues({ ...values, senha })}
         />
-        <button className="button primary" type="submit">
-          Entrar
+        <button className="button primary" type="submit" disabled={loading}>
+          {loading ? "Entrando…" : "Entrar"}
           <ArrowRight size={17} />
         </button>
-        {submitted && (
-          <p className="inline-notice" role="status">
-            O login ainda não está conectado. Nenhuma credencial foi enviada e
-            nenhuma sessão foi criada.
+        {error && (
+          <p className="inline-notice error-notice" role="alert">
+            {error}
           </p>
         )}
         <p className="preview-caption">
           <LockKeyhole size={15} />
-          Prévia de interface. Seus dados não serão enviados ou salvos.
+          A sessão é protegida por cookie HttpOnly. O navegador não armazena nem
+          acessa o token de autenticação.
         </p>
       </form>
       <p className="page-switch">

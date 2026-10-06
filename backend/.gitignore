@@ -65,4 +65,9 @@ Desktop.ini
 *.swp
 *.swo
 *~
-uploads/
+/uploads/
+
+# Fotos locais de anúncios: preservar a pasta, não versionar uploads dos usuários.
+/src/main/resources/static/uploads/veiculos/**
+!/src/main/resources/static/uploads/veiculos/.gitkeep
+!/src/main/resources/static/uploads/veiculos/README.md

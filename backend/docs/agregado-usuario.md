@@ -82,7 +82,7 @@ A API recebe, persiste e retorna CPF, CNPJ e CEP somente com números: CPF possu
 
 ## Autenticação HTTP com JWT
 
-O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` retorna `mensagem`, `accessToken`, `tokenType` (Bearer) e `expiresIn` (segundos). Envie `Authorization: Bearer <accessToken>` nas operações protegidas. A configuração é stateless, sem sessão HTTP.
+O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` grava `PHC_AUTH` como cookie `HttpOnly` e retorna somente metadados da sessão. Clientes de API também podem enviar `Authorization: Bearer <token>` nas operações protegidas.
 
 Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
 
