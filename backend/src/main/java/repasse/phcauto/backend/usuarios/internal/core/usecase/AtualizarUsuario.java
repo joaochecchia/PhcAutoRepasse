@@ -134,7 +134,9 @@ public final class AtualizarUsuario implements AtualizarUsuarioUseCase {
                 patch.numero() == null ? atual.numero() : ValidacaoCadastro.opcional(patch.numero(), "Número", 20),
                 patch.complemento() == null ? atual.complemento()
                         : ValidacaoCadastro.opcional(patch.complemento(), "Complemento", 200),
-                patch.uf() == null ? atual.uf() : validarUf(patch.uf()));
+                patch.uf() == null ? atual.uf() : validarUf(patch.uf()),
+                patch.municipioCodigoIbge() == null
+                        ? atual.municipioCodigoIbge() : patch.municipioCodigoIbge());
     }
 
     private String validarCep(String cep) {

@@ -114,7 +114,7 @@ public class JpaUsuarioAggregateGateway implements ConsultarUsuarioGateway,
                 .orElseThrow(() -> new IllegalStateException("Endereço obrigatório ausente"));
         var enderecoDados = new EnderecoUsuarioDados(endereco.getCep(), endereco.getCidade(),
                 endereco.getBairro(), endereco.getRua(), endereco.getNumero(),
-                endereco.getComplemento(), endereco.getUf());
+                endereco.getComplemento(), endereco.getUf(), endereco.getMunicipioCodigoIbge());
         if (usuario.getTipoPessoa() == TipoPessoa.PF) {
             var perfil = pessoasFisicas.findById(usuario.getId())
                     .orElseThrow(() -> new IllegalStateException("Perfil PF obrigatório ausente"));

@@ -24,6 +24,10 @@ spring:
         enabled: false
   cache:
     type: redis
+  servlet:
+    multipart:
+      max-file-size: ${FOTO_MAX_FILE_SIZE:10MB}
+      max-request-size: ${FOTO_MAX_REQUEST_SIZE:11MB}
   modulith:
     detection-strategy: explicitly-annotated
     events:
@@ -71,6 +75,10 @@ app:
   projection:
     bootstrap: ${PROJECTION_BOOTSTRAP:true}
     retry-delay: ${PROJECTION_RETRY_DELAY:30s}
+  storage:
+    fotos:
+      diretorio: ${FOTOS_DIRETORIO:./uploads}
+      tamanho-maximo-bytes: ${FOTOS_TAMANHO_MAXIMO_BYTES:10485760}
   cache:
     ttl: ${REDIS_CACHE_TTL:10m}
     key-prefix: ${REDIS_CACHE_PREFIX:phcauto:cache:}

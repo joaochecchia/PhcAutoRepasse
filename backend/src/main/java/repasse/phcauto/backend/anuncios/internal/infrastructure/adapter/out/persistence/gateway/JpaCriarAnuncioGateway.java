@@ -128,6 +128,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         public UUID getId(){return id;} public String getCep(){return e.cep();} public String getCidade(){return e.cidade();}
         public String getBairro(){return e.bairro();} public String getRua(){return e.rua();} public String getNumero(){return e.numero();}
         public String getComplemento(){return e.complemento();} public String getUf(){return e.uf();}
+        public Integer getMunicipioCodigoIbge(){return e.municipioCodigoIbge();}
     }
 
     static final class AnuncioDados extends Anuncio {

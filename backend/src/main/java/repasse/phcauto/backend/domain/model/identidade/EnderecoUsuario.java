@@ -12,4 +12,5 @@ public abstract class EnderecoUsuario {
     public abstract String getNumero();
     public abstract String getComplemento();
     public abstract String getUf();
+    public abstract Integer getMunicipioCodigoIbge();
 }

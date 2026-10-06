@@ -1,6 +1,12 @@
 package repasse.phcauto.backend.anuncios.internal.infrastructure.service;
 
 import java.util.List;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import repasse.phcauto.backend.localizacao.*;
+import repasse.phcauto.backend.usuarios.UsuariosLocalizacaoFacade;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import repasse.phcauto.backend.anuncios.*;
@@ -26,21 +32,53 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
     private final CriarAnuncioUseCase criarAnuncio;
     private final AtualizarAnuncioUseCase atualizarAnuncio;
     private final ExcluirAnuncioUseCase excluirAnuncio;
+    private final LocalizacaoFacade localizacao;
+    private final UsuariosLocalizacaoFacade localizacaoUsuario;
+    private final TransactionTemplate transacaoWrite;
     public DefaultAnunciosFacade(BuscarAnunciosUseCase buscarAnuncios, CriarAnuncioUseCase criarAnuncio,
-            AtualizarAnuncioUseCase atualizarAnuncio, ExcluirAnuncioUseCase excluirAnuncio) {
-        this.buscarAnuncios = buscarAnuncios; this.criarAnuncio = criarAnuncio; this.atualizarAnuncio = atualizarAnuncio; this.excluirAnuncio = excluirAnuncio;
+            AtualizarAnuncioUseCase atualizarAnuncio, ExcluirAnuncioUseCase excluirAnuncio,
+            LocalizacaoFacade localizacao, UsuariosLocalizacaoFacade localizacaoUsuario,
+            @Qualifier("writeTransactionManager") PlatformTransactionManager transactionManager) {
+        this.buscarAnuncios = buscarAnuncios;
+        this.criarAnuncio = criarAnuncio;
+        this.atualizarAnuncio = atualizarAnuncio;
+        this.excluirAnuncio = excluirAnuncio;
+        this.localizacao = localizacao;
+        this.localizacaoUsuario = localizacaoUsuario;
+        this.transacaoWrite = new TransactionTemplate(transactionManager);
     }
 
     @Override
-    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
-    public PaginaAnunciosResponse buscar(BuscarAnunciosRequest r) {
+    public PaginaAnunciosResponse buscar(BuscarAnunciosRequest r, UUID usuarioAutenticadoId) {
         if (r == null) r = new BuscarAnunciosRequest(null,null,null,null,null,null,null,null,null,null,
-                null,null,null,null,null,null,null,null,null,null,null,null,null,null);
-        var filtro = new BuscarAnunciosFiltro(r.tipoVeiculo(), r.cidade(), r.uf(), r.marca(), r.tipoPessoa(),
+                null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null);
+        Double latitude = r.latitude();
+        Double longitude = r.longitude();
+        String cidade = r.cidade();
+        String uf = r.uf();
+        switch (r.modoEfetivo()) {
+            case DISPOSITIVO -> { cidade = null; uf = null; }
+            case CIDADE -> {
+                var municipio = localizacao.buscarMunicipio(cidade, uf);
+                latitude = municipio.latitude(); longitude = municipio.longitude();
+                cidade = null; uf = null;
+            }
+            case ENDERECO_CADASTRADO -> {
+                if (usuarioAutenticadoId == null) {
+                    throw new AnuncioInvalidoException("Autenticação obrigatória para usar o endereço cadastrado");
+                }
+                var coordenadas = localizacaoUsuario.buscarEnderecoCadastrado(usuarioAutenticadoId);
+                latitude = coordenadas.latitude(); longitude = coordenadas.longitude();
+                cidade = null; uf = null;
+            }
+            case UF -> { cidade = null; latitude = null; longitude = null; }
+            case BRASIL -> { cidade = null; uf = null; latitude = null; longitude = null; }
+        }
+        var filtro = new BuscarAnunciosFiltro(r.tipoVeiculo(), cidade, uf, r.marca(), r.tipoPessoa(),
                 r.perfil(), r.precoMinimoCentavos(), r.precoMaximoCentavos(), r.anoMinimo(), r.anoMaximo(),
                 r.cambio(), r.combustivel(), r.motorizacao(), r.condicao(), r.tipoDirecao(), r.tracao(),
                 r.ipvaPago(), r.blindado(), r.numeroPortas(), r.cilindradaLitros(), r.tipoFreio(),
-                r.carroceria(), r.pagina() == null ? 0 : r.pagina(), r.tamanho() == null ? 20 : r.tamanho());
+                r.carroceria(), latitude, longitude, r.pagina() == null ? 0 : r.pagina(), r.tamanho() == null ? 20 : r.tamanho());
         var pagina = buscarAnuncios.execute(filtro);
         var itens = pagina.anuncios().stream().map(item -> new AnuncioBuscaResponse(
                 item.anuncioId(), item.veiculoId(), item.anuncianteId(), item.tipoVeiculo(),
@@ -49,14 +87,15 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 item.tipoPessoa(), item.nomePerfil(), item.cambio(), item.combustivel(),
                 item.motorizacao(), item.tipoDirecao(), item.tracao(), item.ipvaPago(),
                 item.blindado(), item.numeroPortas(), item.cilindradaLitros(), item.cilindradas(),
-                item.tipoFreio(), item.carroceria())).toList();
-        return new PaginaAnunciosResponse(itens, pagina.total(), pagina.pagina(), pagina.tamanho());
+                item.tipoFreio(), item.carroceria(), item.distanciaKm())).toList();
+        return new PaginaAnunciosResponse(itens, pagina.total(), pagina.pagina(), pagina.tamanho(),
+                pagina.raioKmAplicado(), pagina.temProximaPagina());
     }
 
     @Override
-    @Transactional(transactionManager = "writeTransactionManager")
     public AnuncioResponse criar(CriarAnuncioRequest request) {
-        return response(criarAnuncio.execute(command(request)));
+        var command = command(request);
+        return transacaoWrite.execute(status -> response(criarAnuncio.execute(command)));
     }
 
     @Override
@@ -67,7 +106,20 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 +(request.caminhonete()!=null?1:0)+(request.barco()!=null?1:0)+(request.linhaAmarela()!=null?1:0);
         if (blocos > 1) throw new AnuncioInvalidoException("Informe no máximo um bloco de dados específicos");
         var e=request.endereco();
-        var endereco=e==null?null:new CriarAnuncioCommand.Endereco(e.cep(),e.cidade(),e.bairro(),e.rua(),e.numero(),e.complemento(),e.uf());
+        CriarAnuncioCommand.Endereco endereco = null;
+        if (e != null) {
+            Integer municipioCodigoIbge = null;
+            String cidade = e.cidade();
+            String uf = e.uf();
+            if (cidade != null || uf != null) {
+                var municipio = localizacao.buscarMunicipio(cidade, uf);
+                municipioCodigoIbge = municipio.codigoIbge();
+                cidade = municipio.nome();
+                uf = municipio.uf();
+            }
+            endereco = new CriarAnuncioCommand.Endereco(e.cep(), cidade, e.bairro(), e.rua(),
+                    e.numero(), e.complemento(), uf, municipioCodigoIbge);
+        }
         var command=new AtualizarAnuncioCommand(request.fabricante(),request.modelo(),request.versao(),request.anoFabricacao(),
                 request.anoModelo(),request.cor(),request.identificadorPublico(),request.condicao(),request.tipoFreio(),request.titulo(),request.descricao(),
                 request.tipoPreco(),request.precoCentavos(),request.aceitaTroca(),request.publicarAgora(),endereco,detalhes(request));
@@ -102,8 +154,12 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 +(r.caminhonete()!=null?1:0)+(r.barco()!=null?1:0)+(r.linhaAmarela()!=null?1:0);
         if (blocos != 1) throw new AnuncioInvalidoException("Informe exatamente um bloco de dados específicos");
         var e = r.endereco();
-        var endereco = e == null ? null : new CriarAnuncioCommand.Endereco(e.cep(), e.cidade(), e.bairro(),
-                e.rua(), e.numero(), e.complemento(), e.uf());
+        CriarAnuncioCommand.Endereco endereco = null;
+        if (e != null) {
+            var municipio = localizacao.buscarMunicipio(e.cidade(), e.uf());
+            endereco = new CriarAnuncioCommand.Endereco(e.cep(), municipio.nome(), e.bairro(), e.rua(),
+                    e.numero(), e.complemento(), municipio.uf(), municipio.codigoIbge());
+        }
         return new CriarAnuncioCommand(r.anuncianteId(), r.tipoVeiculo(), r.fabricante(), r.modelo(),
                 r.versao(), r.anoFabricacao(), r.anoModelo(), r.cor(), r.identificadorPublico(),
                 r.condicao(), r.tipoFreio(), r.titulo(), r.descricao(), r.tipoPreco(), r.precoCentavos(), r.aceitaTroca(),

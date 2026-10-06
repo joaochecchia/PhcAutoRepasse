@@ -160,3 +160,8 @@ Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troc
 Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
 
 Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
+
+
+## Coordenadas do endereço
+
+O frontend envia CEP e os componentes postais. O backend valida cidade e UF no catálogo municipal e persiste `municipio_codigo_ibge` em `identidade.enderecos_usuario`. Não são armazenadas coordenadas residenciais; a busca usa as coordenadas centrais do município.

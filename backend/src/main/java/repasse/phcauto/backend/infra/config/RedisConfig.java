@@ -34,6 +34,7 @@ public class RedisConfig {
                 .serializeValuesWith(SerializationPair.fromSerializer(GenericJacksonJsonRedisSerializer.builder()
                         .enableDefaultTyping(BasicPolymorphicTypeValidator.builder()
                                 .allowIfSubType("repasse.phcauto.backend.infra.")
+                                .allowIfSubType("repasse.phcauto.backend.localizacao.")
                                 .allowIfSubType("java.util.")
                                 .allowIfSubType("java.time.")
                                 .allowIfSubType("java.math.")

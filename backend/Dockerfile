@@ -10,7 +10,7 @@ RUN ./mvnw -B -ntp -DskipTests package
 FROM eclipse-temurin:17-jre-jammy AS runtime
 WORKDIR /app
 
-RUN groupadd --system app && useradd --system --gid app app
+RUN groupadd --system app && useradd --system --gid app app && mkdir -p /app/uploads && chown app:app /app/uploads
 COPY --from=build --chown=app:app /app/target/backend-*.jar /app/backend.jar
 
 USER app

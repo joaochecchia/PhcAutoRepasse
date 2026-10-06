@@ -2,7 +2,7 @@
 
 O fluxo real de criação usa `POST /api/v1/anuncios`. A mesma transação do banco write grava o veículo base, exatamente uma especialização, o endereço próprio do anúncio, os motores quando o veículo for um barco e o anúncio. Uma falha reverte toda a operação.
 
-O request público é `CriarAnuncioRequest`. Campos comuns obrigatórios: `anuncianteId`, `tipoVeiculo`, `fabricante`, `modelo`, `titulo`, `tipoPreco` e `endereco`. O endereço exige CEP numérico com 8 dígitos, cidade, bairro, rua e UF. `numero` e `complemento` podem ser omitidos.
+O request público é `CriarAnuncioRequest`. Campos comuns obrigatórios: `anuncianteId`, `tipoVeiculo`, `fabricante`, `modelo`, `titulo`, `tipoPreco` e `endereco`. O endereço exige CEP numérico com 8 dígitos, cidade, bairro, rua e UF. O frontend não envia coordenadas. O backend valida cidade e UF no catálogo de municípios e salva o código IBGE no endereço do anúncio. `numero` e `complemento` podem ser omitidos.
 
 Exemplo para carro:
 
@@ -67,4 +67,4 @@ Carros, motos, caminhões e caminhonetes exigem `placa` completa no cadastro, co
 
 A placa completa sempre fica armazenada. `exibirPlacaCompleta=true` devolve a placa completa em `detalhes.placa`; quando falso, a resposta devolve somente o último caractere. `detalhes.placaCompletaVisivel` informa qual regra foi aplicada. A API nunca depende do frontend para ocultar a placa. Registros anteriores à V13 permanecem com `placa` nula até que sejam corrigidos; a coluna legada `final_placa` foi preservada nesta etapa para uma implantação compatível.
 
-A migration comum V13 adiciona `placa` e `exibir_placa_completa` às quatro tabelas e a projeção Modulith replica os dois campos. Próximas migrations devem usar V14 ou superior.
+A migration comum V13 adiciona `placa` e `exibir_placa_completa` às quatro tabelas e a projeção Modulith replica os dois campos. V16 adiciona as coordenadas do endereço do anúncio e V17 exige o par em novas gravações no banco write, preservando registros legados. V18 adiciona coordenadas aos endereços de usuário. Próximas migrations devem usar V19 ou superior.

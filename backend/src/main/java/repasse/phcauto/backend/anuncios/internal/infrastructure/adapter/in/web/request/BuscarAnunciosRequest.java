@@ -1,16 +1,15 @@
 package repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo;
 import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
+import repasse.phcauto.backend.anuncios.ModoLocalizacaoBusca;
 
 public record BuscarAnunciosRequest(
+        ModoLocalizacaoBusca modoLocalizacao,
         TipoVeiculo tipoVeiculo,
         @Size(max = 120) String cidade,
         @Size(min = 2, max = 2) String uf,
@@ -33,5 +32,34 @@ public record BuscarAnunciosRequest(
         @Positive BigDecimal cilindradaLitros,
         @Size(max = 60) String tipoFreio,
         @Size(max = 80) String carroceria,
+        @DecimalMin("-90.0") @DecimalMax("90.0") Double latitude,
+        @DecimalMin("-180.0") @DecimalMax("180.0") Double longitude,
         @Min(0) Integer pagina,
-        @Min(1) @Max(100) Integer tamanho) { }
+        @Min(1) @Max(52) Integer tamanho) {
+
+    @AssertTrue(message = "Parâmetros incompatíveis com o modo de localização")
+    @JsonIgnore
+    public boolean isLocalizacaoConsistente() {
+        boolean temCidade = cidade != null && !cidade.isBlank();
+        boolean temUf = uf != null && !uf.isBlank();
+        boolean temLatitude = latitude != null;
+        boolean temLongitude = longitude != null;
+        if (temLatitude != temLongitude) return false;
+        var modo = modoEfetivo();
+        return switch (modo) {
+            case DISPOSITIVO -> temLatitude && temLongitude;
+            case CIDADE -> temCidade && temUf && !temLatitude;
+            case UF -> temUf && !temCidade && !temLatitude;
+            case ENDERECO_CADASTRADO, BRASIL -> !temCidade && !temUf && !temLatitude;
+        };
+    }
+
+    @JsonIgnore
+    public ModoLocalizacaoBusca modoEfetivo() {
+        if (modoLocalizacao != null) return modoLocalizacao;
+        if (latitude != null || longitude != null) return ModoLocalizacaoBusca.DISPOSITIVO;
+        if (cidade != null && !cidade.isBlank()) return ModoLocalizacaoBusca.CIDADE;
+        if (uf != null && !uf.isBlank()) return ModoLocalizacaoBusca.UF;
+        return ModoLocalizacaoBusca.BRASIL;
+    }
+}

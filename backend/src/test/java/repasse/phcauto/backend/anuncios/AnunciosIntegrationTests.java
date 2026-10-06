@@ -86,7 +86,7 @@ class AnunciosIntegrationTests {
         criados.add(criado);
         tx.executeWithoutResult(status -> {
             var patch = new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título que será desfeito",null,
-                    null,null,null,null,new EnderecoAnuncioPatchRequest(null,"Cidade desfeita",null,null,null,null,null),
+                    null,null,null,null,new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,"GO"),
                     new AtualizarAnuncioRequest.CarroPatchRequest(999,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
                     null,null,null,null,null);
             anuncios.atualizar(criado.id(), patch);
@@ -107,7 +107,7 @@ class AnunciosIntegrationTests {
         criados.add(criado);
         var patch=new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título alterado",null,
                 TipoPreco.SOB_CONSULTA,null,false,null,
-                new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,null),
+                new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,"GO"),
                 new AtualizarAnuncioRequest.CarroPatchRequest(250,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
                 null,null,null,null,null);
         var atualizado=anuncios.atualizar(criado.id(),patch);
@@ -127,19 +127,43 @@ class AnunciosIntegrationTests {
         var criado = anuncios.criar(request(TipoVeiculo.CARRO));
         criados.add(criado);
         esperarProjecao(1);
-        var filtros = new BuscarAnunciosRequest(TipoVeiculo.CARRO, "goiânia", "go", "fabricante",
+        var filtros = new BuscarAnunciosRequest(null, TipoVeiculo.CARRO, "goiânia", "go", "fabricante",
                 repasse.phcauto.backend.domain.model.identidade.TipoPessoa.PF, "Anunciante",
                 50_000L, 150_000L, 2025, 2026, "automatico", "flex", "2.0",
                 repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO, null, null,
-                null, null, 4, new java.math.BigDecimal("2.0"), "disco", "suv", 0, 10);
-        var pagina = anuncios.buscar(filtros);
+                null, null, 4, new java.math.BigDecimal("2.0"), "disco", "suv",
+                -16.6869, -49.2648, 0, 10);
+        var pagina = anuncios.buscar(filtros, null);
         assertThat(pagina.total()).isOne();
+        assertThat(pagina.raioKmAplicado()).isEqualTo(100);
+        assertThat(pagina.temProximaPagina()).isFalse();
         assertThat(pagina.anuncios()).singleElement().satisfies(item -> {
             assertThat(item.anuncioId()).isEqualTo(criado.id());
             assertThat(item.nomePerfil()).isEqualTo("Anunciante teste");
             assertThat(item.cidade()).isEqualTo("Goiânia");
+            assertThat(item.distanciaKm()).isLessThan(1.0);
             assertThat(item).extracting(AnuncioBuscaResponse::getClass).isNotNull();
         });
+    }
+
+    @Test void ampliaParaDuzentosKmQuandoNaoHaResultadoEmCemKm() throws Exception {
+        var criado = anuncios.criar(request(TipoVeiculo.CARRO));
+        criados.add(criado);
+        esperarProjecao(1);
+        var marcaUnica = "Raio200-" + UUID.randomUUID();
+        read.update("update catalogo.veiculos set fabricante=? where id=?", marcaUnica, criado.veiculoId());
+        read.update("update catalogo.enderecos_anuncio set municipio_codigo_ibge=5300108 where id=(select endereco_id from catalogo.anuncios where id=?)",
+                criado.id());
+
+        var filtros = new BuscarAnunciosRequest(null, TipoVeiculo.CARRO, "Goiânia", "GO", marcaUnica,
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, -16.6869, -49.2648, 0, 52);
+        var pagina = anuncios.buscar(filtros, null);
+
+        assertThat(pagina.raioKmAplicado()).isEqualTo(200);
+        assertThat(pagina.total()).isOne();
+        assertThat(pagina.anuncios()).singleElement().satisfies(item ->
+                assertThat(item.distanciaKm()).isBetween(100.0, 200.0));
     }
 
     @Test void persisteEProjetaAnunciosDosSeisTipos() throws Exception {

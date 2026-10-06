@@ -23,10 +23,13 @@ public class SecurityConfig {
                 .requestCache(c -> c.disable())
                 .formLogin(c -> c.disable()).httpBasic(c -> c.disable()).logout(c -> c.disable())
                 .authorizeHttpRequests(a -> a
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/error", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/registrar", "/api/v1/usuarios/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").denyAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/localizacao/municipios/coordenadas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/anuncios").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/anuncios/*/fotos",
+                                "/api/v1/anuncios/*/fotos/*/arquivo").permitAll()
                         .requestMatchers("/api/v1/assinaturas/planos", "/api/v1/assinaturas/planos/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/usuarios/**", "/api/v1/anuncios", "/api/v1/anuncios/**").authenticated()
                         .anyRequest().denyAll())

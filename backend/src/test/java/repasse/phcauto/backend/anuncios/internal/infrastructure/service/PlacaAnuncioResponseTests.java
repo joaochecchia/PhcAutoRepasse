@@ -33,7 +33,21 @@ class PlacaAnuncioResponseTests {
     private AnuncioResponse criar(boolean exibir) {
         CriarAnuncioUseCase criar = command -> new AnuncioCriadoResultado(UUID.randomUUID(), UUID.randomUUID(),
                 command, StatusAnuncio.PUBLICADO, Instant.EPOCH, Instant.EPOCH);
-        var facade = new DefaultAnunciosFacade(f -> null, criar, (id, patch) -> null, id -> { });
+        var transactionManager = org.mockito.Mockito.mock(org.springframework.transaction.PlatformTransactionManager.class);
+        org.mockito.Mockito.when(transactionManager.getTransaction(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(org.mockito.Mockito.mock(org.springframework.transaction.TransactionStatus.class));
+        repasse.phcauto.backend.localizacao.LocalizacaoFacade localizacao =
+                new repasse.phcauto.backend.localizacao.LocalizacaoFacade() {
+                    public repasse.phcauto.backend.localizacao.MunicipioLocalizacao buscarMunicipio(String cidade, String uf) {
+                        return new repasse.phcauto.backend.localizacao.MunicipioLocalizacao(
+                                5208707, "Goiânia", "GO", -16.6869, -49.2648);
+                    }
+                    public repasse.phcauto.backend.localizacao.MunicipioLocalizacao buscarMunicipio(int codigoIbge) {
+                        return buscarMunicipio("Goiânia", "GO");
+                    }
+                };
+        var facade = new DefaultAnunciosFacade(f -> null, criar, (id, patch) -> null, id -> { },
+                localizacao, null, transactionManager);
         var endereco = new EnderecoAnuncioRequest("74000000", "Goiânia", "Centro", "Rua", "1", null, "GO");
         var carro = new CriarAnuncioRequest.CarroRequest(10, "SUV", "AUTOMATICO", "FLEX", null,
                 "2.0", null, new BigDecimal("2.0"), 4, 5, "abc1d23", exibir,

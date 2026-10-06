@@ -36,6 +36,16 @@ public class FotoEntity extends Foto {
 
     protected FotoEntity() { }
 
+    public static FotoEntity nova(UUID id, UUID anuncioId, String chaveArquivo, int posicao, String textoAlternativo) {
+        var entity = new FotoEntity();
+        entity.id = Objects.requireNonNull(id, "id");
+        entity.anuncioId = Objects.requireNonNull(anuncioId, "anuncioId");
+        entity.chaveArquivo = Objects.requireNonNull(chaveArquivo, "chaveArquivo");
+        entity.posicao = posicao;
+        entity.textoAlternativo = textoAlternativo;
+        return entity;
+    }
+
     public static FotoEntity criar(Foto dados) {
         Objects.requireNonNull(dados, "dados");
         var entity = new FotoEntity();

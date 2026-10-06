@@ -101,7 +101,7 @@ class CriarAnuncioTests {
             boolean publicar, TipoPreco tipoPreco, Long preco) {
         return new CriarAnuncioCommand(USUARIO, tipo, "Fabricante", "Modelo", "Versão", 2025, 2026,
                 "Preto", null, CondicaoVeiculo.USADO, "DISCO", "Título", "Descrição", tipoPreco, preco, true, publicar,
-                new CriarAnuncioCommand.Endereco("74000000", "Goiânia", "Centro", "Rua 1", "10", null, "GO"), detalhes);
+                new CriarAnuncioCommand.Endereco("74000000", "Goiânia", "Centro", "Rua 1", "10", null, "GO", 5208707), detalhes);
     }
 
     private CriarAnuncioCommand.DetalhesVeiculo detalhes(TipoVeiculo tipo) {

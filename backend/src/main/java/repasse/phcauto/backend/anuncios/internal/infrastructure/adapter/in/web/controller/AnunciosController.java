@@ -23,14 +23,23 @@ public class AnunciosController {
     @io.swagger.v3.oas.annotations.security.SecurityRequirements
     @GetMapping
     public ResponseEntity<HashMap<String, Object>> buscar(
-            @Valid @ParameterObject BuscarAnunciosRequest filtros) {
-        var pagina = anuncios.buscar(filtros);
+            @Valid @ParameterObject BuscarAnunciosRequest filtros,
+            org.springframework.security.core.Authentication authentication) {
+        UUID usuarioId = null;
+        if (authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
+            try { usuarioId = UUID.fromString(authentication.getName()); }
+            catch (IllegalArgumentException ignored) { usuarioId = null; }
+        }
+        var pagina = anuncios.buscar(filtros, usuarioId);
         var resposta = new HashMap<String, Object>();
         resposta.put("mensagem", "Anúncios encontrados com sucesso");
         resposta.put("carros", pagina.anuncios());
         resposta.put("total", pagina.total());
         resposta.put("pagina", pagina.pagina());
         resposta.put("tamanho", pagina.tamanho());
+        resposta.put("raioKmAplicado", pagina.raioKmAplicado());
+        resposta.put("temProximaPagina", pagina.temProximaPagina());
         return ResponseEntity.ok(resposta);
     }
 

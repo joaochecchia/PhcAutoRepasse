@@ -20,7 +20,7 @@ public record CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, St
         DetalhesVeiculo detalhes) {
 
     public record Endereco(String cep, String cidade, String bairro, String rua, String numero,
-            String complemento, String uf) { }
+            String complemento, String uf, Integer municipioCodigoIbge) { }
 
     public sealed interface DetalhesVeiculo permits Carro, Moto, Caminhao, Caminhonete, Barco, LinhaAmarela { }
 

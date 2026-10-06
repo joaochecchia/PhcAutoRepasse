@@ -32,13 +32,13 @@ O CRUD completo continua provisório. Repositories não são casos de uso nem en
 
 ## Publicação, ordem e falhas
 
-`WriteChangeIntegrator` captura insert, update e delete no Hibernate da unidade de escrita, incluindo dirty checking. Publica um `RowChanged` com identificador do evento, tabela de uma allowlist e chave do registro. O evento não carrega senha, dados pessoais ou o snapshot inteiro da linha.
+`WriteChangeIntegrator` captura insert, update e delete no Hibernate da unidade de escrita, incluindo dirty checking. Publica um `RowChanged` com identificador do evento, tabela de uma allowlist e chave do registro. O evento não carrega senha, dados pessoais ou o snapshot inteiro da linha. Callbacks repetidos para a mesma tabela e chave dentro de uma única transação são consolidados em uma publicação; uma transação posterior volta a publicar normalmente.
 
 O registro JDBC do Spring Modulith fica no write e participa da mesma transação JPA. Rollback desfaz tanto os dados quanto a publicação. O listener roda somente após commit.
 
 `ReadModelProjector` abre uma transação com a credencial de projeção, obtém um advisory lock por tabela/chave e só então consulta o estado atual no write. Faz upsert quando a linha existe e delete quando ela não existe. Assim, eventos repetidos ou atrasados convergem para o estado atual sem restaurar snapshots antigos. O lock também serializa projetores de instâncias diferentes para a mesma chave.
 
-O commit no read acontece antes do listener concluir. Se houver falha entre esse commit e a confirmação no registro de eventos, a entrega pode se repetir; o processamento é idempotente. Não existe transação distribuída entre os bancos nem garantia de exatamente uma entrega.
+O commit no read acontece antes do listener concluir. Se houver falha entre esse commit e a confirmação no registro de eventos, a entrega pode se repetir; o processamento é idempotente. Não existe transação distribuída entre os bancos nem garantia de exatamente uma entrega. Novos consumidores com efeitos não idempotentes, como cobrança ou envio de comunicação, devem manter um inbox ou outro controle persistente por identificador do evento.
 
 Falhas permanecem no registro. `PublicationRecovery` tenta novamente a cada 30 segundos. O monitor do Modulith marca como falhas publicações paradas por dois minutos. Publicações pendentes são reenviadas na inicialização; concluídas são removidas (`completion-mode=delete`). Há dois workers assíncronos e fila limitada, com pressão de retorno quando a fila enche. Dimensione pools e workers em conjunto; o padrão de escrita é 10 conexões.
 
@@ -54,7 +54,7 @@ Uma alteração por SQL direto, JDBC, query nativa ou `@Modifying` não dispara 
 
 ## Reconciliação e consistência
 
-Na inicialização, `ProjectionReconciler` percorre as chaves existentes dos dois bancos em páginas de 250 registros e publica eventos. Isso preenche um read novo com dados já existentes e permite remover linhas que deixaram de existir no write. A inicialização enfileira a carga; sua conclusão é assíncrona.
+Na inicialização, `ProjectionReconciler` percorre as chaves em páginas de 250 registros. Publica cada chave existente no write uma vez; no segundo passe, publica somente chaves órfãs presentes no read e ausentes no write. Isso preenche um read novo com dados já existentes, remove linhas que deixaram de existir no write e evita enfileirar duas vezes as linhas já sincronizadas. A inicialização enfileira a carga; sua conclusão é assíncrona.
 
 `PROJECTION_BOOTSTRAP=false` desativa essa varredura automática. O método `reconcile()` pode ser usado por uma rotina administrativa para reconstruir a projeção após intervenção manual. Ele não está exposto por HTTP. A varredura não equivale a um snapshot global atômico; alterações JPA concorrentes também geram eventos e convergem posteriormente.
 

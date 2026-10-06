@@ -34,6 +34,9 @@ public class EnderecoUsuarioEntity extends EnderecoUsuario {
     @Column(name = "uf", nullable = true, length = 2)
     private String uf;
 
+    @Column(name = "municipio_codigo_ibge", nullable = false)
+    private Integer municipioCodigoIbge;
+
     @Version
     @Column(name = "lock_version", nullable = false)
     private Long lockVersion;
@@ -51,6 +54,8 @@ public class EnderecoUsuarioEntity extends EnderecoUsuario {
         entity.numero = dados.getNumero();
         entity.complemento = dados.getComplemento();
         entity.uf = dados.getUf();
+        entity.municipioCodigoIbge = Objects.requireNonNull(
+                dados.getMunicipioCodigoIbge(), "Município obrigatório");
         return entity;
     }
 
@@ -66,6 +71,8 @@ public class EnderecoUsuarioEntity extends EnderecoUsuario {
         this.numero = dados.getNumero();
         this.complemento = dados.getComplemento();
         this.uf = dados.getUf();
+        this.municipioCodigoIbge = Objects.requireNonNull(
+                dados.getMunicipioCodigoIbge(), "Município obrigatório");
     }
 
     @Override
@@ -92,6 +99,9 @@ public class EnderecoUsuarioEntity extends EnderecoUsuario {
     @Override
     public String getUf() { return uf; }
 
+    @Override
+    public Integer getMunicipioCodigoIbge() { return municipioCodigoIbge; }
+
     public Long getLockVersion() { return lockVersion; }
 
     public void aplicarPatch(repasse.phcauto.backend.usuarios.internal.core.domain.EnderecoUsuarioDados dados) {
@@ -103,6 +113,8 @@ public class EnderecoUsuarioEntity extends EnderecoUsuario {
         this.numero = dados.numero();
         this.complemento = dados.complemento();
         this.uf = dados.uf();
+        this.municipioCodigoIbge = Objects.requireNonNull(
+                dados.municipioCodigoIbge(), "Município obrigatório");
     }
 
     public static EnderecoUsuarioEntity novoCadastro(UUID id, repasse.phcauto.backend.usuarios.internal.core.domain.DadosNovoUsuario dados, java.time.Instant agora) {
@@ -115,6 +127,8 @@ public class EnderecoUsuarioEntity extends EnderecoUsuario {
         entity.numero = dados.endereco().numero();
         entity.complemento = dados.endereco().complemento();
         entity.uf = dados.endereco().uf();
+        entity.municipioCodigoIbge = Objects.requireNonNull(
+                dados.endereco().municipioCodigoIbge(), "Município obrigatório");
         return entity;
     }
 }

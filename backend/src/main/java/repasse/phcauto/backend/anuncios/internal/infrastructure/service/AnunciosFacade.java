@@ -8,7 +8,7 @@ import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.r
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.CriarAnuncioRequest;
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioResponse;
 public interface AnunciosFacade {
-    PaginaAnunciosResponse buscar(BuscarAnunciosRequest request);
+    PaginaAnunciosResponse buscar(BuscarAnunciosRequest request, UUID usuarioAutenticadoId);
     AnuncioResponse criar(CriarAnuncioRequest request);
     AnuncioResponse atualizar(UUID anuncioId, AtualizarAnuncioRequest request);
     void excluir(UUID anuncioId);

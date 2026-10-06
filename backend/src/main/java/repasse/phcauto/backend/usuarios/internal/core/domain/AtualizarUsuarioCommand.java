@@ -20,7 +20,13 @@ public record AtualizarUsuarioCommand(
             String rua,
             String numero,
             String complemento,
-            String uf) { }
+            String uf,
+            Integer municipioCodigoIbge) {
+        public EnderecoUsuarioPatch(String cep, String cidade, String bairro, String rua,
+                String numero, String complemento, String uf) {
+            this(cep, cidade, bairro, rua, numero, complemento, uf, null);
+        }
+    }
 
     @Override public String toString() { return "AtualizarUsuarioCommand[conteudo protegido]"; }
 }

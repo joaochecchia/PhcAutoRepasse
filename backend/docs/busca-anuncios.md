@@ -5,19 +5,24 @@
 Todos os parâmetros são opcionais e combináveis:
 
 - `tipoVeiculo`: `CARRO`, `MOTO`, `CAMINHAO`, `CAMINHONETE`, `BARCO` ou `LINHA_AMARELA`.
-- `cidade`, `uf`, `marca`, `tipoPessoa` (`PF`/`PJ`) e `perfil` (nome da pessoa ou nome fantasia da loja).
+- `cidade`, `uf`, `latitude` e `longitude` para a busca por proximidade.
+- `marca`, `tipoPessoa` (`PF`/`PJ`) e `perfil` (nome da pessoa ou nome fantasia da loja).
 - `precoMinimoCentavos` e `precoMaximoCentavos`, aceitos de forma independente.
 - `anoMinimo` e `anoMaximo`, aplicados ao ano do modelo e aceitos de forma independente.
 - `cambio`, `combustivel`, `motorizacao`, `condicao` (`ZERO_KM`/`USADO`).
 - `tipoDirecao`, `tracao`, `ipvaPago`, `blindado`, `numeroPortas`, `cilindradaLitros`, `tipoFreio` e `carroceria`.
-- `pagina`, iniciando em zero, e `tamanho`, de 1 a 100. Os padrões são página 0 e tamanho 20.
+- `pagina`, iniciando em zero, e `tamanho`, de 1 a 52. Os padrões são página 0 e tamanho 20.
+
+A localização aceita `modoLocalizacao=DISPOSITIVO`, `ENDERECO_CADASTRADO`, `CIDADE`, `UF` ou `BRASIL`. Cidade exige apenas `cidade` e `uf`; o backend consulta o catálogo municipal local, sem API externa. Dispositivo exige somente latitude e longitude. Endereço cadastrado exige autenticação. UF aplica igualdade estadual, sem raio. Brasil não adiciona predicado geográfico. Quando o modo não é enviado, ele é inferido pelos parâmetros presentes.
+
+Dispositivo, cidade e endereço cadastrado procuram primeiro anúncios dentro de 100 km e ampliam para 200 km somente quando nenhum anúncio satisfaz todos os filtros em 100 km. A resposta informa `raioKmAplicado`, `temProximaPagina` e `distanciaKm`. O frontend incrementa `pagina` enquanto `temProximaPagina=true`; cada consulta retorna no máximo 52 itens.
 
 Textos de valores categóricos são comparados sem diferença entre letras maiúsculas e minúsculas. `perfil` aceita busca parcial. O endereço público contém somente cidade e UF.
 
 Exemplo:
 
 ```http
-GET /api/v1/anuncios?tipoVeiculo=CARRO&cidade=Goiania&uf=GO&marca=Chevrolet&precoMinimoCentavos=5000000&precoMaximoCentavos=9000000&anoMinimo=2020&cambio=AUTOMATICO&combustivel=FLEX&condicao=USADO&pagina=0&tamanho=20
+GET /api/v1/anuncios?tipoVeiculo=CARRO&cidade=Goiania&uf=GO&modoLocalizacao=CIDADE&marca=Chevrolet&pagina=0&tamanho=52
 ```
 
 Resposta:
@@ -28,8 +33,10 @@ Resposta:
   "carros": [],
   "total": 0,
   "pagina": 0,
-  "tamanho": 20
+  "tamanho": 52,
+  "raioKmAplicado": 200,
+  "temProximaPagina": false
 }
 ```
 
-A chave `carros` foi mantida conforme o contrato solicitado, embora possa conter qualquer um dos seis tipos de veículo.
+Anúncios antigos sem coordenadas não aparecem na busca por raio até terem a localização atualizada. Eles continuam disponíveis nas buscas sem proximidade. A chave `carros` foi mantida conforme o contrato atual, embora possa conter qualquer um dos seis tipos de veículo.

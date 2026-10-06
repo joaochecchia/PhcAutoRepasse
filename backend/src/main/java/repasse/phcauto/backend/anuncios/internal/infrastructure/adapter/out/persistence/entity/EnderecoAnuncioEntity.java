@@ -39,6 +39,9 @@ public class EnderecoAnuncioEntity extends EnderecoAnuncio {
     @JdbcTypeCode(SqlTypes.CHAR)
     private String uf;
 
+    @Column(name = "municipio_codigo_ibge", nullable = false)
+    private Integer municipioCodigoIbge;
+
     @Version
     @Column(name = "lock_version", nullable = false)
     private Long lockVersion;
@@ -71,6 +74,8 @@ public class EnderecoAnuncioEntity extends EnderecoAnuncio {
         complemento = opcional(dados.getComplemento());
         uf = obrigatorio(dados.getUf(), "uf").toUpperCase(Locale.ROOT);
         if (!uf.matches("[A-Z]{2}")) throw new IllegalArgumentException("UF inválida");
+        municipioCodigoIbge = Objects.requireNonNull(
+                dados.getMunicipioCodigoIbge(), "Município obrigatório");
     }
 
     private static String obrigatorio(String valor, String campo) {
@@ -90,5 +95,6 @@ public class EnderecoAnuncioEntity extends EnderecoAnuncio {
     @Override public String getNumero() { return numero; }
     @Override public String getComplemento() { return complemento; }
     @Override public String getUf() { return uf; }
+    @Override public Integer getMunicipioCodigoIbge() { return municipioCodigoIbge; }
     public Long getLockVersion() { return lockVersion; }
 }
