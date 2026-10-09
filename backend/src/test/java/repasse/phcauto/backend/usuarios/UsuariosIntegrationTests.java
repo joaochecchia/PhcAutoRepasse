@@ -75,7 +75,7 @@ class UsuariosIntegrationTests {
                 tipo == TipoPessoa.PF ? LocalDate.of(1990, 1, 1) : null,
                 tipo == TipoPessoa.PJ ? documento : null, tipo == TipoPessoa.PJ ? "Empresa teste LTDA" : null,
                 new EnderecoRequest("01001000", "São Paulo", "Sé", "Praça da Sé", "10", null, "SP"),
-                true, Instant.now(), "1.0", "1.0");
+                true, Instant.now(), "1.1", "1.1");
     }
 
     @Test void criaPfEPjPeloHttpComPerfilEnderecoHashEProjecao() throws Exception {
@@ -104,7 +104,7 @@ class UsuariosIntegrationTests {
             assertEquals(1, source.queryForObject("select count(*) from identidade."+perfil+" where usuario_id=?", Integer.class, id));
             assertEquals(0, source.queryForObject("select count(*) from identidade."+outro+" where usuario_id=?", Integer.class, id));
             assertEquals(1, source.queryForObject("select count(*) from identidade.enderecos_usuario where usuario_id=?", Integer.class, id));
-            assertEquals(1, source.queryForObject("select count(*) from compliance.aceites_termos where usuario_id=? and versao_termos_uso='1.0' and versao_politica_privacidade='1.0'", Integer.class, id));
+            assertEquals(1, source.queryForObject("select count(*) from compliance.aceites_termos where usuario_id=? and versao_termos_uso='1.1' and versao_politica_privacidade='1.1'", Integer.class, id));
             var projection = new JdbcTemplate(read);
             await(() -> projection.queryForObject("select count(*) from identidade.usuarios u join identidade."+perfil+
                     " p on p.usuario_id=u.id join identidade.enderecos_usuario e on e.usuario_id=u.id where u.id=?", Integer.class, id) == 1);

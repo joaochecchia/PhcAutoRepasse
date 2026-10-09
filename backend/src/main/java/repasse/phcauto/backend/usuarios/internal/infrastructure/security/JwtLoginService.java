@@ -24,11 +24,14 @@ public class JwtLoginService {
     }
     public LoginAutenticado execute(LoginRequest request) {
         var usuario = login.execute(new repasse.phcauto.backend.usuarios.internal.core.domain.LoginCommand(request.email(), request.senha()));
+        return emitir(usuario.id(), usuario.papel());
+    }
+    public LoginAutenticado emitir(java.util.UUID usuarioId, String papel) {
         var now = clock.instant();
-        var claims = JwtClaimsSet.builder().issuer(issuer).subject(usuario.id().toString())
-                .issuedAt(now).expiresAt(now.plusSeconds(ttl)).claim("roles", java.util.List.of(usuario.papel())).build();
+        var claims = JwtClaimsSet.builder().issuer(issuer).subject(usuarioId.toString())
+                .issuedAt(now).expiresAt(now.plusSeconds(ttl)).claim("roles", java.util.List.of(papel)).build();
         var token = encoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
-        return new LoginAutenticado(usuario.id(), usuario.papel(), token, ttl);
+        return new LoginAutenticado(usuarioId, papel, token, ttl);
     }
 }

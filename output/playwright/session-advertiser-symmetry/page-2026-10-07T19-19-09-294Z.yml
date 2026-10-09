@@ -1,0 +1,149 @@
+- generic [ref=e2]:
+  - link "Pular para o conteúdo" [ref=e3] [cursor=pointer]:
+    - /url: "#conteudo"
+  - generic [ref=e5]:
+    - generic [ref=e6]: BOAS OPORTUNIDADES. NOVOS CAMINHOS.
+    - generic [ref=e7]: PHC Auto Repasse • Conectando você ao próximo veículo
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "PHC Auto — início" [ref=e10] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e11]
+      - navigation "Navegação principal" [ref=e12]:
+        - link "Comprar veículo" [ref=e13] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Vender meu veículo" [ref=e14] [cursor=pointer]
+        - button "Nossos planos NOVO" [ref=e15] [cursor=pointer]:
+          - text: Nossos planos
+          - generic [ref=e16]: NOVO
+      - generic [ref=e17]:
+        - button "Ativar modo escuro" [ref=e18] [cursor=pointer]
+        - button "Favoritos (0)" [ref=e21] [cursor=pointer]
+        - button "Sair" [ref=e102] [cursor=pointer]
+        - button "Anunciar" [ref=e30] [cursor=pointer]
+  - main [active] [ref=e48]:
+    - generic [ref=e103]:
+      - navigation "Caminho da página" [ref=e104]:
+        - link "Início" [ref=e105] [cursor=pointer]:
+          - /url: "#inicio"
+        - generic [ref=e108]: Dados do anunciante
+      - generic [ref=e109]:
+        - generic [ref=e110]:
+          - generic [ref=e111]: VAMOS PREPARAR SEU ANÚNCIO
+          - heading "Primeiro, vamos conhecer você." [level=1] [ref=e112]
+          - paragraph [ref=e113]: Confira os dados do anunciante e depois preencha as informações do veículo.
+        - generic [ref=e114]: Sessão autenticada
+      - generic [ref=e118]:
+        - generic [ref=e119]: 01 · Seus dados
+        - generic [ref=e120]: 02 · Seu veículo
+        - generic [ref=e121]: 03 · Revisão do anúncio
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - generic [ref=e129]:
+            - heading "Dados do anunciante" [level=2] [ref=e130]
+            - paragraph [ref=e131]: Confira os dados carregados da sua conta. * Campos necessários no cadastro.
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - text: Tipo de pessoa
+              - generic [aria-hidden] [ref=e134]: "*"
+              - combobox "Tipo de pessoa" [ref=e136] [cursor=pointer]: Pessoa física
+            - generic [ref=e137]:
+              - text: Nome completo
+              - generic [aria-hidden] [ref=e138]: "*"
+              - textbox "Nome completo" [ref=e139]:
+                - /placeholder: Obrigatório
+                - text: Usuário Teste PHC
+            - generic [ref=e140]:
+              - text: E-mail
+              - generic [aria-hidden] [ref=e141]: "*"
+              - textbox "E-mail" [ref=e142]:
+                - /placeholder: Obrigatório
+                - text: teste.login.20261006@example.com
+            - generic [ref=e143]:
+              - text: Telefone de contato
+              - generic [aria-hidden] [ref=e144]: "*"
+              - textbox "Telefone de contato" [ref=e145]:
+                - /placeholder: Obrigatório — DDD + número
+                - text: "11999999999"
+            - generic [ref=e146]:
+              - text: CPF
+              - generic [aria-hidden] [ref=e147]: "*"
+              - textbox "CPF" [ref=e148]:
+                - /placeholder: Obrigatório — Somente números
+                - text: "11144477735"
+            - generic [ref=e149]:
+              - text: Data de nascimento
+              - generic [aria-hidden] [ref=e150]: "*"
+              - textbox "Data de nascimento" [ref=e151]:
+                - /placeholder: Obrigatório
+                - text: 1990-01-01
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - generic [ref=e154]: "02"
+              - generic [ref=e155]:
+                - heading "Seu endereço" [level=2] [ref=e156]
+                - paragraph [ref=e157]: Informações de cadastro. O endereço completo não aparece no anúncio público.
+            - generic [ref=e158]:
+              - generic [ref=e159]:
+                - text: CEP
+                - generic [aria-hidden] [ref=e160]: "*"
+                - textbox "CEP" [ref=e161]:
+                  - /placeholder: Obrigatório — 00000000
+                  - text: "01001000"
+              - generic [ref=e162]:
+                - text: Estado
+                - generic [aria-hidden] [ref=e163]: "*"
+                - combobox "Estado" [ref=e165] [cursor=pointer]: SP
+              - generic [ref=e166]:
+                - text: Cidade
+                - generic [aria-hidden] [ref=e167]: "*"
+                - textbox "Cidade" [ref=e168]:
+                  - /placeholder: Obrigatório
+                  - text: São Paulo
+              - generic [ref=e169]:
+                - text: Bairro
+                - generic [aria-hidden] [ref=e170]: "*"
+                - textbox "Bairro" [ref=e171]:
+                  - /placeholder: Obrigatório
+                  - text: Sé
+              - generic [ref=e172]:
+                - text: Rua / avenida
+                - generic [aria-hidden] [ref=e173]: "*"
+                - textbox "Rua / avenida" [ref=e174]:
+                  - /placeholder: Obrigatório
+                  - text: Praça da Sé
+              - generic [ref=e175]:
+                - text: Número
+                - textbox "Número" [ref=e176]:
+                  - /placeholder: Opcional
+                  - text: "100"
+              - generic [ref=e177]:
+                - text: Complemento
+                - textbox "Complemento" [ref=e178]:
+                  - /placeholder: Opcional — Apartamento, bloco…
+                  - text: lado ímpar
+            - status [ref=e179]: Endereço encontrado. Confira os dados e informe o número.
+          - generic [ref=e183]:
+            - link "Voltar ao início" [ref=e184] [cursor=pointer]:
+              - /url: "#inicio"
+            - button "Continuar para o veículo" [ref=e185] [cursor=pointer]
+        - complementary [ref=e188]:
+          - generic [ref=e189]:
+            - heading "Cada informação no seu lugar." [level=2] [ref=e194]
+            - paragraph [ref=e195]: Seus documentos e endereço completo fazem parte do cadastro. A vitrine pública mostra apenas a cidade do veículo.
+            - paragraph [ref=e196]: Estes dados foram carregados da sua conta e suas alterações serão validadas pelo servidor antes de continuar.
+  - contentinfo [ref=e32]:
+    - generic [ref=e33]:
+      - link [ref=e34] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e35]
+      - paragraph [ref=e36]: Boas oportunidades.Novos caminhos.
+      - navigation "Links do rodapé" [ref=e37]:
+        - link "Comprar" [ref=e38] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Anunciar" [ref=e39] [cursor=pointer]
+        - button "Planos" [ref=e40] [cursor=pointer]
+      - button "Modo escuro" [ref=e42] [cursor=pointer]
+    - generic [ref=e45]:
+      - generic [ref=e46]: © 2026 PHC Auto Repasse.
+      - generic [ref=e47]: Dados dos anúncios enviados pelos anunciantes.

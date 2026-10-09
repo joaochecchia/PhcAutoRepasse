@@ -1,0 +1,77 @@
+- generic [ref=e2]:
+  - link "Pular para o conteúdo" [ref=e3] [cursor=pointer]:
+    - /url: "#conteudo"
+  - generic [ref=e5]:
+    - generic [ref=e6]: BOAS OPORTUNIDADES. NOVOS CAMINHOS.
+    - generic [ref=e7]: PHC Auto Repasse • Conectando você ao próximo veículo
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "PHC Auto — início" [ref=e10] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e11]
+      - navigation "Navegação principal" [ref=e12]:
+        - link "Comprar veículo" [ref=e13] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Vender meu veículo" [ref=e14] [cursor=pointer]
+        - button "Nossos planos NOVO" [ref=e15] [cursor=pointer]:
+          - text: Nossos planos
+          - generic [ref=e16]: NOVO
+      - generic [ref=e17]:
+        - button "Ativar modo escuro" [ref=e18] [cursor=pointer]
+        - button "Favoritos (0)" [ref=e21] [cursor=pointer]
+        - button "Entrar" [ref=e25] [cursor=pointer]
+        - button "Anunciar" [ref=e30] [cursor=pointer]
+  - main [active] [ref=e32]:
+    - generic [ref=e64]:
+      - navigation "Caminho da página" [ref=e65]:
+        - link "Início" [ref=e66] [cursor=pointer]:
+          - /url: "#inicio"
+        - generic [ref=e69]: ENTRAR NA SUA CONTA
+      - generic [ref=e70]:
+        - complementary [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]: PHC AUTO REPASSE
+            - heading "Um novo caminho. O seu próximo bom negócio." [level=2] [ref=e74]: Um novo caminho.O seu próximobom negócio.
+            - paragraph [ref=e75]: Encontre oportunidades, anuncie seu veículo e faça parte dessa história.
+            - link "Explorar a vitrine" [ref=e76] [cursor=pointer]:
+              - /url: "#buscar"
+          - generic [ref=e80]: PAIXÃO POR VEÍCULOS.
+        - generic [ref=e81]:
+          - generic [ref=e82]: ENTRAR NA SUA CONTA
+          - heading "Bom te ver por aqui." [level=1] [ref=e83]
+          - paragraph [ref=e84]: Entre para encontrar seu próximo veículo e dar visibilidade ao seu anúncio.
+          - generic [ref=e85]:
+            - generic [ref=e87]:
+              - text: E-mail
+              - textbox "E-mail" [ref=e88]:
+                - /placeholder: voce@exemplo.com
+            - generic [ref=e89]:
+              - generic [ref=e90]: Senha
+              - generic [ref=e91]:
+                - textbox "Senha" [ref=e92]:
+                  - /placeholder: Digite sua senha
+                - button "Mostrar senha" [ref=e93] [cursor=pointer]
+            - button "Entrar" [ref=e97] [cursor=pointer]
+            - paragraph [ref=e100]: A sessão é protegida por cookie HttpOnly. O navegador não armazena nem acessa o token de autenticação.
+          - region "Criar uma conta" [ref=e105]:
+            - generic [ref=e111]:
+              - strong [ref=e112]: Ainda não tem uma conta?
+              - generic [ref=e113]: Cadastre-se para anunciar seu veículo com segurança.
+            - link "Criar minha conta" [ref=e114] [cursor=pointer]:
+              - /url: "#cadastro"
+  - contentinfo [ref=e48]:
+    - generic [ref=e49]:
+      - link [ref=e50] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e51]
+      - paragraph [ref=e52]: Boas oportunidades.Novos caminhos.
+      - navigation "Links do rodapé" [ref=e53]:
+        - link "Comprar" [ref=e54] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Anunciar" [ref=e55] [cursor=pointer]
+        - button "Planos" [ref=e56] [cursor=pointer]
+        - button "Criar conta" [ref=e57] [cursor=pointer]
+      - button "Modo escuro" [ref=e58] [cursor=pointer]
+    - generic [ref=e61]:
+      - generic [ref=e62]: © 2026 PHC Auto Repasse.
+      - generic [ref=e63]: Dados dos anúncios enviados pelos anunciantes.

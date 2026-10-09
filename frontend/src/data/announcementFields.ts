@@ -6,6 +6,8 @@ const number = (key: string, label: string, required = false): Field => ({
   key,
   label,
   type: "number",
+  min: key === "quilometragem" || key === "horimetro" ? 0 : 1,
+  step: ["cilindradaLitros", "tamanhoPes", "potenciaHp", "capacidadeCacambaM3"].includes(key) ? "any" : 1,
   required,
 });
 const text = (key: string, label: string, required = false): Field => ({
@@ -26,9 +28,10 @@ const mileage = number("quilometragem", "Quilometragem (km)", true);
 const transmission = text("cambio", "Câmbio", true);
 const fuel = text("combustivel", "Combustível", true);
 const body = text("carroceria", "Carroceria", true);
-const engine = text("motorizacao", "Motorização", true);
-const displacement = number("cilindradaLitros", "Cilindrada (litros)", true);
-const doors = number("numeroPortas", "Número de portas", true);
+const engine: Field = { ...text("motorizacao", "Motorização", true), pattern: "[0-9]{1,2}[.,][0-9]{1,2}", placeholder: "Ex.: 4.1", hint: "Informe a capacidade em litros, como 1.0 ou 4.1. Turbo é informado separadamente." };
+const turbo = yesNo("turbo", "Turbo?");
+const displacement = { ...number("cilindradaLitros", "Cilindrada (litros)"), min: 0.01 };
+const doors = number("numeroPortas", "Número de portas");
 const traction = text("tracao", "Tração");
 const steering = text("tipoDirecao", "Tipo de direção");
 const roadDocuments: Field[] = [
@@ -37,9 +40,11 @@ const roadDocuments: Field[] = [
     label: "Placa completa",
     required: true,
     placeholder: "Ex.: ABC1D23",
+    pattern: "[A-Za-z]{3}[0-9][A-Za-z0-9][0-9]{2}",
+    maxLength: 7,
   },
   yesNo("exibirPlacaCompleta", "Exibir placa completa no anúncio?", true),
-  yesNo("ipvaPago", "IPVA pago?"),
+  yesNo("ipvaPago", "IPVA pago?", true),
   yesNo("licenciado", "Veículo licenciado?"),
 ];
 export const vehicleFields: Record<string, Field[]> = {
@@ -49,18 +54,19 @@ export const vehicleFields: Record<string, Field[]> = {
     transmission,
     fuel,
     engine,
+    turbo,
     displacement,
     doors,
     number("numeroLugares", "Número de lugares"),
     traction,
     steering,
     ...roadDocuments,
-    yesNo("unicoDono", "Único dono?"),
+    yesNo("unicoDono", "Único dono?", true),
     yesNo("blindado", "Blindado?"),
   ],
   MOTO: [
     mileage,
-    number("cilindradas", "Cilindrada (cc)", true),
+    number("cilindradas", "Cilindrada (cc)"),
     text("categoria", "Categoria", true),
     transmission,
     fuel,
@@ -89,13 +95,14 @@ export const vehicleFields: Record<string, Field[]> = {
     transmission,
     fuel,
     engine,
+    turbo,
     displacement,
     doors,
     traction,
     steering,
     number("capacidadeCargaKg", "Capacidade de carga (kg)"),
     ...roadDocuments,
-    yesNo("unicoDono", "Único dono?"),
+    yesNo("unicoDono", "Único dono?", true),
     yesNo("blindado", "Blindado?"),
   ],
   BARCO: [
@@ -143,7 +150,6 @@ export const commonVehicleFields: Field[] = [
     ],
   },
   text("cor", "Cor"),
-  text("tipoFreio", "Tipo de freio"),
   {
     key: "identificadorPublico",
     label: "Referência pública do veículo",

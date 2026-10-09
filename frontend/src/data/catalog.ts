@@ -7,7 +7,8 @@ export type Vehicle = {
   year: string;
   mileage?: string;
   location: string;
-  image: string;
+  image?: string;
+  imageUrl?: string | null;
   fuel: string;
   transmission: string;
   tag?: string;
@@ -15,6 +16,8 @@ export type Vehicle = {
   live?: boolean;
   condition?: string;
   type?: string;
+  auctionHistory?: boolean | null;
+  accidentHistory?: boolean | null;
 };
 // Editorial fixtures, not a client-side implementation of the catalog service.
 export const vehicles: Vehicle[] = [

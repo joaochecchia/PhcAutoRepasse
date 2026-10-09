@@ -81,7 +81,9 @@ class JpaManterAnuncioGateway implements AtualizarAnuncioGateway, ExcluirAnuncio
         var c = new CriarAnuncioCommand(atual.anuncianteId(), atual.tipoVeiculo(), nn(p.fabricante(),atual.fabricante()),
                 nn(p.modelo(),atual.modelo()), nn(p.versao(),atual.versao()), nn(p.anoFabricacao(),atual.anoFabricacao()),
                 nn(p.anoModelo(),atual.anoModelo()), nn(p.cor(),atual.cor()), nn(p.identificadorPublico(),atual.identificadorPublico()),
-                nn(p.condicao(),atual.condicao()), nn(p.tipoFreio(),atual.tipoFreio()), nn(p.titulo(),atual.titulo()), nn(p.descricao(),atual.descricao()), tipoPreco, preco,
+                nn(p.condicao(),atual.condicao()), nn(p.tipoFreio(),atual.tipoFreio()),
+                nn(p.historicoLeilao(), atual.historicoLeilao()), nn(p.historicoSinistro(), atual.historicoSinistro()),
+                nn(p.titulo(),atual.titulo()), nn(p.descricao(),atual.descricao()), tipoPreco, preco,
                 nn(p.aceitaTroca(),atual.aceitaTroca()), publicar, enderecoNovo, detalhesNovos);
         repasse.phcauto.backend.anuncios.internal.core.validation.ValidarDadosTecnicosAnuncio.validar(c);
         if (c.fabricante()==null || c.fabricante().isBlank() || c.modelo()==null || c.modelo().isBlank()
@@ -120,7 +122,8 @@ class JpaManterAnuncioGateway implements AtualizarAnuncioGateway, ExcluirAnuncio
 
     private CriarAnuncioCommand command(AnuncioEntity a, VeiculoEntity v, EnderecoAnuncioEntity e) {
         return new CriarAnuncioCommand(a.getAnuncianteId(),v.getTipo(),v.getFabricante(),v.getModelo(),v.getVersao(),
-                v.getAnoFabricacao(),v.getAnoModelo(),v.getCor(),v.getIdentificadorPublico(),v.getCondicao(),v.getTipoFreio(),a.getTitulo(),a.getDescricao(),
+                v.getAnoFabricacao(),v.getAnoModelo(),v.getCor(),v.getIdentificadorPublico(),v.getCondicao(),v.getTipoFreio(),
+                v.getHistoricoLeilao(), v.getHistoricoSinistro(), a.getTitulo(),a.getDescricao(),
                 a.getTipoPreco(),a.getPrecoCentavos(),a.getAceitaTroca(),a.getStatus()==StatusAnuncio.PUBLICADO,
                 new CriarAnuncioCommand.Endereco(e.getCep(),e.getCidade(),e.getBairro(),e.getRua(),e.getNumero(),e.getComplemento(),e.getUf(),e.getMunicipioCodigoIbge()), detalhes(v));
     }

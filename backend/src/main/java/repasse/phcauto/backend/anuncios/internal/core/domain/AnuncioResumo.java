@@ -15,4 +15,5 @@ public record AnuncioResumo(UUID anuncioId, UUID veiculoId, UUID anuncianteId,
         String nomePerfil, String cambio, String combustivel, String motorizacao,
         String tipoDirecao, String tracao, Boolean ipvaPago, Boolean blindado,
         Integer numeroPortas, BigDecimal cilindradaLitros, Integer cilindradas,
-        String tipoFreio, String carroceria, Double distanciaKm) { }
+        String tipoFreio, String carroceria, Boolean historicoLeilao, Boolean historicoSinistro,
+        Double distanciaKm, UUID fotoPrincipalId) { }

@@ -57,6 +57,12 @@ public class VeiculoEntity extends Veiculo {
     @Column(name = "tipo_freio", nullable = true, length = 60)
     private String tipoFreio;
 
+    @Column(name = "historico_leilao", nullable = true)
+    private Boolean historicoLeilao;
+
+    @Column(name = "historico_sinistro", nullable = true)
+    private Boolean historicoSinistro;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     private Instant criadoEm;
 
@@ -84,6 +90,8 @@ public class VeiculoEntity extends Veiculo {
         entity.identificadorPublico = dados.getIdentificadorPublico();
         entity.condicao = dados.getCondicao();
         entity.tipoFreio = dados.getTipoFreio();
+        entity.historicoLeilao = dados.getHistoricoLeilao();
+        entity.historicoSinistro = dados.getHistoricoSinistro();
         entity.criadoEm = Objects.requireNonNull(dados.getCriadoEm(), "criadoEm");
         entity.atualizadoEm = Objects.requireNonNull(dados.getAtualizadoEm(), "atualizadoEm");
         return entity;
@@ -105,6 +113,8 @@ public class VeiculoEntity extends Veiculo {
         this.identificadorPublico = dados.getIdentificadorPublico();
         this.condicao = dados.getCondicao();
         this.tipoFreio = dados.getTipoFreio();
+        this.historicoLeilao = dados.getHistoricoLeilao();
+        this.historicoSinistro = dados.getHistoricoSinistro();
         this.atualizadoEm = Objects.requireNonNull(dados.getAtualizadoEm(), "atualizadoEm");
     }
 
@@ -143,6 +153,12 @@ public class VeiculoEntity extends Veiculo {
 
     @Override
     public String getTipoFreio() { return tipoFreio; }
+
+    @Override
+    public Boolean getHistoricoLeilao() { return historicoLeilao; }
+
+    @Override
+    public Boolean getHistoricoSinistro() { return historicoSinistro; }
 
     @Override
     public Instant getCriadoEm() { return criadoEm; }

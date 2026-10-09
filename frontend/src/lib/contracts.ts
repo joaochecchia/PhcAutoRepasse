@@ -47,6 +47,9 @@ export type SearchAd = {
   cambio?: string | null;
   combustivel?: string | null;
   motorizacao?: string | null;
+  historicoLeilao?: boolean | null;
+  historicoSinistro?: boolean | null;
+  fotoPrincipalUrl?: string | null;
 };
 
 export type SearchResponse = {
@@ -56,4 +59,17 @@ export type SearchResponse = {
   tamanho: number;
   raioKmAplicado: number | null;
   temProximaPagina: boolean;
+};
+
+export type HomeAdsResponse = {
+  carros: SearchAd[];
+  mensagem: string;
+};
+
+export type AdPhoto = {
+  id: string;
+  anuncioId: string;
+  posicao: number;
+  textoAlternativo?: string | null;
+  url: string;
 };

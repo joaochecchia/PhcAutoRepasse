@@ -85,7 +85,7 @@ class AnunciosIntegrationTests {
         var criado = anuncios.criar(request(TipoVeiculo.CARRO));
         criados.add(criado);
         tx.executeWithoutResult(status -> {
-            var patch = new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título que será desfeito",null,
+            var patch = new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,null,null,"Título que será desfeito",null,
                     null,null,null,null,new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,"GO"),
                     new AtualizarAnuncioRequest.CarroPatchRequest(999,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
                     null,null,null,null,null);
@@ -105,7 +105,7 @@ class AnunciosIntegrationTests {
     @Test void atualizaParcialmenteEnderecoEDetalhesEExcluiAgregado() throws Exception {
         var criado=anuncios.criar(request(TipoVeiculo.CARRO));
         criados.add(criado);
-        var patch=new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,"Título alterado",null,
+        var patch=new AtualizarAnuncioRequest(null,null,null,null,null,null,null,null,null,null,null,"Título alterado",null,
                 TipoPreco.SOB_CONSULTA,null,false,null,
                 new EnderecoAnuncioPatchRequest(null,"Anápolis",null,null,null,null,"GO"),
                 new AtualizarAnuncioRequest.CarroPatchRequest(250,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null),
@@ -192,8 +192,8 @@ class AnunciosIntegrationTests {
 
     private CriarAnuncioRequest request(TipoVeiculo tipo) {
         var endereco = new EnderecoAnuncioRequest("74000000","Goiânia","Centro","Rua 1","10",null,"GO");
-        return new CriarAnuncioRequest(usuarioId,tipo,"Fabricante","Modelo",null,2025,2026,"Preto",null,repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO,"DISCO",
-                "Anúncio "+tipo,null,TipoPreco.FIXO,100_000L,true,true,endereco,
+        return new CriarAnuncioRequest(usuarioId,tipo,"Fabricante","Modelo",null,2025,2026,"Preto",null,repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO,"DISCO",false,false,
+                "Anúncio "+tipo,null,TipoPreco.FIXO,100_000L,true,true,null,endereco,
                 tipo==TipoVeiculo.CARRO?new CriarAnuncioRequest.CarroRequest(10,"SUV","AUTOMATICO","FLEX",null,"2.0",null,new java.math.BigDecimal("2.0"),4,null,"ABC1D23",false,null,null,null,null):null,
                 tipo==TipoVeiculo.MOTO?new CriarAnuncioRequest.MotoRequest(10,160,"STREET",null,null,"MANUAL","GASOLINA","DEF2E34",true,null,null):null,
                 tipo==TipoVeiculo.CAMINHAO?new CriarAnuncioRequest.CaminhaoRequest(10,"TOCO","BAU","MANUAL","DIESEL",null,null,2,null,null,null,"GHI3F45",false,null,null):null,

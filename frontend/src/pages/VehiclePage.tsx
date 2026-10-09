@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
   CalendarDays,
   Camera,
+  CameraOff,
+  ChevronLeft,
+  ChevronRight,
   Fuel,
+  Gavel,
   Gauge,
   Heart,
   MapPin,
@@ -13,12 +17,15 @@ import {
   Share2,
   ShieldCheck,
   Store,
+  TriangleAlert,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
 import type { Vehicle } from "../data/catalog";
 import { VehicleCard } from "../components/VehicleCard";
 import { PageBreadcrumb } from "./PageLayout";
+import { apiErrorMessage, listAdPhotos, requestWhatsappContact } from "../lib/backend";
+import type { AdPhoto } from "../lib/contracts";
 
 export function VehiclePage({
   vehicle,
@@ -26,18 +33,54 @@ export function VehiclePage({
   onSave,
   onOpen,
   related,
+  authenticated,
 }: {
   vehicle: Vehicle;
   favorites: string[];
   onSave: (id: string) => void;
   onOpen: (id: string) => void;
   related: Vehicle[];
+  authenticated: boolean;
 }) {
   const [zoom, setZoom] = useState(false);
-  const [contact, setContact] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [photos, setPhotos] = useState<AdPhoto[]>([]);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [photosError, setPhotosError] = useState(false);
+  const [contactError, setContactError] = useState("");
+  const [contactLoading, setContactLoading] = useState(false);
   const [shared, setShared] = useState("");
   const [shareFallback, setShareFallback] = useState(false);
   const saved = favorites.includes(vehicle.id);
+  const fallbackImage = vehicle.imageUrl || (vehicle.image ? `/images/${vehicle.image}.jpg` : null);
+  const currentPhoto = photos[photoIndex];
+  const imageSource = currentPhoto?.url || fallbackImage;
+  const imageAlt = currentPhoto?.textoAlternativo?.trim() || `${vehicle.brand} ${vehicle.model}`;
+  useEffect(() => {
+    let active = true;
+    setPhotos([]);
+    setPhotoIndex(0);
+    setImageFailed(false);
+    setPhotosError(false);
+    if (!vehicle.live) return () => { active = false; };
+    setPhotosLoading(true);
+    listAdPhotos(vehicle.id)
+      .then((result) => {
+        if (active) setPhotos([...result].sort((left, right) => left.posicao - right.posicao));
+      })
+      .catch(() => {
+        if (active) setPhotosError(true);
+      })
+      .finally(() => {
+        if (active) setPhotosLoading(false);
+      });
+    return () => { active = false; };
+  }, [vehicle.id, vehicle.live]);
+  useEffect(() => {
+    setImageFailed(false);
+    setZoom(false);
+  }, [photoIndex, imageSource]);
   const specs = [
     ["Marca", vehicle.brand],
     ["Modelo", vehicle.model],
@@ -114,22 +157,69 @@ export function VehiclePage({
       <div className="vehicle-page-layout">
         <div className="vehicle-page-main">
           <div className={`vehicle-gallery ${zoom ? "is-zoomed" : ""}`}>
-            <img
-              src={`/images/${vehicle.image}.jpg`}
-              alt={`${vehicle.brand} ${vehicle.model}`}
-            />
+            {imageSource && !imageFailed ? (
+              <img
+                src={imageSource}
+                alt={imageAlt}
+                onError={() => setImageFailed(true)}
+              />
+            ) : (
+              <div className="vehicle-image-placeholder vehicle-image-placeholder-large" role="img" aria-label="Anúncio sem fotos">
+                <CameraOff size={46} />
+                <span>Este anúncio ainda não possui fotos</span>
+              </div>
+            )}
             <span className="gallery-caption">
-              <Camera size={15} /> Imagem de referência
+              <Camera size={15} /> {imageSource && !imageFailed
+                ? photos.length > 1 ? `${photoIndex + 1} de ${photos.length}` : "Foto do veículo"
+                : "Sem fotos cadastradas"}
             </span>
-            <button
-              className="gallery-zoom"
-              onClick={() => setZoom(!zoom)}
-              aria-label={zoom ? "Reduzir foto" : "Ampliar foto"}
-              aria-pressed={zoom}
-            >
-              {zoom ? <ZoomOut size={20} /> : <ZoomIn size={20} />}
-            </button>
+            {photos.length > 1 && !imageFailed && (
+              <>
+                <button
+                  className="gallery-navigation gallery-previous"
+                  onClick={() => setPhotoIndex((photoIndex - 1 + photos.length) % photos.length)}
+                  aria-label="Foto anterior"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  className="gallery-navigation gallery-next"
+                  onClick={() => setPhotoIndex((photoIndex + 1) % photos.length)}
+                  aria-label="Próxima foto"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+            {imageSource && !imageFailed && (
+              <button
+                className="gallery-zoom"
+                onClick={() => setZoom(!zoom)}
+                aria-label={zoom ? "Reduzir foto" : "Ampliar foto"}
+                aria-pressed={zoom}
+              >
+                {zoom ? <ZoomOut size={20} /> : <ZoomIn size={20} />}
+              </button>
+            )}
           </div>
+          {photos.length > 1 && (
+            <div className="vehicle-gallery-thumbnails" aria-label="Fotos do veículo">
+              {photos.map((photo, index) => (
+                <button
+                  key={photo.id}
+                  className={index === photoIndex ? "is-active" : ""}
+                  onClick={() => setPhotoIndex(index)}
+                  aria-label={`Exibir foto ${index + 1} de ${photos.length}`}
+                  aria-current={index === photoIndex ? "true" : undefined}
+                >
+                  <img src={photo.url} alt="" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          )}
+          {photosLoading && <p className="gallery-status" role="status">Carregando fotos…</p>}
+          {photosError && <p className="gallery-status gallery-error" role="status">Não foi possível carregar todas as fotos.</p>}
           <div className="vehicle-highlights">
             <div>
               <CalendarDays />
@@ -156,6 +246,37 @@ export function VehiclePage({
               </span>
             </div>
           </div>
+          <section className="vehicle-detail-section vehicle-history-section">
+            <span className="eyebrow">TRANSPARÊNCIA DO ANÚNCIO</span>
+            <h2>Histórico declarado</h2>
+            <p>Informações fornecidas pelo anunciante sobre o histórico deste veículo.</p>
+            <div className="vehicle-history-details">
+              {[
+                {
+                  label: "Passagem por leilão",
+                  value: vehicle.auctionHistory,
+                  icon: Gavel,
+                },
+                {
+                  label: "Registro de sinistro",
+                  value: vehicle.accidentHistory,
+                  icon: TriangleAlert,
+                },
+              ].map(({ label, value, icon: Icon }) => (
+                <div
+                  className={`vehicle-history-detail ${value == null ? "is-unknown" : value ? "has-record" : "is-clear"}`}
+                  key={label}
+                >
+                  <span className="vehicle-history-detail-icon"><Icon size={18} /></span>
+                  <span>
+                    <small>{label}</small>
+                    <strong>{value == null ? "Não informado" : value ? "Sim" : "Não"}</strong>
+                  </span>
+                  {value === false && <ShieldCheck className="history-state-icon" size={17} aria-hidden="true" />}
+                </div>
+              ))}
+            </div>
+          </section>
           <section className="vehicle-detail-section">
             <span className="eyebrow">CONHEÇA OS DETALHES</span>
             <h2>Sobre este veículo</h2>
@@ -224,17 +345,35 @@ export function VehiclePage({
                 </p>
               </div>
             </div>
-            <button className="button primary" onClick={() => setContact(true)}>
+            <button className="button primary" disabled={contactLoading} onClick={async () => {
+              if (!authenticated) {
+                setContactError("Você precisa estar logado para falar com o anunciante.");
+                return;
+              }
+              const whatsappTab = window.open("about:blank", "_blank");
+              if (!whatsappTab) {
+                setContactError("Permita a abertura de novas guias para conversar com o anunciante.");
+                return;
+              }
+              whatsappTab.opener = null;
+              whatsappTab.document.title = "Abrindo WhatsApp…";
+              setContactLoading(true);
+              setContactError("");
+              try {
+                const { url } = await requestWhatsappContact(vehicle.id);
+                whatsappTab.location.replace(url);
+              } catch (error) {
+                whatsappTab.close();
+                setContactError(apiErrorMessage(error, "Não foi possível abrir o contato do anunciante."));
+              } finally {
+                setContactLoading(false);
+              }
+            }}>
               <MessageCircle size={18} />
-              Falar com anunciante
+              {contactLoading ? "Abrindo WhatsApp…" : "Falar com anunciante"}
               <ArrowUpRight size={17} />
             </button>
-            {contact && (
-              <p className="inline-notice" role="status">
-                Use os dados de contato disponibilizados pelo anunciante. O
-                envio de mensagens pela plataforma ainda não está disponível.
-              </p>
-            )}
+            {contactError && <p className="inline-notice error-notice" role="alert">{contactError}</p>}
             <p className="contact-note">
               Gostou do veículo? Salve para consultar novamente durante esta
               visita.

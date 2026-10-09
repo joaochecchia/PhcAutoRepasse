@@ -64,8 +64,8 @@ Exemplo PF:
   },
   "aceitouTermos": true,
   "aceiteTermosEm": "2026-09-29T14:00:00Z",
-  "versaoTermosUso": "1.0",
-  "versaoPoliticaPrivacidade": "1.0"
+  "versaoTermosUso": "1.1",
+  "versaoPoliticaPrivacidade": "1.1"
 }
 ```
 
@@ -91,8 +91,8 @@ Para PJ, usar `tipoPessoa: "PJ"`, `nome` como nome da empresa, `cnpj` e `razaoSo
   },
   "aceitouTermos": true,
   "aceiteTermosEm": "2026-09-29T14:00:00Z",
-  "versaoTermosUso": "1.0",
-  "versaoPoliticaPrivacidade": "1.0"
+  "versaoTermosUso": "1.1",
+  "versaoPoliticaPrivacidade": "1.1"
 }
 ```
 

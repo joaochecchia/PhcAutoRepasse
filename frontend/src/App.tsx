@@ -27,6 +27,7 @@ import { brands, types, vehicles, type Vehicle } from "./data/catalog";
 import type { Filters } from "./data/filters";
 import { FilterChips, FilterPanel } from "./components/Filters";
 import { VehicleCard } from "./components/VehicleCard";
+import { PickupSideIcon } from "./components/PickupSideIcon";
 import { Modal } from "./components/Modal";
 import { PlansView } from "./components/PlansView";
 import { readRoute, pageHash, pageTitles, type Page } from "./lib/routes";
@@ -39,7 +40,9 @@ import type { Draft } from "./components/FormFields";
 import {
   apiErrorMessage,
   authApi,
+  homeAds,
   profileToDraft,
+  prepareDeviceLocation,
   searchAds,
   searchAdToVehicle,
 } from "./lib/backend";
@@ -89,6 +92,7 @@ export default function App() {
   const [locationCep, setLocationCep] = useState("");
   const [locationError, setLocationError] = useState("");
   const [resolvingCep, setResolvingCep] = useState(false);
+  const [requestingDeviceLocation, setRequestingDeviceLocation] = useState(false);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const homeRequestStarted = useRef(false);
@@ -156,6 +160,30 @@ export default function App() {
     setModel(item.model);
     setVehicleQuery(item.label);
     setSuggestionsOpen(false);
+  }
+
+  async function authorizeDeviceLocation(showInLocationPanel = false) {
+    setRequestingDeviceLocation(true);
+    if (showInLocationPanel) setLocationError("");
+    try {
+      await prepareDeviceLocation();
+      return true;
+    } catch (error) {
+      const denied = typeof error === "object" && error !== null && "code" in error && error.code === 1;
+      const message = denied
+        ? "A localização não foi autorizada. Permita o acesso no navegador para buscar perto de você."
+        : "Não foi possível obter sua localização. Tente novamente ou escolha uma cidade.";
+      if (showInLocationPanel) setLocationError(message);
+      else setNotice(message);
+      return false;
+    } finally {
+      setRequestingDeviceLocation(false);
+    }
+  }
+
+  async function applySearch(values: Filters) {
+    if (values.modoLocalizacao === "DISPOSITIVO" && !(await authorizeDeviceLocation())) return;
+    navigate("search", values);
   }
 
   async function applyTypedLocation() {
@@ -241,7 +269,7 @@ export default function App() {
     if (homeRequestStarted.current) return;
     homeRequestStarted.current = true;
     setLoading(true);
-    searchAds({ modoLocalizacao: "BRASIL" }, 0, 20)
+    homeAds()
       .then((result) => {
         setHomeVehicles(result.carros.map(searchAdToVehicle));
         setCatalogError("");
@@ -274,7 +302,7 @@ export default function App() {
     if (!authChecked || session?.autenticado) return;
     if (page === "profile" || page === "announce") {
       setAnnounceIntent(true);
-      navigate("register");
+      navigate("login");
     }
   }, [authChecked, page, session]);
 
@@ -297,7 +325,7 @@ export default function App() {
     if (d === "plans") setDialog(d);
     else if (d === "announce") {
       setAnnounceIntent(true);
-      navigate(session?.autenticado ? "profile" : "register");
+      navigate(session?.autenticado ? "profile" : "login");
     } else navigate(d);
     setMenu(false);
   }
@@ -517,6 +545,7 @@ export default function App() {
               onSave={save}
               onOpen={(id) => navigate("vehicle", {}, String(id))}
               related={allKnownVehicles}
+              authenticated={Boolean(session?.autenticado)}
             />
           ) : (
             <NotFoundPage />
@@ -596,7 +625,7 @@ export default function App() {
                       >
                         {type === v && v === "CARRO" && <CarFront size={19} />}
                         {type === v && v === "MOTO" && <Bike size={19} />}
-                        {type === v && v === "CAMINHONETE" && <CarFront size={19} />}
+                        {type === v && v === "CAMINHONETE" && <PickupSideIcon size={19} />}
                         {type === v && v === "CAMINHAO" && <Truck size={19} />}
                         {type === v && v === "BARCO" && <Ship size={19} />}
                         {type === v && v === "LINHA_AMARELA" && <Tractor size={19} />}
@@ -610,9 +639,9 @@ export default function App() {
                 </div>
                 <form
                   className="hero-search"
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
-                    navigate("search", heroFilters());
+                    await applySearch(heroFilters());
                   }}
                 >
                   <div className="brand-search" ref={vehicleSearchRef}>
@@ -729,13 +758,18 @@ export default function App() {
                       <button
                         type="button"
                         className="location-device"
-                        onClick={() => {
+                        disabled={requestingDeviceLocation}
+                        onClick={async () => {
+                          if (!(await authorizeDeviceLocation(true))) return;
                           setLocationMode("DISPOSITIVO");
                           setLocationOpen(false);
                         }}
                       >
                         <MapPin size={18} />
-                        <span><strong>Usar minha localização</strong><small>O navegador pedirá sua permissão</small></span>
+                        <span>
+                          <strong>{requestingDeviceLocation ? "Aguardando sua permissão…" : "Usar minha localização"}</strong>
+                          <small>O navegador pedirá sua permissão antes da busca</small>
+                        </span>
                         <ChevronRight size={16} />
                       </button>
                     </div>
@@ -756,7 +790,7 @@ export default function App() {
                   </span>
                   <button
                     className="text-button"
-                    onClick={() => navigate("search", heroFilters())}
+                    onClick={() => void applySearch(heroFilters())}
                   >
                     Busca avançada
                     <SlidersHorizontal size={14} />
@@ -945,7 +979,7 @@ export default function App() {
                   <FilterPanel
                     values={filters}
                     setValues={setFilters}
-                    onApply={() => navigate("search", filters)}
+                    onApply={() => void applySearch(filters)}
                     onClear={() => navigate("search", {})}
                   />
                 </aside>
@@ -1121,7 +1155,7 @@ export default function App() {
           <FilterPanel
             values={filters}
             setValues={setFilters}
-            onApply={() => navigate("search", filters)}
+            onApply={() => void applySearch(filters)}
             onClear={() => setFilters({})}
           />
         </Modal>

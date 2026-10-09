@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthCookieService {
     public static final String COOKIE_NAME = "PHC_AUTH";
+    public static final String REFRESH_COOKIE_NAME = "PHC_REFRESH";
     private final boolean secure;
 
     public AuthCookieService(@Value("${AUTH_COOKIE_SECURE:false}") boolean secure) {
@@ -20,11 +21,21 @@ public class AuthCookieService {
     }
 
     public String remover() {
-        return cookie("", Duration.ZERO).toString();
+        return cookie(COOKIE_NAME, "", Duration.ZERO).toString();
     }
 
+    public String criarRefresh(String token, long expiresIn) {
+        return cookie(REFRESH_COOKIE_NAME, token, Duration.ofSeconds(expiresIn)).toString();
+    }
+
+    public String removerRefresh() { return cookie(REFRESH_COOKIE_NAME, "", Duration.ZERO).toString(); }
+
     private ResponseCookie cookie(String valor, Duration maxAge) {
-        return ResponseCookie.from(COOKIE_NAME, valor)
+        return cookie(COOKIE_NAME, valor, maxAge);
+    }
+
+    private ResponseCookie cookie(String nome, String valor, Duration maxAge) {
+        return ResponseCookie.from(nome, valor)
                 .httpOnly(true)
                 .secure(secure)
                 .sameSite("Lax")

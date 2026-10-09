@@ -14,13 +14,14 @@ import repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioResumo;
 import repasse.phcauto.backend.anuncios.internal.core.domain.BuscarAnunciosFiltro;
 import repasse.phcauto.backend.anuncios.internal.core.domain.PaginaAnuncios;
 import repasse.phcauto.backend.anuncios.internal.core.gateway.BuscarAnunciosGateway;
+import repasse.phcauto.backend.anuncios.internal.core.gateway.BuscarAnunciosPaginaInicialGateway;
 import repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo;
 import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
 import repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
 
 @Component
-public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway {
+public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway, BuscarAnunciosPaginaInicialGateway {
     private static final int RAIO_INICIAL_KM = 100;
     private static final int RAIO_AMPLIADO_KM = 200;
     private static final double KM_POR_GRAU = 111.32;
@@ -57,9 +58,13 @@ public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway {
                    coalesce(car.blindado, pic.blindado) blindado,
                    coalesce(car.numero_portas, pic.numero_portas) numero_portas,
                    coalesce(car.cilindrada_litros, pic.cilindrada_litros) cilindrada_litros,
-                   moto.cilindradas, v.tipo_freio,
+                   moto.cilindradas, v.tipo_freio, v.historico_leilao, v.historico_sinistro,
                    coalesce(car.carroceria, cam.carroceria, pic.carroceria) carroceria,
-                   %s distancia_km
+                   %s distancia_km,
+                   (select f.id from catalogo.fotos f where f.anuncio_id = a.id
+                    order by f.posicao, f.id limit 1) foto_principal_id,
+                   (select count(*) from catalogo.fotos f where f.anuncio_id = a.id) foto_quantidade,
+                   a.publicado_em
             """;
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -104,6 +109,29 @@ public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway {
                 JdbcBuscarAnunciosGateway::mapear);
         boolean temProxima = offset + itens.size() < total;
         return new PaginaAnuncios(itens, total, filtro.pagina(), filtro.tamanho(), raio, temProxima);
+    }
+
+    @Override
+    public List<AnuncioResumo> buscar(int limite) {
+        var parametros = new MapSqlParameterSource("limite", limite);
+        String base = SELECT.formatted("null::double precision") + FROM + " where a.status = 'PUBLICADO'";
+        String qualidade = """
+                (case when fabricante is not null and fabricante <> '' then 1 else 0 end
+                 + case when modelo is not null and modelo <> '' then 1 else 0 end
+                 + case when ano_fabricacao is not null then 1 else 0 end
+                 + case when ano_modelo is not null then 1 else 0 end
+                 + case when condicao is not null then 1 else 0 end
+                 + case when titulo is not null and titulo <> '' then 1 else 0 end
+                 + case when cidade is not null and cidade <> '' and uf is not null then 1 else 0 end
+                 + case when cambio is not null and cambio <> '' then 1 else 0 end
+                 + case when combustivel is not null and combustivel <> '' then 1 else 0 end
+                 + case when motorizacao is not null and motorizacao <> '' then 1 else 0 end
+                 + case when carroceria is not null and carroceria <> '' then 1 else 0 end)
+                """;
+        return jdbc.query("select destaque.* from (" + base + ") destaque order by "
+                        + "(foto_principal_id is not null) desc, foto_quantidade desc, "
+                        + qualidade + " desc, publicado_em desc nulls last, anuncio_id desc limit :limite",
+                parametros, JdbcBuscarAnunciosGateway::mapear);
     }
 
     private long contar(List<String> where, MapSqlParameterSource parametros) {
@@ -181,7 +209,9 @@ public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway {
                 r.getString("nome_perfil"), r.getString("cambio"), r.getString("combustivel"), r.getString("motorizacao"),
                 r.getString("tipo_direcao"), r.getString("tracao"), r.getObject("ipva_pago", Boolean.class),
                 r.getObject("blindado", Boolean.class), inteiro(r, "numero_portas"), r.getBigDecimal("cilindrada_litros"),
-                inteiro(r, "cilindradas"), r.getString("tipo_freio"), r.getString("carroceria"), distancia);
+                inteiro(r, "cilindradas"), r.getString("tipo_freio"), r.getString("carroceria"),
+                r.getObject("historico_leilao", Boolean.class), r.getObject("historico_sinistro", Boolean.class), distancia,
+                r.getObject("foto_principal_id", java.util.UUID.class));
     }
 
     private static Integer inteiro(ResultSet r, String coluna) throws SQLException { return r.getObject(coluna, Integer.class); }

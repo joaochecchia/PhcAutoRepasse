@@ -1,0 +1,197 @@
+- generic [ref=e2]:
+  - link "Pular para o conteúdo" [ref=e3] [cursor=pointer]:
+    - /url: "#conteudo"
+  - generic [ref=e5]:
+    - generic [ref=e6]: BOAS OPORTUNIDADES. NOVOS CAMINHOS.
+    - generic [ref=e7]: PHC Auto Repasse • Conectando você ao próximo veículo
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "PHC Auto — início" [ref=e10] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e11]
+      - navigation "Navegação principal" [ref=e12]:
+        - link "Comprar veículo" [ref=e13] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Vender meu veículo" [ref=e14] [cursor=pointer]
+        - button "Nossos planos NOVO" [ref=e15] [cursor=pointer]:
+          - text: Nossos planos
+          - generic [ref=e16]: NOVO
+      - generic [ref=e17]:
+        - button "Ativar modo escuro" [ref=e18] [cursor=pointer]
+        - button "Favoritos (0)" [ref=e21] [cursor=pointer]
+        - button "Sair" [ref=e117] [cursor=pointer]
+        - button "Anunciar" [ref=e30] [cursor=pointer]
+  - main [ref=e32]:
+    - generic [ref=e967]:
+      - navigation "Caminho da página" [ref=e968]:
+        - link "Início" [ref=e969] [cursor=pointer]:
+          - /url: "#inicio"
+        - link "Anunciar" [ref=e972] [cursor=pointer]:
+          - /url: "#anunciar/dados"
+        - generic [ref=e975]: Seu veículo
+      - generic [ref=e976]:
+        - generic [ref=e977]:
+          - generic [ref=e978]: SEU VEÍCULO EM UMA NOVA VITRINE
+          - heading "Vamos preparar seu anúncio." [level=1] [ref=e979]
+          - paragraph [ref=e980]: Preencha os detalhes que ajudam alguém a encontrar o próximo veículo.
+        - link "Revisar meus dados" [ref=e981] [cursor=pointer]:
+          - /url: "#anunciar/dados"
+      - navigation "Etapas do anúncio" [ref=e984]:
+        - button "01 · Veículo" [ref=e985] [cursor=pointer]
+        - button "02 · Localização" [disabled] [ref=e986]
+        - button "03 · Fotos e anúncio" [disabled] [ref=e987]
+        - button "04 · Conferência" [disabled] [ref=e988]
+      - generic [ref=e989]:
+        - generic [ref=e990]:
+          - generic [ref=e996]:
+            - heading "Qual veículo você quer anunciar?" [active] [level=2] [ref=e997]
+            - paragraph [ref=e998]: Campos com * são necessários no contrato de cadastro.
+          - generic [ref=e1000]:
+            - text: Tipo de veículo
+            - generic [aria-hidden] [ref=e1001]: "*"
+            - combobox "Tipo de veículo" [ref=e1003] [cursor=pointer]: Carros
+          - generic [ref=e1004]:
+            - generic [ref=e1005]:
+              - text: Marca / fabricante
+              - generic [aria-hidden] [ref=e1006]: "*"
+              - combobox "Marca / fabricante" [ref=e1008]
+            - generic [ref=e1009]:
+              - text: Modelo
+              - generic [aria-hidden] [ref=e1010]: "*"
+              - combobox "Modelo" [disabled] [ref=e1012]
+            - generic [ref=e1013]:
+              - text: Versão
+              - textbox "Versão" [ref=e1014]:
+                - /placeholder: Opcional
+            - generic [ref=e1015]:
+              - text: Ano de fabricação
+              - generic [aria-hidden] [ref=e1016]: "*"
+              - spinbutton "Ano de fabricação" [ref=e1017]
+            - generic [ref=e1018]:
+              - text: Ano do modelo
+              - generic [aria-hidden] [ref=e1019]: "*"
+              - spinbutton "Ano do modelo" [ref=e1020]
+            - generic [ref=e1021]:
+              - text: Condição
+              - generic [aria-hidden] [ref=e1022]: "*"
+              - combobox "Condição" [ref=e1024] [cursor=pointer]
+            - generic [ref=e1025]:
+              - text: Cor
+              - textbox "Cor" [ref=e1026]:
+                - /placeholder: Opcional
+            - generic [ref=e1027]:
+              - text: Referência pública do veículo
+              - textbox "Referência pública do veículo Opcional. Identificador que poderá ser público; não use documentos pessoais." [ref=e1028]:
+                - /placeholder: Opcional
+              - generic [ref=e1029]: Opcional. Identificador que poderá ser público; não use documentos pessoais.
+          - generic [ref=e1030]:
+            - generic [ref=e1031]:
+              - generic [ref=e1032]: +
+              - generic [ref=e1033]:
+                - heading "Ficha técnica" [level=2] [ref=e1034]
+                - paragraph [ref=e1035]: Informações específicas para carros.
+            - generic [ref=e1036]:
+              - generic [ref=e1037]:
+                - text: Tipo de freio
+                - combobox "Tipo de freio" [ref=e1039]
+              - generic [ref=e1040]:
+                - text: Quilometragem (km)
+                - generic [aria-hidden] [ref=e1041]: "*"
+                - spinbutton "Quilometragem (km)" [ref=e1042]
+              - generic [ref=e1043]:
+                - text: Carroceria
+                - generic [aria-hidden] [ref=e1044]: "*"
+                - textbox "Carroceria" [ref=e1045]:
+                  - /placeholder: Obrigatório
+              - generic [ref=e1046]:
+                - text: Câmbio
+                - generic [aria-hidden] [ref=e1047]: "*"
+                - textbox "Câmbio" [ref=e1048]:
+                  - /placeholder: Obrigatório
+              - generic [ref=e1049]:
+                - text: Combustível
+                - generic [aria-hidden] [ref=e1050]: "*"
+                - textbox "Combustível" [ref=e1051]:
+                  - /placeholder: Obrigatório
+              - generic [ref=e1052]:
+                - text: Motorização
+                - generic [aria-hidden] [ref=e1053]: "*"
+                - textbox "Motorização Informe a capacidade em litros, como 1.0 ou 4.1. Turbo é informado separadamente." [ref=e1054]:
+                  - /placeholder: "Obrigatório — Ex.: 4.1"
+                - generic [ref=e1055]: Informe a capacidade em litros, como 1.0 ou 4.1. Turbo é informado separadamente.
+              - generic [ref=e1056]:
+                - text: Turbo?
+                - combobox "Turbo?" [ref=e1058] [cursor=pointer]
+              - generic [ref=e1059]:
+                - text: Cilindrada (litros)
+                - spinbutton "Cilindrada (litros)" [ref=e1060]
+              - generic [ref=e1061]:
+                - text: Número de portas
+                - spinbutton "Número de portas" [ref=e1062]
+              - generic [ref=e1063]:
+                - text: Número de lugares
+                - spinbutton "Número de lugares" [ref=e1064]
+              - generic [ref=e1065]:
+                - text: Tração
+                - textbox "Tração" [ref=e1066]:
+                  - /placeholder: Opcional
+              - generic [ref=e1067]:
+                - text: Tipo de direção
+                - textbox "Tipo de direção" [ref=e1068]:
+                  - /placeholder: Opcional
+              - generic [ref=e1069]:
+                - text: Placa completa
+                - generic [aria-hidden] [ref=e1070]: "*"
+                - textbox "Placa completa" [ref=e1071]:
+                  - /placeholder: "Obrigatório — Ex.: ABC1D23"
+              - generic [ref=e1072]:
+                - text: Exibir placa completa no anúncio?
+                - generic [aria-hidden] [ref=e1073]: "*"
+                - combobox "Exibir placa completa no anúncio?" [ref=e1075] [cursor=pointer]
+              - generic [ref=e1076]:
+                - text: IPVA pago?
+                - generic [aria-hidden] [ref=e1077]: "*"
+                - combobox "IPVA pago?" [ref=e1079] [cursor=pointer]
+              - generic [ref=e1080]:
+                - text: Veículo licenciado?
+                - combobox "Veículo licenciado?" [ref=e1082] [cursor=pointer]
+              - generic [ref=e1083]:
+                - text: Único dono?
+                - generic [aria-hidden] [ref=e1084]: "*"
+                - combobox "Único dono?" [ref=e1086] [cursor=pointer]
+              - generic [ref=e1087]:
+                - text: Blindado?
+                - combobox "Blindado?" [ref=e1089] [cursor=pointer]
+          - generic [ref=e1090]:
+            - link "Meus dados" [ref=e1091] [cursor=pointer]:
+              - /url: "#anunciar/dados"
+            - button "Continuar" [ref=e1092] [cursor=pointer]
+        - complementary [ref=e1095]:
+          - generic [ref=e1096]:
+            - generic [ref=e1097]: UM BOM ANÚNCIO COMEÇA NOS DETALHES
+            - heading "Mostre o que faz seu veículo ser único." [level=2] [ref=e1098]
+            - list [ref=e1099]:
+              - listitem [ref=e1100]: Descreva o veículo com informações claras.
+              - listitem [ref=e1101]: Confira ano, versão e características.
+              - listitem [ref=e1102]: Prefira fotos bem iluminadas de diferentes ângulos.
+              - listitem [ref=e1103]: Informe a cidade onde o veículo se encontra.
+          - generic [ref=e1104]:
+            - heading "Dados protegidos pela sua sessão." [level=3] [ref=e1105]
+            - paragraph [ref=e1106]: O servidor valida o perfil, os dados técnicos, a propriedade do anúncio e a publicação.
+            - link "Revisar dados do anunciante" [ref=e1107] [cursor=pointer]:
+              - /url: "#anunciar/dados"
+  - contentinfo [ref=e48]:
+    - generic [ref=e49]:
+      - link [ref=e50] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e51]
+      - paragraph [ref=e52]: Boas oportunidades.Novos caminhos.
+      - navigation "Links do rodapé" [ref=e53]:
+        - link "Comprar" [ref=e54] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Anunciar" [ref=e55] [cursor=pointer]
+        - button "Planos" [ref=e56] [cursor=pointer]
+      - button "Modo escuro" [ref=e58] [cursor=pointer]
+    - generic [ref=e61]:
+      - generic [ref=e62]: © 2026 PHC Auto Repasse.
+      - generic [ref=e63]: Dados dos anúncios enviados pelos anunciantes.

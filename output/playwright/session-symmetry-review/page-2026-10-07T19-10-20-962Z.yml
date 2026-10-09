@@ -1,0 +1,50 @@
+- generic [ref=e2]:
+  - link "Pular para o conteúdo" [ref=e3] [cursor=pointer]:
+    - /url: "#conteudo"
+  - generic [ref=e5]:
+    - generic [ref=e6]: BOAS OPORTUNIDADES. NOVOS CAMINHOS.
+    - generic [ref=e7]: PHC Auto Repasse • Conectando você ao próximo veículo
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "PHC Auto — início" [ref=e10] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e11]
+      - navigation "Navegação principal" [ref=e12]:
+        - link "Comprar veículo" [ref=e13] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Vender meu veículo" [ref=e14] [cursor=pointer]
+        - button "Nossos planos NOVO" [ref=e15] [cursor=pointer]:
+          - text: Nossos planos
+          - generic [ref=e16]: NOVO
+      - generic [ref=e17]:
+        - button "Ativar modo escuro" [ref=e18] [cursor=pointer]
+        - button "Favoritos (0)" [ref=e21] [cursor=pointer]
+        - button "Entrar" [ref=e25] [cursor=pointer]
+        - button "Anunciar" [ref=e30] [cursor=pointer]
+  - main [active] [ref=e32]:
+    - generic [ref=e33]:
+      - navigation "Caminho da página" [ref=e34]:
+        - link "Início" [ref=e35] [cursor=pointer]:
+          - /url: "#inicio"
+        - generic [ref=e38]: Página não encontrada
+      - generic [ref=e39]:
+        - heading "Esse caminho não está disponível." [level=1] [ref=e43]
+        - paragraph [ref=e44]: O anúncio ou a página que você tentou acessar não foi encontrado nesta prévia.
+        - link "Explorar veículos" [ref=e45] [cursor=pointer]:
+          - /url: "#buscar"
+  - contentinfo [ref=e48]:
+    - generic [ref=e49]:
+      - link [ref=e50] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e51]
+      - paragraph [ref=e52]: Boas oportunidades.Novos caminhos.
+      - navigation "Links do rodapé" [ref=e53]:
+        - link "Comprar" [ref=e54] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Anunciar" [ref=e55] [cursor=pointer]
+        - button "Planos" [ref=e56] [cursor=pointer]
+        - button "Criar conta" [ref=e57] [cursor=pointer]
+      - button "Modo escuro" [ref=e58] [cursor=pointer]
+    - generic [ref=e61]:
+      - generic [ref=e62]: © 2026 PHC Auto Repasse.
+      - generic [ref=e63]: Dados dos anúncios enviados pelos anunciantes.

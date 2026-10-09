@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, LockKeyhole } from "lucide-react";
+import { ArrowRight, LockKeyhole, UserPlus } from "lucide-react";
 import { AccountLayout } from "./PageLayout";
 import { Fields, PasswordField } from "../components/FormFields";
 import { apiErrorMessage, authApi } from "../lib/backend";
@@ -43,6 +43,7 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: (session: Sess
           ]}
           values={values}
           onChange={(_, v) => setValues({ ...values, email: v })}
+          showRequirement={false}
         />
         <PasswordField
           value={values.senha}
@@ -63,13 +64,21 @@ export function LoginPage({ onAuthenticated }: { onAuthenticated: (session: Sess
           acessa o token de autenticação.
         </p>
       </form>
-      <p className="page-switch">
-        Ainda não tem uma conta?{" "}
-        <a href="#cadastro">
+      <section className="login-register-cta" aria-label="Criar uma conta">
+        <div>
+          <span className="login-register-icon" aria-hidden="true">
+            <UserPlus size={19} />
+          </span>
+          <span>
+            <strong>Ainda não tem uma conta?</strong>
+            <small>Cadastre-se para anunciar seu veículo com segurança.</small>
+          </span>
+        </div>
+        <a className="button secondary" href="#cadastro">
           Criar minha conta
-          <ArrowRight size={14} />
+          <ArrowRight size={16} />
         </a>
-      </p>
+      </section>
     </AccountLayout>
   );
 }

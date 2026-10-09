@@ -1,0 +1,473 @@
+- generic [ref=e2]:
+  - link "Pular para o conteúdo" [ref=e3] [cursor=pointer]:
+    - /url: "#conteudo"
+  - generic [ref=e5]:
+    - generic [ref=e6]: BOAS OPORTUNIDADES. NOVOS CAMINHOS.
+    - generic [ref=e7]: PHC Auto Repasse • Conectando você ao próximo veículo
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "PHC Auto — início" [ref=e10] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e11]
+      - navigation "Navegação principal" [ref=e12]:
+        - link "Comprar veículo" [ref=e13] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Vender meu veículo" [ref=e14] [cursor=pointer]
+        - button "Nossos planos NOVO" [ref=e15] [cursor=pointer]:
+          - text: Nossos planos
+          - generic [ref=e16]: NOVO
+      - generic [ref=e17]:
+        - button "Ativar modo escuro" [ref=e18] [cursor=pointer]
+        - button "Favoritos (0)" [ref=e21] [cursor=pointer]
+        - button "Entrar" [ref=e25] [cursor=pointer]
+        - button "Anunciar" [ref=e30] [cursor=pointer]
+  - main [ref=e32]:
+    - generic [ref=e33]:
+      - img "Porsche em uma estrada arborizada" [ref=e34]
+      - generic [ref=e36]:
+        - generic [ref=e37]: O SEU PRÓXIMO CAPÍTULO
+        - heading "Bom negócio. Melhor caminho." [level=1] [ref=e39]: Bom negócio.Melhor caminho.
+        - paragraph [ref=e40]: O veículo que você procura. A oportunidade que você esperava.
+        - generic [ref=e41]:
+          - button "Explore as oportunidades" [ref=e42] [cursor=pointer]
+          - button "Anunciar meu veículo" [ref=e45] [cursor=pointer]
+        - generic [ref=e49]: PAIXÃO POR VEÍCULOS. CONEXÃO COM BONS NEGÓCIOS.
+      - generic [ref=e50]: 01 / 01
+    - region "Pesquisar veículos" [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - group "Tipo de veículo" [ref=e54]:
+            - button "Carros" [ref=e55] [cursor=pointer]
+            - button "Motos" [ref=e59] [cursor=pointer]
+            - button "Caminhonetes" [active] [pressed] [ref=e60] [cursor=pointer]
+            - button "Caminhões" [ref=e61] [cursor=pointer]
+            - button "Barcos" [ref=e62] [cursor=pointer]
+            - button "Linha amarela" [ref=e63] [cursor=pointer]
+          - generic [ref=e64]: Qual vai ser o seu próximo?
+        - generic [ref=e65]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: ENCONTRE SEU VEÍCULO
+            - combobox "Buscar por marca ou modelo" [ref=e72]
+          - button "LOCALIZAÇÃO Todo o Brasil" [ref=e74] [cursor=pointer]:
+            - generic [ref=e78]:
+              - generic [ref=e79]: LOCALIZAÇÃO
+              - text: Todo o Brasil
+          - button "Buscar veículos" [ref=e82] [cursor=pointer]
+        - generic [ref=e85]:
+          - generic [ref=e86]: Seu próximo negócio começa com uma boa escolha.
+          - button "Busca avançada" [ref=e90] [cursor=pointer]
+    - generic [ref=e92]:
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]: ENCONTRE A SUA FAVORITA
+          - heading "O próximo pode ser um..." [level=2] [ref=e96]
+        - button "Ver todas as marcas" [ref=e97] [cursor=pointer]
+      - generic [ref=e101]:
+        - button "Volkswagen" [ref=e102] [cursor=pointer]
+        - button "Chevrolet" [ref=e105] [cursor=pointer]
+        - button "Fiat" [ref=e108] [cursor=pointer]
+        - button "Toyota" [ref=e111] [cursor=pointer]
+        - button "Honda" [ref=e114] [cursor=pointer]
+        - button "Jeep" [ref=e117] [cursor=pointer]
+        - button "BMW" [ref=e120] [cursor=pointer]
+        - button "Hyundai" [ref=e123] [cursor=pointer]
+    - generic [ref=e127]:
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - generic [ref=e130]: A SUA PRÓXIMA CONQUISTA
+          - heading "Vale a pena conhecer." [level=2] [ref=e132]
+          - paragraph [ref=e133]: Explore veículos e encontre o que combina com você.
+        - button "Ver todos os veículos" [ref=e134] [cursor=pointer]
+      - generic [ref=e138]:
+        - generic [ref=e139]: Vitrine PHC
+        - generic [ref=e142]: Até 20 oportunidades recentes
+      - generic [ref=e143]:
+        - article [ref=e204]:
+          - generic [ref=e205]:
+            - button "Ver FORD Fiesta" [ref=e206] [cursor=pointer]:
+              - img "FORD Fiesta" [ref=e207]
+            - button "Salvar FORD Fiesta nos favoritos" [ref=e208] [cursor=pointer]
+          - generic [ref=e211]:
+            - text: FORD
+            - button "Fiesta" [ref=e212] [cursor=pointer]
+            - paragraph [ref=e213]: power
+            - generic [ref=e214]:
+              - generic [ref=e215]: 2019 / 2019
+              - generic [ref=e218]: Não informada
+            - generic [ref=e222]: Luziânia, GO
+            - generic [ref=e227]: R$ 51
+            - generic [ref=e228]:
+              - generic [ref=e229]: Ver anúncio completo
+              - button "Detalhes de Fiesta" [ref=e230] [cursor=pointer]
+        - article [ref=e234]:
+          - generic [ref=e235]:
+            - button "Ver VOLKSWAGEN Polo" [ref=e236] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e237]:
+                - generic [ref=e243]: Sem fotos
+            - button "Salvar VOLKSWAGEN Polo nos favoritos" [ref=e244] [cursor=pointer]
+          - generic [ref=e247]:
+            - text: VOLKSWAGEN
+            - button "Polo" [ref=e248] [cursor=pointer]
+            - paragraph [ref=e249]: "1.0"
+            - generic [ref=e250]:
+              - generic [ref=e251]: 2021 / 2022
+              - generic [ref=e254]: Não informada
+            - generic [ref=e258]: Embu das Artes, SP
+            - generic [ref=e263]: R$ 133.000
+            - generic [ref=e264]:
+              - generic [ref=e265]: Ver anúncio completo
+              - button "Detalhes de Polo" [ref=e266] [cursor=pointer]
+        - article [ref=e270]:
+          - generic [ref=e271]:
+            - button "Ver CHEVROLET Onix" [ref=e272] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e273]:
+                - generic [ref=e279]: Sem fotos
+            - button "Salvar CHEVROLET Onix nos favoritos" [ref=e280] [cursor=pointer]
+          - generic [ref=e283]:
+            - text: CHEVROLET
+            - button "Onix" [ref=e284] [cursor=pointer]
+            - paragraph [ref=e285]: "2.0"
+            - generic [ref=e286]:
+              - generic [ref=e287]: 2020 / 2020
+              - generic [ref=e290]: Não informada
+            - generic [ref=e294]: Embu das Artes, SP
+            - generic [ref=e299]: R$ 131.250
+            - generic [ref=e300]:
+              - generic [ref=e301]: Ver anúncio completo
+              - button "Detalhes de Onix" [ref=e302] [cursor=pointer]
+        - article [ref=e306]:
+          - generic [ref=e307]:
+            - button "Ver FORD Ka" [ref=e308] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e309]:
+                - generic [ref=e315]: Sem fotos
+            - button "Salvar FORD Ka nos favoritos" [ref=e316] [cursor=pointer]
+          - generic [ref=e319]:
+            - text: FORD
+            - button "Ka" [ref=e320] [cursor=pointer]
+            - paragraph [ref=e321]: "1.6"
+            - generic [ref=e322]:
+              - generic [ref=e323]: 2019 / 2019
+              - generic [ref=e326]: Não informada
+            - generic [ref=e330]: Embu das Artes, SP
+            - generic [ref=e335]: R$ 129.500
+            - generic [ref=e336]:
+              - generic [ref=e337]: Ver anúncio completo
+              - button "Detalhes de Ka" [ref=e338] [cursor=pointer]
+        - article [ref=e342]:
+          - generic [ref=e343]:
+            - button "Ver NISSAN Kicks" [ref=e344] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e345]:
+                - generic [ref=e351]: Sem fotos
+            - button "Salvar NISSAN Kicks nos favoritos" [ref=e352] [cursor=pointer]
+          - generic [ref=e355]:
+            - text: NISSAN
+            - button "Kicks" [ref=e356] [cursor=pointer]
+            - paragraph [ref=e357]: "1.3"
+            - generic [ref=e358]:
+              - generic [ref=e359]: 2018 / 2018
+              - generic [ref=e362]: Não informada
+            - generic [ref=e366]: Mauá, SP
+            - generic [ref=e371]: R$ 127.750
+            - generic [ref=e372]:
+              - generic [ref=e373]: Ver anúncio completo
+              - button "Detalhes de Kicks" [ref=e374] [cursor=pointer]
+        - article [ref=e378]:
+          - generic [ref=e379]:
+            - button "Ver JEEP Renegade" [ref=e380] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e381]:
+                - generic [ref=e387]: Sem fotos
+            - button "Salvar JEEP Renegade nos favoritos" [ref=e388] [cursor=pointer]
+          - generic [ref=e391]:
+            - text: JEEP
+            - button "Renegade" [ref=e392] [cursor=pointer]
+            - paragraph [ref=e393]: "1.0"
+            - generic [ref=e394]:
+              - generic [ref=e395]: 2017 / 2018
+              - generic [ref=e398]: Não informada
+            - generic [ref=e402]: Mauá, SP
+            - generic [ref=e407]: R$ 126.000
+            - generic [ref=e408]:
+              - generic [ref=e409]: Ver anúncio completo
+              - button "Detalhes de Renegade" [ref=e410] [cursor=pointer]
+        - article [ref=e414]:
+          - generic [ref=e415]:
+            - button "Ver RENAULT Kwid" [ref=e416] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e417]:
+                - generic [ref=e423]: Sem fotos
+            - button "Salvar RENAULT Kwid nos favoritos" [ref=e424] [cursor=pointer]
+          - generic [ref=e427]:
+            - text: RENAULT
+            - button "Kwid" [ref=e428] [cursor=pointer]
+            - paragraph [ref=e429]: "2.0"
+            - generic [ref=e430]:
+              - generic [ref=e431]: 2024 / 2024
+              - generic [ref=e434]: Não informada
+            - generic [ref=e438]: Mauá, SP
+            - generic [ref=e443]: R$ 124.250
+            - generic [ref=e444]:
+              - generic [ref=e445]: Ver anúncio completo
+              - button "Detalhes de Kwid" [ref=e446] [cursor=pointer]
+        - article [ref=e450]:
+          - generic [ref=e451]:
+            - button "Ver HONDA Civic" [ref=e452] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e453]:
+                - generic [ref=e459]: Sem fotos
+            - button "Salvar HONDA Civic nos favoritos" [ref=e460] [cursor=pointer]
+          - generic [ref=e463]:
+            - text: HONDA
+            - button "Civic" [ref=e464] [cursor=pointer]
+            - paragraph [ref=e465]: "1.6"
+            - generic [ref=e466]:
+              - generic [ref=e467]: 2023 / 2023
+              - generic [ref=e470]: Não informada
+            - generic [ref=e474]: Diadema, SP
+            - generic [ref=e479]: R$ 122.500
+            - generic [ref=e480]:
+              - generic [ref=e481]: Ver anúncio completo
+              - button "Detalhes de Civic" [ref=e482] [cursor=pointer]
+        - article [ref=e486]:
+          - generic [ref=e487]:
+            - button "Ver TOYOTA Corolla" [ref=e488] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e489]:
+                - generic [ref=e495]: Sem fotos
+            - button "Salvar TOYOTA Corolla nos favoritos" [ref=e496] [cursor=pointer]
+          - generic [ref=e499]:
+            - text: TOYOTA
+            - button "Corolla" [ref=e500] [cursor=pointer]
+            - paragraph [ref=e501]: "1.3"
+            - generic [ref=e502]:
+              - generic [ref=e503]: 2025 / 2025
+              - generic [ref=e506]: Não informada
+            - generic [ref=e510]: Diadema, SP
+            - generic [ref=e515]: R$ 120.750
+            - generic [ref=e516]:
+              - generic [ref=e517]: Ver anúncio completo
+              - button "Detalhes de Corolla" [ref=e518] [cursor=pointer]
+        - article [ref=e522]:
+          - generic [ref=e523]:
+            - button "Ver HYUNDAI HB20" [ref=e524] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e525]:
+                - generic [ref=e531]: Sem fotos
+            - button "Salvar HYUNDAI HB20 nos favoritos" [ref=e532] [cursor=pointer]
+          - generic [ref=e535]:
+            - text: HYUNDAI
+            - button "HB20" [ref=e536] [cursor=pointer]
+            - paragraph [ref=e537]: "1.0"
+            - generic [ref=e538]:
+              - generic [ref=e539]: 2021 / 2022
+              - generic [ref=e542]: Não informada
+            - generic [ref=e546]: Diadema, SP
+            - generic [ref=e551]: R$ 119.000
+            - generic [ref=e552]:
+              - generic [ref=e553]: Ver anúncio completo
+              - button "Detalhes de HB20" [ref=e554] [cursor=pointer]
+        - article [ref=e558]:
+          - generic [ref=e559]:
+            - button "Ver FIAT Argo" [ref=e560] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e561]:
+                - generic [ref=e567]: Sem fotos
+            - button "Salvar FIAT Argo nos favoritos" [ref=e568] [cursor=pointer]
+          - generic [ref=e571]:
+            - text: FIAT
+            - button "Argo" [ref=e572] [cursor=pointer]
+            - paragraph [ref=e573]: "2.0"
+            - generic [ref=e574]:
+              - generic [ref=e575]: 2020 / 2020
+              - generic [ref=e578]: Não informada
+            - generic [ref=e582]: Suzano, SP
+            - generic [ref=e587]: R$ 117.250
+            - generic [ref=e588]:
+              - generic [ref=e589]: Ver anúncio completo
+              - button "Detalhes de Argo" [ref=e590] [cursor=pointer]
+        - article [ref=e594]:
+          - generic [ref=e595]:
+            - button "Ver VOLKSWAGEN Polo" [ref=e596] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e597]:
+                - generic [ref=e603]: Sem fotos
+            - button "Salvar VOLKSWAGEN Polo nos favoritos" [ref=e604] [cursor=pointer]
+          - generic [ref=e607]:
+            - text: VOLKSWAGEN
+            - button "Polo" [ref=e608] [cursor=pointer]
+            - paragraph [ref=e609]: "1.6"
+            - generic [ref=e610]:
+              - generic [ref=e611]: 2019 / 2019
+              - generic [ref=e614]: Não informada
+            - generic [ref=e618]: Suzano, SP
+            - generic [ref=e623]: R$ 115.500
+            - generic [ref=e624]:
+              - generic [ref=e625]: Ver anúncio completo
+              - button "Detalhes de Polo" [ref=e626] [cursor=pointer]
+        - article [ref=e630]:
+          - generic [ref=e631]:
+            - button "Ver CHEVROLET Onix" [ref=e632] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e633]:
+                - generic [ref=e639]: Sem fotos
+            - button "Salvar CHEVROLET Onix nos favoritos" [ref=e640] [cursor=pointer]
+          - generic [ref=e643]:
+            - text: CHEVROLET
+            - button "Onix" [ref=e644] [cursor=pointer]
+            - paragraph [ref=e645]: "1.3"
+            - generic [ref=e646]:
+              - generic [ref=e647]: 2018 / 2018
+              - generic [ref=e650]: Não informada
+            - generic [ref=e654]: Suzano, SP
+            - generic [ref=e659]: R$ 113.750
+            - generic [ref=e660]:
+              - generic [ref=e661]: Ver anúncio completo
+              - button "Detalhes de Onix" [ref=e662] [cursor=pointer]
+        - article [ref=e666]:
+          - generic [ref=e667]:
+            - button "Ver FORD Ka" [ref=e668] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e669]:
+                - generic [ref=e675]: Sem fotos
+            - button "Salvar FORD Ka nos favoritos" [ref=e676] [cursor=pointer]
+          - generic [ref=e679]:
+            - text: FORD
+            - button "Ka" [ref=e680] [cursor=pointer]
+            - paragraph [ref=e681]: "1.0"
+            - generic [ref=e682]:
+              - generic [ref=e683]: 2017 / 2018
+              - generic [ref=e686]: Não informada
+            - generic [ref=e690]: Mogi das Cruzes, SP
+            - generic [ref=e695]: R$ 112.000
+            - generic [ref=e696]:
+              - generic [ref=e697]: Ver anúncio completo
+              - button "Detalhes de Ka" [ref=e698] [cursor=pointer]
+        - article [ref=e702]:
+          - generic [ref=e703]:
+            - button "Ver NISSAN Kicks" [ref=e704] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e705]:
+                - generic [ref=e711]: Sem fotos
+            - button "Salvar NISSAN Kicks nos favoritos" [ref=e712] [cursor=pointer]
+          - generic [ref=e715]:
+            - text: NISSAN
+            - button "Kicks" [ref=e716] [cursor=pointer]
+            - paragraph [ref=e717]: "2.0"
+            - generic [ref=e718]:
+              - generic [ref=e719]: 2024 / 2024
+              - generic [ref=e722]: Não informada
+            - generic [ref=e726]: Mogi das Cruzes, SP
+            - generic [ref=e731]: R$ 110.250
+            - generic [ref=e732]:
+              - generic [ref=e733]: Ver anúncio completo
+              - button "Detalhes de Kicks" [ref=e734] [cursor=pointer]
+        - article [ref=e738]:
+          - generic [ref=e739]:
+            - button "Ver JEEP Renegade" [ref=e740] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e741]:
+                - generic [ref=e747]: Sem fotos
+            - button "Salvar JEEP Renegade nos favoritos" [ref=e748] [cursor=pointer]
+          - generic [ref=e751]:
+            - text: JEEP
+            - button "Renegade" [ref=e752] [cursor=pointer]
+            - paragraph [ref=e753]: "1.6"
+            - generic [ref=e754]:
+              - generic [ref=e755]: 2023 / 2023
+              - generic [ref=e758]: Não informada
+            - generic [ref=e762]: Mogi das Cruzes, SP
+            - generic [ref=e767]: R$ 108.500
+            - generic [ref=e768]:
+              - generic [ref=e769]: Ver anúncio completo
+              - button "Detalhes de Renegade" [ref=e770] [cursor=pointer]
+        - article [ref=e774]:
+          - generic [ref=e775]:
+            - button "Ver RENAULT Kwid" [ref=e776] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e777]:
+                - generic [ref=e783]: Sem fotos
+            - button "Salvar RENAULT Kwid nos favoritos" [ref=e784] [cursor=pointer]
+          - generic [ref=e787]:
+            - text: RENAULT
+            - button "Kwid" [ref=e788] [cursor=pointer]
+            - paragraph [ref=e789]: "1.3"
+            - generic [ref=e790]:
+              - generic [ref=e791]: 2022 / 2022
+              - generic [ref=e794]: Não informada
+            - generic [ref=e798]: Taboão da Serra, SP
+            - generic [ref=e803]: R$ 106.750
+            - generic [ref=e804]:
+              - generic [ref=e805]: Ver anúncio completo
+              - button "Detalhes de Kwid" [ref=e806] [cursor=pointer]
+        - article [ref=e810]:
+          - generic [ref=e811]:
+            - button "Ver HONDA Civic" [ref=e812] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e813]:
+                - generic [ref=e819]: Sem fotos
+            - button "Salvar HONDA Civic nos favoritos" [ref=e820] [cursor=pointer]
+          - generic [ref=e823]:
+            - text: HONDA
+            - button "Civic" [ref=e824] [cursor=pointer]
+            - paragraph [ref=e825]: "1.0"
+            - generic [ref=e826]:
+              - generic [ref=e827]: 2025 / 2026
+              - generic [ref=e830]: Não informada
+            - generic [ref=e834]: Taboão da Serra, SP
+            - generic [ref=e839]: R$ 105.000
+            - generic [ref=e840]:
+              - generic [ref=e841]: Ver anúncio completo
+              - button "Detalhes de Civic" [ref=e842] [cursor=pointer]
+        - article [ref=e846]:
+          - generic [ref=e847]:
+            - button "Ver TOYOTA Corolla" [ref=e848] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e849]:
+                - generic [ref=e855]: Sem fotos
+            - button "Salvar TOYOTA Corolla nos favoritos" [ref=e856] [cursor=pointer]
+          - generic [ref=e859]:
+            - text: TOYOTA
+            - button "Corolla" [ref=e860] [cursor=pointer]
+            - paragraph [ref=e861]: "2.0"
+            - generic [ref=e862]:
+              - generic [ref=e863]: 2020 / 2020
+              - generic [ref=e866]: Não informada
+            - generic [ref=e870]: Taboão da Serra, SP
+            - generic [ref=e875]: R$ 103.250
+            - generic [ref=e876]:
+              - generic [ref=e877]: Ver anúncio completo
+              - button "Detalhes de Corolla" [ref=e878] [cursor=pointer]
+        - article [ref=e882]:
+          - generic [ref=e883]:
+            - button "Ver HYUNDAI HB20" [ref=e884] [cursor=pointer]:
+              - img "Anúncio sem fotos" [ref=e885]:
+                - generic [ref=e891]: Sem fotos
+            - button "Salvar HYUNDAI HB20 nos favoritos" [ref=e892] [cursor=pointer]
+          - generic [ref=e895]:
+            - text: HYUNDAI
+            - button "HB20" [ref=e896] [cursor=pointer]
+            - paragraph [ref=e897]: "1.6"
+            - generic [ref=e898]:
+              - generic [ref=e899]: 2019 / 2019
+              - generic [ref=e902]: Não informada
+            - generic [ref=e906]: Cotia, SP
+            - generic [ref=e911]: R$ 101.500
+            - generic [ref=e912]:
+              - generic [ref=e913]: Ver anúncio completo
+              - button "Detalhes de HB20" [ref=e914] [cursor=pointer]
+    - generic [ref=e164]:
+      - generic [ref=e165]:
+        - generic [ref=e166]: O PRÓXIMO BOM NEGÓCIO PODE SER SEU
+        - heading "Seu veículo merece uma nova vitrine." [level=2] [ref=e167]: Seu veículo mereceuma nova vitrine.
+        - paragraph [ref=e168]: Deixe seu anúncio pronto para quem está procurando exatamente o que você tem.
+        - button "Quero anunciar meu veículo" [ref=e169] [cursor=pointer]
+      - generic [ref=e173]:
+        - generic [ref=e174]: VAMOSNEGOCIAR.
+        - generic [ref=e176]: ↗
+    - generic [ref=e177]:
+      - generic [ref=e182]:
+        - heading "Uma conta. Novas possibilidades." [level=3] [ref=e183]
+        - paragraph [ref=e184]: Prepare-se para comprar, anunciar e acompanhar seus favoritos.
+      - button "Criar minha conta" [ref=e185] [cursor=pointer]
+  - contentinfo [ref=e188]:
+    - generic [ref=e189]:
+      - link [ref=e190] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e191]
+      - paragraph [ref=e192]: Boas oportunidades.Novos caminhos.
+      - navigation "Links do rodapé" [ref=e193]:
+        - link "Comprar" [ref=e194] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Anunciar" [ref=e195] [cursor=pointer]
+        - button "Planos" [ref=e196] [cursor=pointer]
+        - button "Criar conta" [ref=e197] [cursor=pointer]
+      - button "Modo escuro" [ref=e198] [cursor=pointer]
+    - generic [ref=e201]:
+      - generic [ref=e202]: © 2026 PHC Auto Repasse.
+      - generic [ref=e203]: Dados dos anúncios enviados pelos anunciantes.

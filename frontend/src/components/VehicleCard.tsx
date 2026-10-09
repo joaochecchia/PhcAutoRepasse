@@ -1,4 +1,14 @@
-import { ArrowUpRight, CalendarDays, Gauge, Heart, MapPin } from "lucide-react";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  CameraOff,
+  Gauge,
+  Heart,
+  MapPin,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
+import { useState } from "react";
 import type { Vehicle } from "../data/catalog";
 
 export function VehicleCard({
@@ -12,6 +22,18 @@ export function VehicleCard({
   onSave: () => void;
   onOpen: () => void;
 }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageSource = v.imageUrl || (v.image ? `/images/${v.image}.jpg` : null);
+  const reportedHistory = [
+    v.auctionHistory ? "Leilão" : "",
+    v.accidentHistory ? "Sinistro" : "",
+  ].filter(Boolean);
+  const historyIsComplete = v.auctionHistory != null && v.accidentHistory != null;
+  const historyLabel = reportedHistory.length
+    ? `${reportedHistory.join(" e ")} ${reportedHistory.length > 1 ? "informados" : "informado"}`
+    : historyIsComplete
+      ? "Sem leilão ou sinistro"
+      : "";
   return (
     <article className="vehicle-card">
       <div className="vehicle-photo">
@@ -20,14 +42,19 @@ export function VehicleCard({
           onClick={onOpen}
           aria-label={`Ver ${v.brand} ${v.model}`}
         >
-          <img
-            src={`/images/${v.image}.jpg`}
-            alt={`${v.brand} ${v.model}, imagem ilustrativa`}
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
+          {imageSource && !imageFailed ? (
+            <img
+              src={imageSource}
+              alt={`${v.brand} ${v.model}`}
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <span className="vehicle-image-placeholder" role="img" aria-label="Anúncio sem fotos">
+              <CameraOff size={30} />
+              <span>Sem fotos</span>
+            </span>
+          )}
         </button>
         {v.tag && <span className="vehicle-tag">{v.tag}</span>}
         <button
@@ -45,6 +72,15 @@ export function VehicleCard({
           {v.model}
         </button>
         <p className="version">{v.version}</p>
+        {historyLabel && (
+          <div
+            className={`vehicle-history ${reportedHistory.length ? "history-alert" : "history-clear"}`}
+            aria-label={`Histórico do veículo: ${historyLabel}`}
+          >
+            {reportedHistory.length ? <TriangleAlert size={13} /> : <ShieldCheck size={13} />}
+            <span>{historyLabel}</span>
+          </div>
+        )}
         <div className="vehicle-specs">
           <span>
             <CalendarDays size={14} />

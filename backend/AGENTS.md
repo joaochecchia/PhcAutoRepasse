@@ -266,12 +266,17 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 
 ## Obrigatoriedade técnica dos anúncios
 
-- Todo novo anúncio exige ano de fabricação, ano do modelo e condição. Para carro, moto, caminhão e caminhonete, o core também exige os dados técnicos definidos por tipo; a regra é aplicada após a mesclagem do PATCH.
+- Todo novo anúncio exige ano de fabricação, ano do modelo, condição e resposta explícita para `historicoLeilao` e `historicoSinistro`. Esses dois campos pertencem ao veículo comum e valem para todos os seis tipos. Para carro, moto, caminhão e caminhonete, o core também exige os dados técnicos definidos por tipo; a regra é aplicada após a mesclagem do PATCH.
+- V28 comum adiciona os dois campos, V29 do write reforça a obrigatoriedade e V30 comum preenche somente carros legados por hash determinístico do UUID, mantendo write e read com o mesmo resultado.
 - Carro: quilometragem, carroceria, câmbio, combustível, motorização, cilindrada em litros e portas. Moto: quilometragem, cilindradas, categoria, câmbio e combustível. Caminhão: quilometragem, configuração, carroceria, câmbio, combustível e eixos. Caminhonete: quilometragem, cabine, carroceria, câmbio, combustível, motorização, cilindrada em litros e portas.
 - Veículo `ZERO_KM` deve ter quilometragem zero. Os demais campos técnicos continuam opcionais.
 - V9 do write cria constraints `NOT VALID`: novas gravações inválidas são bloqueadas, enquanto anúncios legados incompletos são preservados até serem corrigidos. Não preencher legado com dados fictícios.
 
 ## Busca pública de anúncios
+
+- A página inicial usa exclusivamente `GET /api/v1/anuncios/pagina-inicial`; a busca comum continua em `GET /api/v1/anuncios` com filtros e paginação.
+- A vitrine inicial retorna até 20 publicados e ordena por presença de foto, quantidade de fotos, completude, publicação mais recente e ID. Planos/assinaturas ainda não influenciam relevância.
+- `anunciosPaginaInicial::v1` é cacheado no Redis com o TTL geral. `ReadModelListener` limpa o cache depois de projetar alterações das tabelas que afetam a vitrine, evitando invalidar antes de o read estar atualizado.
 
 - Consulte `docs/busca-anuncios.md`. GET `/api/v1/anuncios` usa o banco read e retorna somente anúncios `PUBLICADO`, com paginação limitada a 52 itens.
 - Os filtros opcionais cobrem tipo, localização pública, marca, perfil PF/PJ, nome de pessoa/loja, faixas de preço/ano e dados técnicos. Comparações categóricas textuais ignoram maiúsculas/minúsculas; perfil usa correspondência parcial.
@@ -315,7 +320,7 @@ Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troc
 
 Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
 
-Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
+Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto, JWT_TTL_SECONDS tem default 900 e REFRESH_TOKEN_TTL_SECONDS tem default 2592000. O refresh token opaco fica em cookie HttpOnly e somente seu hash SHA-256 é persistido; há rotação, revogação no logout e detecção de reutilização por família. JWTs de acesso já emitidos permanecem válidos até expirar. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
 
 ## Placa completa e visibilidade
 

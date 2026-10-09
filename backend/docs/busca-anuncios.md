@@ -40,3 +40,9 @@ Resposta:
 ```
 
 Anúncios antigos sem coordenadas não aparecem na busca por raio até terem a localização atualizada. Eles continuam disponíveis nas buscas sem proximidade. A chave `carros` foi mantida conforme o contrato atual, embora possa conter qualquer um dos seis tipos de veículo.
+
+## Página inicial
+
+`GET /api/v1/anuncios/pagina-inicial` é exclusivo da vitrine inicial e retorna no máximo 20 anúncios publicados. Ele não altera a ordenação da busca paginada. A relevância usa, nesta ordem: existência de foto, quantidade de fotos, completude dos dados disponíveis, data de publicação e ID como desempate estável. Planos e assinaturas não influenciam o ranking enquanto seus benefícios comerciais não forem definidos.
+
+A resposta é armazenada no Redis no cache `anunciosPaginaInicial`, chave `v1`, com o TTL geral configurado por `REDIS_CACHE_TTL`. Alterações projetadas em anúncio, veículo, especialização, endereço, foto ou perfil do anunciante limpam esse cache depois que a transação da projeção read termina. Assim, o cache não é reconstruído com uma versão anterior à alteração recém-projetada.

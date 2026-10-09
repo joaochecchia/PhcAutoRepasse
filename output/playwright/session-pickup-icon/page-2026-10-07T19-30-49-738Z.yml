@@ -1,0 +1,113 @@
+- generic [ref=e2]:
+  - link "Pular para o conteúdo" [ref=e3] [cursor=pointer]:
+    - /url: "#conteudo"
+  - generic [ref=e5]:
+    - generic [ref=e6]: BOAS OPORTUNIDADES. NOVOS CAMINHOS.
+    - generic [ref=e7]: PHC Auto Repasse • Conectando você ao próximo veículo
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "PHC Auto — início" [ref=e10] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e11]
+      - navigation "Navegação principal" [ref=e12]:
+        - link "Comprar veículo" [ref=e13] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Vender meu veículo" [ref=e14] [cursor=pointer]
+        - button "Nossos planos NOVO" [ref=e15] [cursor=pointer]:
+          - text: Nossos planos
+          - generic [ref=e16]: NOVO
+      - generic [ref=e17]:
+        - button "Ativar modo escuro" [ref=e18] [cursor=pointer]
+        - button "Favoritos (0)" [ref=e21] [cursor=pointer]
+        - button "Entrar" [ref=e25] [cursor=pointer]
+        - button "Anunciar" [ref=e30] [cursor=pointer]
+  - main [active] [ref=e32]:
+    - generic [ref=e33]:
+      - img "Porsche em uma estrada arborizada" [ref=e34]
+      - generic [ref=e36]:
+        - generic [ref=e37]: O SEU PRÓXIMO CAPÍTULO
+        - heading "Bom negócio. Melhor caminho." [level=1] [ref=e39]: Bom negócio.Melhor caminho.
+        - paragraph [ref=e40]: O veículo que você procura. A oportunidade que você esperava.
+        - generic [ref=e41]:
+          - button "Explore as oportunidades" [ref=e42] [cursor=pointer]
+          - button "Anunciar meu veículo" [ref=e45] [cursor=pointer]
+        - generic [ref=e49]: PAIXÃO POR VEÍCULOS. CONEXÃO COM BONS NEGÓCIOS.
+      - generic [ref=e50]: 01 / 01
+    - region "Pesquisar veículos" [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - group "Tipo de veículo" [ref=e54]:
+            - button "Carros" [pressed] [ref=e55] [cursor=pointer]
+            - button "Motos" [ref=e59] [cursor=pointer]
+            - button "Caminhonetes" [ref=e60] [cursor=pointer]
+            - button "Caminhões" [ref=e61] [cursor=pointer]
+            - button "Barcos" [ref=e62] [cursor=pointer]
+            - button "Linha amarela" [ref=e63] [cursor=pointer]
+          - generic [ref=e64]: Qual vai ser o seu próximo?
+        - generic [ref=e65]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: ENCONTRE SEU VEÍCULO
+            - combobox "Buscar por marca ou modelo" [ref=e72]
+          - button "LOCALIZAÇÃO Todo o Brasil" [ref=e74] [cursor=pointer]:
+            - generic [ref=e78]:
+              - generic [ref=e79]: LOCALIZAÇÃO
+              - text: Todo o Brasil
+          - button "Buscar veículos" [ref=e82] [cursor=pointer]
+        - generic [ref=e85]:
+          - generic [ref=e86]: Seu próximo negócio começa com uma boa escolha.
+          - button "Busca avançada" [ref=e90] [cursor=pointer]
+    - generic [ref=e92]:
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]: ENCONTRE A SUA FAVORITA
+          - heading "O próximo pode ser um..." [level=2] [ref=e96]
+        - button "Ver todas as marcas" [ref=e97] [cursor=pointer]
+      - generic [ref=e101]:
+        - button "Volkswagen" [ref=e102] [cursor=pointer]
+        - button "Chevrolet" [ref=e105] [cursor=pointer]
+        - button "Fiat" [ref=e108] [cursor=pointer]
+        - button "Toyota" [ref=e111] [cursor=pointer]
+        - button "Honda" [ref=e114] [cursor=pointer]
+        - button "Jeep" [ref=e117] [cursor=pointer]
+        - button "BMW" [ref=e120] [cursor=pointer]
+        - button "Hyundai" [ref=e123] [cursor=pointer]
+    - generic [ref=e127]:
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - generic [ref=e130]: A SUA PRÓXIMA CONQUISTA
+          - heading "Vale a pena conhecer." [level=2] [ref=e132]
+          - paragraph [ref=e133]: Explore veículos e encontre o que combina com você.
+        - button "Ver todos os veículos" [ref=e134] [cursor=pointer]
+      - generic [ref=e138]:
+        - generic [ref=e139]: Vitrine PHC
+        - generic [ref=e142]: Até 20 oportunidades recentes
+    - generic [ref=e164]:
+      - generic [ref=e165]:
+        - generic [ref=e166]: O PRÓXIMO BOM NEGÓCIO PODE SER SEU
+        - heading "Seu veículo merece uma nova vitrine." [level=2] [ref=e167]: Seu veículo mereceuma nova vitrine.
+        - paragraph [ref=e168]: Deixe seu anúncio pronto para quem está procurando exatamente o que você tem.
+        - button "Quero anunciar meu veículo" [ref=e169] [cursor=pointer]
+      - generic [ref=e173]:
+        - generic [ref=e174]: VAMOSNEGOCIAR.
+        - generic [ref=e176]: ↗
+    - generic [ref=e177]:
+      - generic [ref=e182]:
+        - heading "Uma conta. Novas possibilidades." [level=3] [ref=e183]
+        - paragraph [ref=e184]: Prepare-se para comprar, anunciar e acompanhar seus favoritos.
+      - button "Criar minha conta" [ref=e185] [cursor=pointer]
+  - contentinfo [ref=e188]:
+    - generic [ref=e189]:
+      - link [ref=e190] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e191]
+      - paragraph [ref=e192]: Boas oportunidades.Novos caminhos.
+      - navigation "Links do rodapé" [ref=e193]:
+        - link "Comprar" [ref=e194] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Anunciar" [ref=e195] [cursor=pointer]
+        - button "Planos" [ref=e196] [cursor=pointer]
+        - button "Criar conta" [ref=e197] [cursor=pointer]
+      - button "Modo escuro" [ref=e198] [cursor=pointer]
+    - generic [ref=e201]:
+      - generic [ref=e202]: © 2026 PHC Auto Repasse.
+      - generic [ref=e203]: Dados dos anúncios enviados pelos anunciantes.

@@ -57,8 +57,9 @@ class ModosLocalizacaoBuscaTests {
     private DefaultAnunciosFacade facade() {
         PlatformTransactionManager tx = Mockito.mock(PlatformTransactionManager.class);
         Mockito.when(tx.getTransaction(Mockito.any())).thenReturn(Mockito.mock(TransactionStatus.class));
-        return new DefaultAnunciosFacade(busca, command -> null, (id, patch) -> null, id -> {},
-                localizacao, id -> new Coordenadas(-23, -46), tx);
+        return new DefaultAnunciosFacade(busca, limite -> java.util.List.of(), command -> null,
+                (id, patch) -> null, id -> {},
+                localizacao, id -> new Coordenadas(-23, -46), tx, null);
     }
 
     private BuscarAnunciosRequest request(ModoLocalizacaoBusca modo, String cidade, String uf,

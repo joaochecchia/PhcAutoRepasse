@@ -119,6 +119,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         public Integer getAnoFabricacao(){return c.anoFabricacao();} public Integer getAnoModelo(){return c.anoModelo();}
         public String getCor(){return c.cor();} public String getIdentificadorPublico(){return c.identificadorPublico();}
         public repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo getCondicao(){return c.condicao();} public String getTipoFreio(){return c.tipoFreio();}
+        public Boolean getHistoricoLeilao(){return c.historicoLeilao();} public Boolean getHistoricoSinistro(){return c.historicoSinistro();}
         public Instant getCriadoEm(){return agora;} public Instant getAtualizadoEm(){return agora;}
     }
 

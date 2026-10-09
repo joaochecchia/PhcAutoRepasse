@@ -183,7 +183,7 @@ class UsuarioAggregateIntegrationTests {
                 tipo == TipoPessoa.PJ ? documento : null,
                 tipo == TipoPessoa.PJ ? "Empresa Teste LTDA" : null,
                 new EnderecoRequest("01001000", "São Paulo", "Sé", "Praça da Sé", "10", "apto", "SP"),
-                true, Instant.now(), "1.0", "1.0");
+                true, Instant.now(), "1.1", "1.1");
         var body = json.valueToTree(request);
         ((tools.jackson.databind.node.ObjectNode) body).put("senha", request.senha());
         var result = mvc.perform(post("/api/v1/usuarios/registrar").contentType("application/json")

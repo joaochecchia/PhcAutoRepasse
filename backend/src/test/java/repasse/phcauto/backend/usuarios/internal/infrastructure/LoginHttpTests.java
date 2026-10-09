@@ -19,6 +19,7 @@ import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.pers
 import repasse.phcauto.backend.usuarios.internal.infrastructure.configuration.AutenticacaoConfiguration;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.configuration.UsuariosConfiguration;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.security.JwtLoginService;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.security.RefreshTokenService;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.security.UsuarioDetailsService;
 class LoginHttpTests {
     private final UsuarioWriteRepository repository = mock(UsuarioWriteRepository.class);
@@ -31,8 +32,10 @@ class LoginHttpTests {
         var jwtEncoder = org.springframework.security.oauth2.jwt.NimbusJwtEncoder.withSecretKey(
                 new javax.crypto.spec.SecretKeySpec(new byte[32], "HmacSHA256")).build();
         var service = new JwtLoginService(new Login(gateway), jwtEncoder, java.time.Clock.systemUTC(), "phcauto", 900);
+        var refreshTokens = mock(RefreshTokenService.class);
+        when(refreshTokens.iniciar(any())).thenReturn(new RefreshTokenService.RefreshEmitido("refresh-seguro", 2592000));
         mvc = MockMvcBuilders.standaloneSetup(new LoginController(service,
-                        new repasse.phcauto.backend.usuarios.internal.infrastructure.security.AuthCookieService(false)))
+                        new repasse.phcauto.backend.usuarios.internal.infrastructure.security.AuthCookieService(false), refreshTokens))
                 .setControllerAdvice(new LoginExceptionHandler()).build();
     }
     private UsuarioEntity usuario(String hash, boolean ativo) {
@@ -59,6 +62,8 @@ class LoginHttpTests {
                 .andExpect(jsonPath("$.senha").doesNotExist())
                 .andExpect(cookie().httpOnly("PHC_AUTH", true))
                 .andExpect(cookie().maxAge("PHC_AUTH", 900))
+                .andExpect(cookie().httpOnly("PHC_REFRESH", true))
+                .andExpect(cookie().maxAge("PHC_REFRESH", 2592000))
                 .andExpect(header().string("Cache-Control", "no-store"));
     }
     @Test void senhaIncorretaRecebe401() throws Exception {

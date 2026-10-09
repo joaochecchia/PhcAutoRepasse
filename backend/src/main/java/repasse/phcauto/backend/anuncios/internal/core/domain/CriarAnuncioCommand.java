@@ -15,7 +15,8 @@ import repasse.phcauto.backend.domain.model.catalogo.Moto;
 public record CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, String fabricante,
         String modelo, String versao, Integer anoFabricacao, Integer anoModelo, String cor,
         String identificadorPublico,
-        repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao, String tipoFreio, String titulo, String descricao, TipoPreco tipoPreco,
+        repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao, String tipoFreio,
+        Boolean historicoLeilao, Boolean historicoSinistro, String titulo, String descricao, TipoPreco tipoPreco,
         Long precoCentavos, Boolean aceitaTroca, boolean publicarAgora, Endereco endereco,
         DetalhesVeiculo detalhes) {
 

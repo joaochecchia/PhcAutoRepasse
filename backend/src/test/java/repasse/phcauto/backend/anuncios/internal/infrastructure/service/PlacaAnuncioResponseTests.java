@@ -46,14 +46,15 @@ class PlacaAnuncioResponseTests {
                         return buscarMunicipio("Goiânia", "GO");
                     }
                 };
-        var facade = new DefaultAnunciosFacade(f -> null, criar, (id, patch) -> null, id -> { },
-                localizacao, null, transactionManager);
+        var facade = new DefaultAnunciosFacade(f -> null, limite -> java.util.List.of(), criar,
+                (id, patch) -> null, id -> { },
+                localizacao, null, transactionManager, null);
         var endereco = new EnderecoAnuncioRequest("74000000", "Goiânia", "Centro", "Rua", "1", null, "GO");
         var carro = new CriarAnuncioRequest.CarroRequest(10, "SUV", "AUTOMATICO", "FLEX", null,
                 "2.0", null, new BigDecimal("2.0"), 4, 5, "abc1d23", exibir,
                 true, true, true, false);
         return facade.criar(new CriarAnuncioRequest(UUID.randomUUID(), TipoVeiculo.CARRO, "Fabricante", "Modelo",
-                null, 2025, 2026, "Preto", null, CondicaoVeiculo.USADO, "ABS", "Título", null,
-                TipoPreco.FIXO, 100L, false, true, endereco, carro, null, null, null, null, null));
+                null, 2025, 2026, "Preto", null, CondicaoVeiculo.USADO, "ABS", false, false, "Título", null,
+                TipoPreco.FIXO, 100L, false, true, null, endereco, carro, null, null, null, null, null));
     }
 }

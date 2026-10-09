@@ -1,0 +1,116 @@
+- generic [ref=e2]:
+  - link "Pular para o conteúdo" [ref=e3] [cursor=pointer]:
+    - /url: "#conteudo"
+  - generic [ref=e5]:
+    - generic [ref=e6]: BOAS OPORTUNIDADES. NOVOS CAMINHOS.
+    - generic [ref=e7]: PHC Auto Repasse • Conectando você ao próximo veículo
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "PHC Auto — início" [ref=e10] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e11]
+      - navigation "Navegação principal" [ref=e12]:
+        - link "Comprar veículo" [ref=e13] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Vender meu veículo" [ref=e14] [cursor=pointer]
+        - button "Nossos planos NOVO" [ref=e15] [cursor=pointer]:
+          - text: Nossos planos
+          - generic [ref=e16]: NOVO
+      - generic [ref=e17]:
+        - button "Ativar modo escuro" [ref=e18] [cursor=pointer]
+        - button "Favoritos (0)" [ref=e21] [cursor=pointer]
+        - button "Entrar" [ref=e25] [cursor=pointer]
+        - button "Anunciar" [ref=e30] [cursor=pointer]
+  - main [active] [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - link "Início" [ref=e35] [cursor=pointer]:
+          - /url: "#inicio"
+        - generic [ref=e38]: Comprar veículos
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - generic [ref=e41]: ENCONTRE O SEU PRÓXIMO CAMINHO
+          - heading "Boas escolhas começam aqui." [level=1] [ref=e42]
+          - paragraph [ref=e43]: Explore a vitrine e prepare uma busca do seu jeito.
+        - button "Voltar ao início" [ref=e44] [cursor=pointer]
+      - generic [ref=e47]:
+        - complementary [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - heading "Filtros" [level=2] [ref=e51]
+              - button "Limpar" [ref=e53] [cursor=pointer]
+            - generic [ref=e55]:
+              - text: Tipo de veículo
+              - combobox "Tipo de veículo" [ref=e57] [cursor=pointer]:
+                - generic [ref=e58]: Todos os veículos
+            - group [ref=e61]:
+              - generic "Localização" [ref=e62] [cursor=pointer]
+              - generic [ref=e66]:
+                - text: Onde procurar
+                - combobox "Onde procurar" [ref=e68] [cursor=pointer]:
+                  - generic [ref=e69]: Selecione
+            - group [ref=e72]:
+              - generic "Marca e condição" [ref=e73] [cursor=pointer]
+              - generic [ref=e76]:
+                - generic [ref=e77]:
+                  - text: Marca
+                  - combobox "Marca" [ref=e79] [cursor=pointer]:
+                    - generic [ref=e80]: Selecione
+                - generic [ref=e83]:
+                  - text: Modelo
+                  - textbox "Modelo" [ref=e84]:
+                    - /placeholder: "Ex.: Corolla, HB20, Polo"
+                - generic [ref=e85]:
+                  - text: Condição
+                  - combobox "Condição" [ref=e87] [cursor=pointer]:
+                    - generic [ref=e88]: Selecione
+            - group [ref=e91]:
+              - generic "Preço e ano" [ref=e92] [cursor=pointer]
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - text: Preço mínimo (R$)
+                  - spinbutton "Preço mínimo (R$)" [ref=e97]
+                - generic [ref=e98]:
+                  - text: Preço máximo (R$)
+                  - spinbutton "Preço máximo (R$)" [ref=e99]
+                - generic [ref=e100]:
+                  - text: Ano mínimo
+                  - spinbutton "Ano mínimo" [ref=e101]
+                - generic [ref=e102]:
+                  - text: Ano máximo
+                  - spinbutton "Ano máximo" [ref=e103]
+            - group [ref=e104]:
+              - generic "Motor e transmissão" [ref=e105] [cursor=pointer]
+            - group [ref=e108]:
+              - generic "Características" [ref=e109] [cursor=pointer]
+            - group [ref=e112]:
+              - generic "Anunciante" [ref=e113] [cursor=pointer]
+            - button "Aplicar filtros" [ref=e117] [cursor=pointer]
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - generic [ref=e120]:
+              - generic [ref=e121]: PHC AUTO REPASSE
+              - heading "Seu próximo veículo. Sua próxima história." [level=3] [ref=e122]: Seu próximo veículo.Sua próxima história.
+            - button [ref=e126] [cursor=pointer]:
+              - text: Tem um veículo para vender?
+              - generic [ref=e127]: Anuncie aqui
+          - generic [ref=e132]:
+            - strong [ref=e133]: "0"
+            - text: veículos encontrados
+          - generic "Carregando veículos" [ref=e134]
+  - contentinfo [ref=e165]:
+    - generic [ref=e166]:
+      - link [ref=e167] [cursor=pointer]:
+        - /url: "#inicio"
+        - img "PHC Auto" [ref=e168]
+      - paragraph [ref=e169]: Boas oportunidades.Novos caminhos.
+      - navigation "Links do rodapé" [ref=e170]:
+        - link "Comprar" [ref=e171] [cursor=pointer]:
+          - /url: "#buscar"
+        - button "Anunciar" [ref=e172] [cursor=pointer]
+        - button "Planos" [ref=e173] [cursor=pointer]
+        - button "Criar conta" [ref=e174] [cursor=pointer]
+      - button "Modo escuro" [ref=e175] [cursor=pointer]
+    - generic [ref=e178]:
+      - generic [ref=e179]: © 2026 PHC Auto Repasse.
+      - generic [ref=e180]: Dados dos anúncios enviados pelos anunciantes.

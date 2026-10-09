@@ -2,12 +2,41 @@ import axios from "axios";
 import { api } from "./api";
 import type { Draft } from "../components/FormFields";
 import type { Filters } from "../data/filters";
-import type { Address, SearchResponse, Session, UserProfile } from "./contracts";
+import type { AdPhoto, Address, HomeAdsResponse, SearchResponse, Session, UserProfile } from "./contracts";
 import type { Vehicle } from "../data/catalog";
 
 type RegistrationConfig = {
   versaoTermosUso: string;
   versaoPoliticaPrivacidade: string;
+};
+
+export type AdFormCatalog = {
+  fabricantes: { valor: string; aliases: string[] }[];
+  modelosPorFabricante: Record<string, string[]>;
+  cores: string[];
+  carrocerias: string[];
+  cambios: string[];
+  combustiveis: string[];
+  motorizacoes: string[];
+  tiposFreio: string[];
+  tracoes: string[];
+  direcoes: string[];
+  fabricantesMotos: { valor: string; aliases: string[] }[];
+  modelosMotosPorFabricante: Record<string, string[]>;
+  categoriasMotos: string[];
+  partidasMotos: string[];
+  refrigeracoesMotos: string[];
+  cambiosMotos: string[];
+  tiposFreioMotos: string[];
+  fabricantesCaminhoes: { valor: string; aliases: string[] }[];
+  modelosCaminhoesPorFabricante: Record<string, string[]>;
+  configuracoesCaminhao: string[];
+  carroceriasCaminhao: string[];
+  cambiosCaminhao: string[];
+  tracoesCaminhao: string[];
+  direcoesCaminhao: string[];
+  tiposFreioCaminhao: string[];
+  implementosCaminhao: string[];
 };
 
 let pendingSession: Promise<Session> | undefined;
@@ -16,6 +45,12 @@ let pendingRegistrationConfig: Promise<RegistrationConfig> | undefined;
 
 export function apiErrorMessage(error: unknown, fallback: string) {
   if (!axios.isAxiosError(error)) return fallback;
+  if (
+    error.response?.status === 401 &&
+    !error.config?.url?.includes("/usuarios/login")
+  ) {
+    return "Sua sessão expirou. Entre novamente.";
+  }
   const data = error.response?.data as
     | { detail?: string; title?: string; errors?: Record<string, string> }
     | undefined;
@@ -100,6 +135,10 @@ export const authApi = {
 
 const pendingSearches = new Map<string, Promise<SearchResponse>>();
 
+export async function homeAds() {
+  return (await api.get<HomeAdsResponse>("/anuncios/pagina-inicial")).data;
+}
+
 export async function searchAds(filters: Filters, pagina: number, tamanho: 20 | 52) {
   const params: Record<string, string | number> = { pagina, tamanho };
   for (const [key, value] of Object.entries(filters)) {
@@ -116,7 +155,7 @@ export async function searchAds(filters: Filters, pagina: number, tamanho: 20 | 
     delete params.uf;
   }
   if (params.modoLocalizacao === "DISPOSITIVO") {
-    const position = await currentPosition();
+    const position = await prepareDeviceLocation();
     params.latitude = position.coords.latitude;
     params.longitude = position.coords.longitude;
   }
@@ -136,7 +175,7 @@ export async function searchAds(filters: Filters, pagina: number, tamanho: 20 | 
 
 export function searchAdToVehicle(
   ad: SearchResponse["carros"][number],
-  index: number,
+  _index: number,
 ): Vehicle {
   const price =
     ad.tipoPreco === "SOB_CONSULTA" || ad.precoCentavos == null
@@ -145,7 +184,6 @@ export function searchAdToVehicle(
           minimumFractionDigits: 0,
           maximumFractionDigits: 0,
         }).format(ad.precoCentavos / 100);
-  const fallbackImages = ["porsche", "bmw", "mercedes", "audi", "golf", "toyota", "mustang", "jeep"];
   return {
     id: ad.anuncioId,
     brand: ad.fabricante.toUpperCase(),
@@ -157,18 +195,24 @@ export function searchAdToVehicle(
       ad.cidade && ad.uf
         ? `${ad.cidade}, ${ad.uf}`
         : ad.cidade || ad.uf || "Localização não informada",
-    image: fallbackImages[index % fallbackImages.length],
+    imageUrl: ad.fotoPrincipalUrl ?? null,
     fuel: ad.combustivel || "Não informado",
     transmission: ad.cambio || "Não informado",
     seller: ad.nomePerfil || "Anunciante",
     live: true,
     condition: ad.condicao,
     type: ad.tipoVeiculo,
+    auctionHistory: ad.historicoLeilao,
+    accidentHistory: ad.historicoSinistro,
   };
 }
 
 export async function createAd(payload: unknown) {
   return (await api.post<{ id: string }>("/anuncios", payload)).data;
+}
+
+export async function getAdFormCatalog() {
+  return (await api.get<AdFormCatalog>("/anuncios/opcoes-cadastro")).data;
 }
 
 export async function uploadAdPhoto(
@@ -182,6 +226,14 @@ export async function uploadAdPhoto(
   data.append("posicao", String(position));
   if (alt.trim()) data.append("textoAlternativo", alt.trim());
   await api.post(`/anuncios/${anuncioId}/fotos`, data);
+}
+
+export async function listAdPhotos(anuncioId: string) {
+  return (await api.get<AdPhoto[]>(`/anuncios/${anuncioId}/fotos`)).data;
+}
+
+export async function requestWhatsappContact(anuncioId: string) {
+  return (await api.post<{ url: string }>(`/anuncios/${anuncioId}/contato/whatsapp`)).data;
 }
 
 export function adPayloadFromDraft(
@@ -207,6 +259,12 @@ export function adPayloadFromDraft(
       ),
     );
   }
+  // The API stores the engine designation as one string; the form presents turbo separately.
+  if (typeof details.motorizacao === "string") {
+    details.motorizacao = details.motorizacao.replace(",", ".")
+      + (values[`${tipo}.turbo`] === "true" ? " Turbo" : "");
+  }
+  delete details.turbo;
   return {
     anuncianteId: usuarioId,
     tipoVeiculo: tipo,
@@ -219,6 +277,8 @@ export function adPayloadFromDraft(
     identificadorPublico: values.identificadorPublico || null,
     condicao: values.condicao,
     tipoFreio: values.tipoFreio || null,
+    historicoLeilao: optionalBoolean(values.historicoLeilao),
+    historicoSinistro: optionalBoolean(values.historicoSinistro),
     titulo: values.titulo,
     descricao: values.descricao || null,
     tipoPreco: values.tipoPreco,
@@ -228,6 +288,12 @@ export function adPayloadFromDraft(
         : null,
     aceitaTroca: optionalBoolean(values.aceitaTroca),
     publicarAgora: optionalBoolean(values.publicarAgora) ?? false,
+    contato: {
+      whatsapp: values.contatoWhatsapp === "true",
+      ligacao: values.contatoLigacao === "true",
+      naoDivulgar: values.contatoNaoDivulgar === "true",
+      versaoTexto: values.contatoNaoDivulgar === "true" ? null : "1.0",
+    },
     endereco: addressFromDraft(values),
     carro: tipo === "CARRO" ? details : null,
     moto: tipo === "MOTO" ? details : null,
@@ -291,8 +357,15 @@ function optionalBoolean(value?: string) {
   return value === undefined || value === "" ? null : value === "true";
 }
 
-function currentPosition() {
-  return new Promise<GeolocationPosition>((resolve, reject) => {
+let cachedPosition: { position: GeolocationPosition; capturedAt: number } | null = null;
+let pendingPosition: Promise<GeolocationPosition> | null = null;
+
+export function prepareDeviceLocation() {
+  if (cachedPosition && Date.now() - cachedPosition.capturedAt < 300_000) {
+    return Promise.resolve(cachedPosition.position);
+  }
+  if (pendingPosition) return pendingPosition;
+  pendingPosition = new Promise<GeolocationPosition>((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error("Seu navegador não oferece localização."));
       return;
@@ -302,5 +375,11 @@ function currentPosition() {
       timeout: 8_000,
       maximumAge: 300_000,
     });
+  }).then((position) => {
+    cachedPosition = { position, capturedAt: Date.now() };
+    return position;
+  }).finally(() => {
+    pendingPosition = null;
   });
+  return pendingPosition;
 }

@@ -13,6 +13,7 @@ import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.r
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.BuscarAnunciosRequest;
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.CriarAnuncioRequest;
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioResponse;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.PaginaInicialAnunciosResponse;
 import repasse.phcauto.backend.anuncios.internal.infrastructure.service.AnunciosFacade;
 @RestController
 @RequestMapping("/api/v1/anuncios")
@@ -41,6 +42,12 @@ public class AnunciosController {
         resposta.put("raioKmAplicado", pagina.raioKmAplicado());
         resposta.put("temProximaPagina", pagina.temProximaPagina());
         return ResponseEntity.ok(resposta);
+    }
+
+    @io.swagger.v3.oas.annotations.security.SecurityRequirements
+    @GetMapping("/pagina-inicial")
+    public ResponseEntity<PaginaInicialAnunciosResponse> paginaInicial() {
+        return ResponseEntity.ok(anuncios.paginaInicial());
     }
 
     @org.springframework.security.access.prepost.PreAuthorize("authentication.name == #request.anuncianteId().toString()")

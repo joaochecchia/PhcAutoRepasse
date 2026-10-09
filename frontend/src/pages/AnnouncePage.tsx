@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  Bike,
   Camera,
   CarFront,
   Check,
   ChevronDown,
   ChevronUp,
   Plus,
+  Ship,
+  Tractor,
   Trash2,
+  Truck,
 } from "lucide-react";
 import {
   AddressFields,
@@ -16,6 +20,7 @@ import {
   Fields,
   type Draft,
 } from "../components/FormFields";
+import { PickupSideIcon } from "../components/PickupSideIcon";
 import {
   commonVehicleFields,
   motorFields,
@@ -27,6 +32,8 @@ import {
   adPayloadFromDraft,
   apiErrorMessage,
   createAd,
+  getAdFormCatalog,
+  type AdFormCatalog,
   uploadAdPhoto,
 } from "../lib/backend";
 
@@ -54,6 +61,9 @@ export function AnnouncePage({
   const [values, setValues] = useState<Draft>({
     tipoVeiculo: "CARRO",
     tipoPreco: "FIXO",
+    contatoWhatsapp: "false",
+    contatoLigacao: "false",
+    contatoNaoDivulgar: "true",
   });
   const [sameAddress, setSameAddress] = useState(false);
   const [motors, setMotors] = useState<Draft[]>([]);
@@ -61,6 +71,8 @@ export function AnnouncePage({
   const [photoError, setPhotoError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [catalog, setCatalog] = useState<AdFormCatalog | null>(null);
+  const [catalogError, setCatalogError] = useState("");
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const initialStep = useRef(true);
   useEffect(() => {
@@ -74,9 +86,71 @@ export function AnnouncePage({
       behavior: "instant",
     });
   }, [step]);
+  useEffect(() => {
+    getAdFormCatalog()
+      .then(setCatalog)
+      .catch(() => setCatalogError("Não foi possível carregar as opções do catálogo. Tente atualizar a página."));
+  }, []);
   const change = (key: string, value: string) =>
-    setValues((prev) => ({ ...prev, [key]: value }));
-  const specific = vehicleFields[values.tipoVeiculo];
+    setValues((prev) => key === "fabricante"
+      ? { ...prev, fabricante: value, modelo: "" }
+      : { ...prev, [key]: value });
+  const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]/g, "").toLocaleLowerCase("pt-BR");
+  const strictVehicleCatalog = values.tipoVeiculo === "CARRO" || values.tipoVeiculo === "CAMINHONETE";
+  const suggestedManufacturers = values.tipoVeiculo === "MOTO"
+    ? catalog?.fabricantesMotos
+    : values.tipoVeiculo === "CAMINHAO"
+      ? catalog?.fabricantesCaminhoes
+    : strictVehicleCatalog ? catalog?.fabricantes : undefined;
+  const suggestedModels = values.tipoVeiculo === "MOTO"
+    ? catalog?.modelosMotosPorFabricante
+    : values.tipoVeiculo === "CAMINHAO"
+      ? catalog?.modelosCaminhoesPorFabricante
+    : strictVehicleCatalog ? catalog?.modelosPorFabricante : undefined;
+  const chosenManufacturer = suggestedManufacturers?.find((item) =>
+    [item.valor, ...item.aliases].some((candidate) => normalize(candidate) === normalize(values.fabricante || "")),
+  )?.valor;
+  const asSuggestions = (items: string[] = []) => items.map((value) => ({ value }));
+  const commonFields = useMemo(() => commonVehicleFields.map((field) => {
+    if (field.key === "fabricante" && suggestedManufacturers) return {
+      ...field, suggestions: suggestedManufacturers.map(({ valor, aliases }) => ({ value: valor, aliases })),
+      strictSuggestions: false,
+      autoCorrectSuggestions: false,
+    };
+    if (field.key === "modelo" && suggestedManufacturers) return {
+      ...field,
+      suggestions: asSuggestions(chosenManufacturer ? suggestedModels?.[chosenManufacturer] : []),
+      strictSuggestions: false,
+      autoCorrectSuggestions: false,
+      disabled: false,
+      placeholder: chosenManufacturer
+        ? "Obrigatório — escolha uma sugestão ou digite o modelo"
+        : "Obrigatório — digite o modelo",
+    };
+    const source = field.key === "cor" ? catalog?.cores : field.key === "tipoFreio" ? catalog?.tiposFreio : undefined;
+    return source ? { ...field, suggestions: asSuggestions(source), strictSuggestions: false, autoCorrectSuggestions: false } : field;
+  }), [catalog, chosenManufacturer, suggestedManufacturers, suggestedModels]);
+  const specific = useMemo(() => (vehicleFields[values.tipoVeiculo] || []).map((field) => {
+    const sources: Record<string, string[] | undefined> = {
+      configuracao: values.tipoVeiculo === "CAMINHAO" ? catalog?.configuracoesCaminhao : undefined,
+      carroceria: values.tipoVeiculo === "CAMINHAO" ? catalog?.carroceriasCaminhao : catalog?.carrocerias,
+      cambio: values.tipoVeiculo === "MOTO"
+        ? catalog?.cambiosMotos
+        : values.tipoVeiculo === "CAMINHAO" ? catalog?.cambiosCaminhao : catalog?.cambios,
+      combustivel: catalog?.combustiveis,
+      motorizacao: catalog?.motorizacoes.filter((item) => /^[0-9]+\.[0-9]+$/.test(item)),
+      tracao: values.tipoVeiculo === "CAMINHAO" ? catalog?.tracoesCaminhao : catalog?.tracoes,
+      tipoDirecao: values.tipoVeiculo === "CAMINHAO" ? catalog?.direcoesCaminhao : catalog?.direcoes,
+      implemento: values.tipoVeiculo === "CAMINHAO" ? catalog?.implementosCaminhao : undefined,
+      categoria: catalog?.categoriasMotos,
+      partida: catalog?.partidasMotos,
+      refrigeracao: catalog?.refrigeracoesMotos,
+    };
+    const source = sources[field.key];
+    const free = ["motorizacao", "combustivel", "categoria", "partida", "refrigeracao", "configuracao", "implemento"].includes(field.key);
+    return source ? { ...field, suggestions: asSuggestions(source), strictSuggestions: !free, autoCorrectSuggestions: !free } : field;
+  }), [catalog, values.tipoVeiculo]);
   function copyAddress(checked: boolean) {
     setSameAddress(checked);
     if (checked)
@@ -186,23 +260,39 @@ export function AnnouncePage({
           </div>
           {step === 0 && (
             <>
+              <fieldset className="announce-vehicle-types">
+                <legend>
+                  Tipo de veículo <span className="required-mark" aria-hidden="true">*</span>
+                </legend>
+                <div className="announce-vehicle-type-list">
+                  {types.map(([vehicleType, label]) => {
+                    const selected = values.tipoVeiculo === vehicleType;
+                    return (
+                      <button
+                        key={vehicleType}
+                        type="button"
+                        className={selected ? "is-selected" : ""}
+                        aria-pressed={selected}
+                        onClick={() => change("tipoVeiculo", vehicleType)}
+                      >
+                        {vehicleType === "MOTO" ? <Bike size={22} />
+                          : vehicleType === "CAMINHAO" ? <Truck size={22} />
+                            : vehicleType === "CAMINHONETE" ? <PickupSideIcon size={22} />
+                            : vehicleType === "BARCO" ? <Ship size={22} />
+                              : vehicleType === "LINHA_AMARELA" ? <Tractor size={22} />
+                                : <CarFront size={22} />}
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
               <Fields
-                fields={[
-                  {
-                    key: "tipoVeiculo",
-                    label: "Tipo de veículo",
-                    required: true,
-                    options: types.map(([v, l]) => [v, l]),
-                  },
-                ]}
+                fields={commonFields}
                 values={values}
                 onChange={change}
               />
-              <Fields
-                fields={commonVehicleFields}
-                values={values}
-                onChange={change}
-              />
+              {catalogError && <p className="inline-notice" role="alert">{catalogError}</p>}
               <section className="form-section">
                 <div className="form-section-title">
                   <span>+</span>
@@ -218,7 +308,34 @@ export function AnnouncePage({
                   </div>
                 </div>
                 <Fields
-                  fields={specific}
+                  fields={[
+                    {
+                      key: "tipoFreio",
+                      label: "Tipo de freio",
+                      suggestions: asSuggestions(values.tipoVeiculo === "MOTO"
+                        ? catalog?.tiposFreioMotos
+                        : values.tipoVeiculo === "CAMINHAO"
+                          ? catalog?.tiposFreioCaminhao
+                        : catalog?.tiposFreio),
+                      strictSuggestions: true,
+                      unprefixed: true,
+                    },
+                    {
+                      key: "historicoLeilao",
+                      label: "Possui histórico de leilão?",
+                      required: true,
+                      unprefixed: true,
+                      options: [["true", "Sim"], ["false", "Não"]],
+                    },
+                    {
+                      key: "historicoSinistro",
+                      label: "Possui histórico de sinistro?",
+                      required: true,
+                      unprefixed: true,
+                      options: [["true", "Sim"], ["false", "Não"]],
+                    },
+                    ...specific,
+                  ]}
                   prefix={`${values.tipoVeiculo}.`}
                   values={values}
                   onChange={change}
@@ -341,7 +458,7 @@ export function AnnouncePage({
                   rows={5}
                   value={values.descricao || ""}
                   onChange={(e) => change("descricao", e.target.value)}
-                  placeholder="Conte sobre o estado de conservação, histórico de manutenção e outros detalhes do veículo."
+                  placeholder="Opcional — conte sobre o estado de conservação, histórico de manutenção e outros detalhes do veículo."
                 />
               </label>
               <div className="form-section">
@@ -409,7 +526,7 @@ export function AnnouncePage({
                                 ),
                               )
                             }
-                            placeholder="Ex.: Vista lateral do veículo"
+                            placeholder="Opcional — Ex.: vista lateral do veículo"
                           />
                         </label>
                         <div className="photo-editor-actions">
@@ -523,6 +640,19 @@ export function AnnouncePage({
                   <p>{values.descricao}</p>
                 </div>
               )}
+              <section className="contact-consent-panel" aria-labelledby="contact-consent-title">
+                <h3 id="contact-consent-title">Como interessados podem falar com você?</h3>
+                <label><input type="checkbox" checked={values.contatoWhatsapp === "true"}
+                  onChange={(event) => { change("contatoWhatsapp", String(event.target.checked)); if (event.target.checked) change("contatoNaoDivulgar", "false"); }} />
+                  Aceito receber mensagens pelo WhatsApp</label>
+                <label><input type="checkbox" checked={values.contatoLigacao === "true"}
+                  onChange={(event) => { change("contatoLigacao", String(event.target.checked)); if (event.target.checked) change("contatoNaoDivulgar", "false"); }} />
+                  Aceito receber ligações</label>
+                <label><input type="checkbox" checked={values.contatoNaoDivulgar === "true"}
+                  onChange={(event) => { change("contatoNaoDivulgar", String(event.target.checked)); if (event.target.checked) { change("contatoWhatsapp", "false"); change("contatoLigacao", "false"); } }} />
+                  Prefiro não divulgar meu telefone</label>
+                <p>Ao ativar o WhatsApp, seu número poderá ser visualizado por pessoas interessadas no anúncio. Você poderá desativar essa opção a qualquer momento.</p>
+              </section>
               <Fields
                 fields={[
                   {

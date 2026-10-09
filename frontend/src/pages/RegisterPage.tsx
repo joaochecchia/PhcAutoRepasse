@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, FileText } from "lucide-react";
+import { ArrowRight, ExternalLink, FileText } from "lucide-react";
 import { AccountLayout } from "./PageLayout";
 import {
   PasswordField,
@@ -94,6 +94,19 @@ export function RegisterPage({
           <FileText size={19} />
           <div>
             <strong>Termos de uso e privacidade</strong>
+            <p className="terms-version">
+              Documento vigente: versão {versions?.versaoTermosUso || "carregando…"}
+            </p>
+            <a
+              className="terms-document-link"
+              href="/documentos/termos-uso-politica-privacidade-v1.1.pdf"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FileText size={16} />
+              Ler os Termos de Uso e a Política de Privacidade
+              <ExternalLink size={14} />
+            </a>
             <label className="check-label terms-check">
               <input
                 type="checkbox"
@@ -101,7 +114,8 @@ export function RegisterPage({
                 onChange={(event) => setAccepted(event.target.checked)}
                 required
               />
-              Li e aceito os Termos de Uso e a Política de Privacidade vigentes.
+              Li o documento da versão vigente e aceito os Termos de Uso e a
+              Política de Privacidade.
             </label>
             <button
               className="text-button"
@@ -113,8 +127,9 @@ export function RegisterPage({
             </button>
             {termsOpen && (
               <p className="inline-notice">
-                O momento deste aceite será enviado ao servidor junto com o
-                cadastro e registrado para fins de comprovação.
+                O momento do aceite e as versões {versions?.versaoTermosUso} dos
+                documentos serão enviados ao servidor junto com o cadastro e
+                registrados para fins de comprovação.
               </p>
             )}
           </div>

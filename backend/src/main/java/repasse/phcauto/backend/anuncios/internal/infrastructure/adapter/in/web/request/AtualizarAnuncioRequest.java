@@ -19,6 +19,8 @@ public record AtualizarAnuncioRequest(
         @Size(max = 80) String identificadorPublico,
         repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao,
         @Size(max = 60) String tipoFreio,
+        Boolean historicoLeilao,
+        Boolean historicoSinistro,
         @Size(min = 1, max = 180) String titulo,
         @Size(max = 10000) String descricao,
         TipoPreco tipoPreco,
@@ -72,7 +74,8 @@ public record AtualizarAnuncioRequest(
     public boolean isPossuiAlgumaAlteracao() {
         return fabricante != null || modelo != null || versao != null || anoFabricacao != null
                 || anoModelo != null || cor != null || identificadorPublico != null || condicao != null
-                || tipoFreio != null || titulo != null || descricao != null || tipoPreco != null
+                || tipoFreio != null || historicoLeilao != null || historicoSinistro != null
+                || titulo != null || descricao != null || tipoPreco != null
                 || precoCentavos != null || aceitaTroca != null || publicarAgora != null
                 || possuiValor(endereco) || possuiValor(carro) || possuiValor(moto)
                 || possuiValor(caminhao) || possuiValor(caminhonete)

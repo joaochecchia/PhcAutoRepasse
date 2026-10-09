@@ -35,6 +35,7 @@ public class RedisConfig {
                         .enableDefaultTyping(BasicPolymorphicTypeValidator.builder()
                                 .allowIfSubType("repasse.phcauto.backend.infra.")
                                 .allowIfSubType("repasse.phcauto.backend.localizacao.")
+                                .allowIfSubType("repasse.phcauto.backend.anuncios.")
                                 .allowIfSubType("java.util.")
                                 .allowIfSubType("java.time.")
                                 .allowIfSubType("java.math.")

@@ -32,6 +32,7 @@ public class WriteChangeIntegrator implements Integrator {
     }
 
     void publish(Class<?> type, Object id) {
+        if (type.isAnnotationPresent(WriteOnlyOperationalData.class)) return;
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             throw new IllegalStateException("Alterações exigem uma transação Spring no banco write");
         }

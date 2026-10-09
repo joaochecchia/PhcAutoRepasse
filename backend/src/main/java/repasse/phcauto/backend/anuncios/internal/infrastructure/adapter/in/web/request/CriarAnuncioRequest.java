@@ -25,12 +25,15 @@ public record CriarAnuncioRequest(
         @Size(max = 80) String identificadorPublico,
         @NotNull repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao,
         @Size(max = 60) String tipoFreio,
+        @NotNull Boolean historicoLeilao,
+        @NotNull Boolean historicoSinistro,
         @NotBlank @Size(max = 180) String titulo,
         @Size(max = 10000) String descricao,
         @NotNull TipoPreco tipoPreco,
         @Positive Long precoCentavos,
         Boolean aceitaTroca,
         Boolean publicarAgora,
+        @Valid ContatoAnuncianteRequest contato,
         @Valid @NotNull EnderecoAnuncioRequest endereco,
         @Valid CarroRequest carro,
         @Valid MotoRequest moto,
@@ -38,6 +41,16 @@ public record CriarAnuncioRequest(
         @Valid CaminhoneteRequest caminhonete,
         @Valid BarcoRequest barco,
         @Valid LinhaAmarelaRequest linhaAmarela) {
+
+    public record ContatoAnuncianteRequest(boolean whatsapp, boolean ligacao,
+            boolean naoDivulgar, @Size(max = 32) String versaoTexto) {
+        @jakarta.validation.constraints.AssertTrue(message = "Escolha divulgar contatos ou não divulgar")
+        @com.fasterxml.jackson.annotation.JsonIgnore
+        public boolean isEscolhaValida() {
+            return naoDivulgar ? !whatsapp && !ligacao
+                    : (whatsapp || ligacao) && versaoTexto != null && !versaoTexto.isBlank();
+        }
+    }
 
 
     @jakarta.validation.constraints.AssertTrue(message = "Informe exatamente um bloco de dados específicos compatível com tipoVeiculo")
@@ -62,20 +75,18 @@ public record CriarAnuncioRequest(
     public boolean isDadosTecnicosObrigatoriosPreenchidos() {
         if (carro != null) return carro.quilometragem() != null && preenchido(carro.carroceria())
                 && preenchido(carro.cambio()) && preenchido(carro.combustivel())
-                && preenchido(carro.motorizacao()) && carro.cilindradaLitros() != null
-                && carro.numeroPortas() != null;
-        if (moto != null) return moto.quilometragem() != null && moto.cilindradas() != null
+                && preenchido(carro.motorizacao()) && carro.ipvaPago() != null && carro.unicoDono() != null;
+        if (moto != null) return moto.quilometragem() != null && moto.ipvaPago() != null
                 && preenchido(moto.categoria()) && preenchido(moto.cambio())
                 && preenchido(moto.combustivel());
         if (caminhao != null) return caminhao.quilometragem() != null
                 && preenchido(caminhao.configuracao()) && preenchido(caminhao.carroceria())
                 && preenchido(caminhao.cambio()) && preenchido(caminhao.combustivel())
-                && caminhao.numeroEixos() != null;
+                && caminhao.numeroEixos() != null && caminhao.ipvaPago() != null;
         if (caminhonete != null) return caminhonete.quilometragem() != null
                 && preenchido(caminhonete.tipoCabine()) && preenchido(caminhonete.carroceria())
                 && preenchido(caminhonete.cambio()) && preenchido(caminhonete.combustivel())
-                && preenchido(caminhonete.motorizacao()) && caminhonete.cilindradaLitros() != null
-                && caminhonete.numeroPortas() != null;
+                && preenchido(caminhonete.motorizacao()) && caminhonete.ipvaPago() != null && caminhonete.unicoDono() != null;
         return true;
     }
 

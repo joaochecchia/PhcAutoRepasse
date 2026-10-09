@@ -10,8 +10,8 @@ Além dos dados do usuário, o request exige:
 {
   "aceitouTermos": true,
   "aceiteTermosEm": "2026-09-29T14:00:00Z",
-  "versaoTermosUso": "1.0",
-  "versaoPoliticaPrivacidade": "1.0"
+  "versaoTermosUso": "1.1",
+  "versaoPoliticaPrivacidade": "1.1"
 }
 ```
 
@@ -22,7 +22,7 @@ As versões precisam coincidir com:
 - `TERMOS_USO_VERSAO_ATUAL`
 - `POLITICA_PRIVACIDADE_VERSAO_ATUAL`
 
-Os defaults locais são `1.0`. Uma publicação de novos documentos deve atualizar as variáveis e o frontend no mesmo release. Manter apenas a versão sem conservar o documento correspondente fora do banco não prova o conteúdo histórico; os textos publicados precisam ser arquivados de forma imutável pela operação do produto.
+Os defaults locais são `1.1`. O documento publicado no frontend fica em `public/documentos/termos-uso-politica-privacidade-v1.1.pdf`. Uma publicação de novos documentos deve atualizar as variáveis, arquivar o novo PDF e ajustar o frontend no mesmo release. Manter apenas a versão sem conservar o documento correspondente não prova o conteúdo histórico.
 
 ## Persistência e transação
 

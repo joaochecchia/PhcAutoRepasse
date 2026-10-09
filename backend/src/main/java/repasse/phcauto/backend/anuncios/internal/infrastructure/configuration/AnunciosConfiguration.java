@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import repasse.phcauto.backend.anuncios.internal.core.gateway.AtualizarAnuncioGateway;
 import repasse.phcauto.backend.anuncios.internal.core.gateway.BuscarAnunciosGateway;
+import repasse.phcauto.backend.anuncios.internal.core.gateway.BuscarAnunciosPaginaInicialGateway;
 import repasse.phcauto.backend.anuncios.internal.core.gateway.CriarAnuncioGateway;
 import repasse.phcauto.backend.anuncios.internal.core.gateway.ExcluirAnuncioGateway;
 import repasse.phcauto.backend.anuncios.internal.core.gateway.PublicarAlteracaoAnuncioGateway;
@@ -13,6 +14,8 @@ import repasse.phcauto.backend.anuncios.internal.core.usecase.AtualizarAnuncio;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.AtualizarAnuncioUseCase;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.BuscarAnuncios;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.BuscarAnunciosUseCase;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.BuscarAnunciosPaginaInicial;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.BuscarAnunciosPaginaInicialUseCase;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.CriarAnuncio;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.CriarAnuncioUseCase;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.ExcluirAnuncio;
@@ -21,6 +24,10 @@ import repasse.phcauto.backend.anuncios.internal.core.usecase.ExcluirAnuncioUseC
 class AnunciosConfiguration {
     @Bean BuscarAnunciosUseCase buscarAnunciosUseCase(BuscarAnunciosGateway gateway) {
         return new BuscarAnuncios(gateway);
+    }
+    @Bean BuscarAnunciosPaginaInicialUseCase buscarAnunciosPaginaInicialUseCase(
+            BuscarAnunciosPaginaInicialGateway gateway) {
+        return new BuscarAnunciosPaginaInicial(gateway);
     }
     @Bean CriarAnuncioUseCase criarAnuncioUseCase(CriarAnuncioGateway gateway,
             PublicarAnuncioCriadoGateway eventos, Clock applicationClock) {

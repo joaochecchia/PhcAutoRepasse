@@ -45,6 +45,12 @@ public abstract class Veiculo {
     /** Tipo predominante de freio; opcional. */
     public abstract String getTipoFreio();
 
+    /** Histórico obrigatório para novos anúncios; nulo somente em registros legados. */
+    public abstract Boolean getHistoricoLeilao();
+
+    /** Histórico obrigatório para novos anúncios; nulo somente em registros legados. */
+    public abstract Boolean getHistoricoSinistro();
+
     /** Obrigatório no modelo inicial. */
     public abstract Instant getCriadoEm();
 

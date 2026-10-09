@@ -13,11 +13,13 @@ import repasse.phcauto.backend.anuncios.*;
 import repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioCriadoResultado;
 import repasse.phcauto.backend.anuncios.internal.core.domain.AtualizarAnuncioCommand;
 import repasse.phcauto.backend.anuncios.internal.core.domain.BuscarAnunciosFiltro;
+import repasse.phcauto.backend.anuncios.internal.core.domain.CatalogoReferenciaVeicular;
 import repasse.phcauto.backend.anuncios.internal.core.domain.CriarAnuncioCommand;
 import repasse.phcauto.backend.anuncios.internal.core.domain.PaginaAnuncios;
 import repasse.phcauto.backend.anuncios.internal.core.exception.AnuncioInvalidoException;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.AtualizarAnuncioUseCase;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.BuscarAnunciosUseCase;
+import repasse.phcauto.backend.anuncios.internal.core.usecase.BuscarAnunciosPaginaInicialUseCase;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.CriarAnuncioUseCase;
 import repasse.phcauto.backend.anuncios.internal.core.usecase.ExcluirAnuncioUseCase;
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.request.AtualizarAnuncioRequest;
@@ -26,26 +28,41 @@ import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.r
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioResponse;
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.AnuncioBuscaResponse;
 import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.PaginaAnunciosResponse;
+import repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.PaginaInicialAnunciosResponse;
 @Service
 public class DefaultAnunciosFacade implements AnunciosFacade {
     private final BuscarAnunciosUseCase buscarAnuncios;
+    private final BuscarAnunciosPaginaInicialUseCase buscarPaginaInicial;
     private final CriarAnuncioUseCase criarAnuncio;
     private final AtualizarAnuncioUseCase atualizarAnuncio;
     private final ExcluirAnuncioUseCase excluirAnuncio;
     private final LocalizacaoFacade localizacao;
     private final UsuariosLocalizacaoFacade localizacaoUsuario;
     private final TransactionTemplate transacaoWrite;
-    public DefaultAnunciosFacade(BuscarAnunciosUseCase buscarAnuncios, CriarAnuncioUseCase criarAnuncio,
+    private final ContatoAnuncioService contatos;
+    public DefaultAnunciosFacade(BuscarAnunciosUseCase buscarAnuncios,
+            BuscarAnunciosPaginaInicialUseCase buscarPaginaInicial, CriarAnuncioUseCase criarAnuncio,
             AtualizarAnuncioUseCase atualizarAnuncio, ExcluirAnuncioUseCase excluirAnuncio,
             LocalizacaoFacade localizacao, UsuariosLocalizacaoFacade localizacaoUsuario,
-            @Qualifier("writeTransactionManager") PlatformTransactionManager transactionManager) {
+            @Qualifier("writeTransactionManager") PlatformTransactionManager transactionManager,
+            ContatoAnuncioService contatos) {
         this.buscarAnuncios = buscarAnuncios;
+        this.buscarPaginaInicial = buscarPaginaInicial;
         this.criarAnuncio = criarAnuncio;
         this.atualizarAnuncio = atualizarAnuncio;
         this.excluirAnuncio = excluirAnuncio;
         this.localizacao = localizacao;
         this.localizacaoUsuario = localizacaoUsuario;
         this.transacaoWrite = new TransactionTemplate(transactionManager);
+        this.contatos = contatos;
+    }
+
+    @Override
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "anunciosPaginaInicial", key = "'v1'")
+    public PaginaInicialAnunciosResponse paginaInicial() {
+        var anuncios = buscarPaginaInicial.execute(20).stream().map(this::buscaResponse).toList();
+        return new PaginaInicialAnunciosResponse(
+                "Anúncios da página inicial encontrados com sucesso", anuncios);
     }
 
     @Override
@@ -80,22 +97,37 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 r.ipvaPago(), r.blindado(), r.numeroPortas(), r.cilindradaLitros(), r.tipoFreio(),
                 r.carroceria(), latitude, longitude, r.pagina() == null ? 0 : r.pagina(), r.tamanho() == null ? 20 : r.tamanho());
         var pagina = buscarAnuncios.execute(filtro);
-        var itens = pagina.anuncios().stream().map(item -> new AnuncioBuscaResponse(
+        var itens = pagina.anuncios().stream().map(this::buscaResponse).toList();
+        return new PaginaAnunciosResponse(itens, pagina.total(), pagina.pagina(), pagina.tamanho(),
+                pagina.raioKmAplicado(), pagina.temProximaPagina());
+    }
+
+    private AnuncioBuscaResponse buscaResponse(
+            repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioResumo item) {
+        return new AnuncioBuscaResponse(
                 item.anuncioId(), item.veiculoId(), item.anuncianteId(), item.tipoVeiculo(),
                 item.fabricante(), item.modelo(), item.anoFabricacao(), item.anoModelo(), item.condicao(),
                 item.titulo(), item.tipoPreco(), item.precoCentavos(), item.cidade(), item.uf(),
                 item.tipoPessoa(), item.nomePerfil(), item.cambio(), item.combustivel(),
                 item.motorizacao(), item.tipoDirecao(), item.tracao(), item.ipvaPago(),
                 item.blindado(), item.numeroPortas(), item.cilindradaLitros(), item.cilindradas(),
-                item.tipoFreio(), item.carroceria(), item.distanciaKm())).toList();
-        return new PaginaAnunciosResponse(itens, pagina.total(), pagina.pagina(), pagina.tamanho(),
-                pagina.raioKmAplicado(), pagina.temProximaPagina());
+                item.tipoFreio(), item.carroceria(), item.historicoLeilao(), item.historicoSinistro(),
+                item.distanciaKm(), fotoPrincipalUrl(item));
+    }
+
+    private static String fotoPrincipalUrl(repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioResumo item) {
+        return item.fotoPrincipalId() == null ? null
+                : "/api/v1/anuncios/" + item.anuncioId() + "/fotos/" + item.fotoPrincipalId() + "/arquivo";
     }
 
     @Override
     public AnuncioResponse criar(CriarAnuncioRequest request) {
         var command = command(request);
-        return transacaoWrite.execute(status -> response(criarAnuncio.execute(command)));
+        return transacaoWrite.execute(status -> {
+            var criado = criarAnuncio.execute(command);
+            if (contatos != null) contatos.salvarPreferencias(criado.anuncioId(), command.anuncianteId(), request.contato());
+            return response(criado);
+        });
     }
 
     @Override
@@ -121,7 +153,8 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                     e.numero(), e.complemento(), uf, municipioCodigoIbge);
         }
         var command=new AtualizarAnuncioCommand(request.fabricante(),request.modelo(),request.versao(),request.anoFabricacao(),
-                request.anoModelo(),request.cor(),request.identificadorPublico(),request.condicao(),request.tipoFreio(),request.titulo(),request.descricao(),
+                request.anoModelo(),request.cor(),request.identificadorPublico(),request.condicao(),request.tipoFreio(),
+                request.historicoLeilao(), request.historicoSinistro(), request.titulo(),request.descricao(),
                 request.tipoPreco(),request.precoCentavos(),request.aceitaTroca(),request.publicarAgora(),endereco,detalhes(request));
         return response(atualizarAnuncio.execute(anuncioId, command));
     }
@@ -134,7 +167,8 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
         var c=resultado.dados();
         return new AnuncioResponse(resultado.anuncioId(), resultado.veiculoId(), c.anuncianteId(),
                 c.tipoVeiculo(), c.fabricante(), c.modelo(), c.versao(), c.anoFabricacao(), c.anoModelo(),
-                c.cor(), c.condicao(), c.tipoFreio(), c.titulo(), c.descricao(), c.tipoPreco(), c.precoCentavos(), c.aceitaTroca(),
+                c.cor(), c.condicao(), c.tipoFreio(), c.historicoLeilao(), c.historicoSinistro(),
+                c.titulo(), c.descricao(), c.tipoPreco(), c.precoCentavos(), c.aceitaTroca(),
                 c.endereco().cidade(), resultado.status(), response(c.detalhes()), resultado.criadoEm(), resultado.publicadoEm());
     }
 
@@ -160,20 +194,51 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
             endereco = new CriarAnuncioCommand.Endereco(e.cep(), municipio.nome(), e.bairro(), e.rua(),
                     e.numero(), e.complemento(), municipio.uf(), municipio.codigoIbge());
         }
-        return new CriarAnuncioCommand(r.anuncianteId(), r.tipoVeiculo(), r.fabricante(), r.modelo(),
+        var fabricante = r.fabricante();
+        var modelo = r.modelo();
+        if (r.tipoVeiculo() == repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo.CARRO
+                || r.tipoVeiculo() == repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo.CAMINHONETE) {
+            fabricante = CatalogoReferenciaVeicular.normalizarFabricante(r.fabricante())
+                    .orElseGet(() -> r.fabricante().trim());
+            modelo = CatalogoReferenciaVeicular.normalizarModelo(fabricante, r.modelo())
+                    .orElse(r.modelo().trim());
+        } else if (r.tipoVeiculo() == repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo.MOTO) {
+            fabricante = CatalogoReferenciaVeicular.normalizarFabricanteMoto(r.fabricante())
+                    .orElseGet(() -> r.fabricante().trim());
+            modelo = CatalogoReferenciaVeicular.normalizarModeloMoto(fabricante, r.modelo())
+                    .orElse(r.modelo().trim());
+        } else if (r.tipoVeiculo() == repasse.phcauto.backend.domain.model.catalogo.TipoVeiculo.CAMINHAO) {
+            fabricante = CatalogoReferenciaVeicular.normalizarFabricanteCaminhao(r.fabricante())
+                    .orElseGet(() -> r.fabricante().trim());
+            modelo = CatalogoReferenciaVeicular.normalizarModeloCaminhao(fabricante, r.modelo())
+                    .orElse(r.modelo().trim());
+        }
+        var tiposFreio = switch (r.tipoVeiculo()) {
+            case MOTO -> CatalogoReferenciaVeicular.TIPOS_FREIO_MOTO;
+            case CAMINHAO -> CatalogoReferenciaVeicular.TIPOS_FREIO_CAMINHAO;
+            default -> CatalogoReferenciaVeicular.TIPOS_FREIO;
+        };
+        return new CriarAnuncioCommand(r.anuncianteId(), r.tipoVeiculo(), fabricante, modelo,
                 r.versao(), r.anoFabricacao(), r.anoModelo(), r.cor(), r.identificadorPublico(),
-                r.condicao(), r.tipoFreio(), r.titulo(), r.descricao(), r.tipoPreco(), r.precoCentavos(), r.aceitaTroca(),
+                r.condicao(), opcao(r.tipoFreio(), tiposFreio, "tipo de freio"),
+                r.historicoLeilao(), r.historicoSinistro(), r.titulo(), r.descricao(), r.tipoPreco(), r.precoCentavos(), r.aceitaTroca(),
                 Boolean.TRUE.equals(r.publicarAgora()), endereco, detalhes(r));
     }
 
     private CriarAnuncioCommand.DetalhesVeiculo detalhes(CriarAnuncioRequest r) {
-        if (r.carro()!=null) { var d=r.carro(); return new CriarAnuncioCommand.Carro(d.quilometragem(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.tipoDirecao(),d.cilindradaLitros(),d.numeroPortas(),d.numeroLugares(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.unicoDono(),d.ipvaPago(),d.licenciado(),d.blindado()); }
-        if (r.moto()!=null) { var d=r.moto(); return new CriarAnuncioCommand.Moto(d.quilometragem(),d.cilindradas(),d.categoria(),d.partida(),d.refrigeracao(),d.cambio(),d.combustivel(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.ipvaPago(),d.licenciado()); }
-        if (r.caminhao()!=null) { var d=r.caminhao(); return new CriarAnuncioCommand.Caminhao(d.quilometragem(),d.configuracao(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.tipoDirecao(),d.numeroEixos(),d.capacidadeCargaKg(),d.pesoBrutoTotalKg(),d.implemento(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.ipvaPago(),d.licenciado()); }
-        if (r.caminhonete()!=null) { var d=r.caminhonete(); return new CriarAnuncioCommand.Caminhonete(d.quilometragem(),d.tipoCabine(),d.carroceria(),d.cambio(),d.combustivel(),d.tracao(),d.motorizacao(),d.tipoDirecao(),d.cilindradaLitros(),d.capacidadeCargaKg(),d.numeroPortas(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.unicoDono(),d.ipvaPago(),d.licenciado(),d.blindado()); }
+        if (r.carro()!=null) { var d=r.carro(); return new CriarAnuncioCommand.Carro(d.quilometragem(),opcao(d.carroceria(),CatalogoReferenciaVeicular.CARROCERIAS,"carroceria"),opcao(d.cambio(),CatalogoReferenciaVeicular.CAMBIOS,"câmbio"),d.combustivel(),opcao(d.tracao(),CatalogoReferenciaVeicular.TRACOES,"tração"),d.motorizacao(),opcao(d.tipoDirecao(),CatalogoReferenciaVeicular.DIRECOES,"direção"),d.cilindradaLitros(),d.numeroPortas(),d.numeroLugares(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.unicoDono(),d.ipvaPago(),d.licenciado(),d.blindado()); }
+        if (r.moto()!=null) { var d=r.moto(); return new CriarAnuncioCommand.Moto(d.quilometragem(),d.cilindradas(),d.categoria(),d.partida(),d.refrigeracao(),opcao(d.cambio(),CatalogoReferenciaVeicular.CAMBIOS_MOTO,"câmbio"),d.combustivel(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.ipvaPago(),d.licenciado()); }
+        if (r.caminhao()!=null) { var d=r.caminhao(); return new CriarAnuncioCommand.Caminhao(d.quilometragem(),d.configuracao(),opcao(d.carroceria(),CatalogoReferenciaVeicular.CARROCERIAS_CAMINHAO,"carroceria"),opcao(d.cambio(),CatalogoReferenciaVeicular.CAMBIOS_CAMINHAO,"câmbio"),d.combustivel(),opcao(d.tracao(),CatalogoReferenciaVeicular.TRACOES_CAMINHAO,"tração"),opcao(d.tipoDirecao(),CatalogoReferenciaVeicular.DIRECOES_CAMINHAO,"direção"),d.numeroEixos(),d.capacidadeCargaKg(),d.pesoBrutoTotalKg(),d.implemento(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.ipvaPago(),d.licenciado()); }
+        if (r.caminhonete()!=null) { var d=r.caminhonete(); return new CriarAnuncioCommand.Caminhonete(d.quilometragem(),d.tipoCabine(),opcao(d.carroceria(),CatalogoReferenciaVeicular.CARROCERIAS,"carroceria"),opcao(d.cambio(),CatalogoReferenciaVeicular.CAMBIOS,"câmbio"),d.combustivel(),opcao(d.tracao(),CatalogoReferenciaVeicular.TRACOES,"tração"),d.motorizacao(),opcao(d.tipoDirecao(),CatalogoReferenciaVeicular.DIRECOES,"direção"),d.cilindradaLitros(),d.capacidadeCargaKg(),d.numeroPortas(),normalizarPlaca(d.placa()),d.exibirPlacaCompleta(),d.unicoDono(),d.ipvaPago(),d.licenciado(),d.blindado()); }
         if (r.barco()!=null) { var d=r.barco(); return new CriarAnuncioCommand.Barco(d.tamanhoPes(),d.estilo(),d.materialCasco(),d.capacidadePessoas(),d.numeroCabines(),d.horasUso(),d.registroMaritimo(),d.motores().stream().map(m->new CriarAnuncioCommand.Motor(m.posicao(),m.fabricante(),m.modelo(),m.potenciaHp(),m.ano(),m.horasUso(),m.horasDesdeRevisao(),m.combustivel())).toList()); }
         if (r.linhaAmarela()!=null) { var d=r.linhaAmarela(); return new CriarAnuncioCommand.LinhaAmarela(d.tipoMaquina(),d.horimetro(),d.pesoOperacionalKg(),d.potenciaHp(),d.tipoEsteiraOuPneu(),d.capacidadeCacambaM3(),d.numeroSerie()); }
         throw new AnuncioInvalidoException("Dados específicos são obrigatórios");
+    }
+
+    private String opcao(String valor, List<String> opcoes, String campo) {
+        if (valor == null || valor.isBlank()) return null;
+        return CatalogoReferenciaVeicular.normalizarOpcao(opcoes, valor)
+                .orElseThrow(() -> new AnuncioInvalidoException(campo + " não reconhecido pelo catálogo"));
     }
 
     private AnuncioResponse.DetalhesVeiculoResponse response(CriarAnuncioCommand.DetalhesVeiculo detalhes) {

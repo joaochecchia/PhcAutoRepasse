@@ -33,7 +33,7 @@ class ManterAnuncioTests {
         var esperado=resultado();
         AtualizarAnuncioGateway gateway=(id,c,instante)->{ assertThat(id).isEqualTo(esperado.anuncioId()); assertThat(instante).isEqualTo(agora); return esperado; };
         var useCase=new AtualizarAnuncio(gateway,eventos::add,clock);
-        var resposta=useCase.execute(esperado.anuncioId(),new AtualizarAnuncioCommand(null,null,null,null,null,null,null,null,null,"Novo título",null,null,null,null,null,null,null));
+        var resposta=useCase.execute(esperado.anuncioId(),new AtualizarAnuncioCommand(null,null,null,null,null,null,null,null,null,null,null,"Novo título",null,null,null,null,null,null,null));
         assertThat(resposta).isSameAs(esperado);
         assertThat(eventos).singleElement().isInstanceOf(AnuncioAtualizado.class);
     }
@@ -41,7 +41,7 @@ class ManterAnuncioTests {
     @Test void rejeitaAnoInvalidoAntesDoGateway() {
         AtualizarAnuncioGateway gateway=(id,c,i)->{throw new AssertionError("não deveria persistir");};
         var useCase=new AtualizarAnuncio(gateway,eventos::add,clock);
-        var command=new AtualizarAnuncioCommand(null,null,null,1800,null,null,null,null,null,null,null,null,null,null,null,null,null);
+        var command=new AtualizarAnuncioCommand(null,null,null,1800,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null);
         assertThatThrownBy(()->useCase.execute(UUID.randomUUID(),command)).isInstanceOf(AnuncioInvalidoException.class);
     }
 
@@ -54,7 +54,7 @@ class ManterAnuncioTests {
 
     private AnuncioCriadoResultado resultado(){
         UUID a=UUID.randomUUID(),v=UUID.randomUUID(),u=UUID.randomUUID();
-        var c=new CriarAnuncioCommand(u,TipoVeiculo.CARRO,"F","M",null,2025,2026,null,null,CondicaoVeiculo.USADO,"DISCO","T",null,TipoPreco.FIXO,1L,false,true,
+        var c=new CriarAnuncioCommand(u,TipoVeiculo.CARRO,"F","M",null,2025,2026,null,null,CondicaoVeiculo.USADO,"DISCO",false,false,"T",null,TipoPreco.FIXO,1L,false,true,
                 new CriarAnuncioCommand.Endereco("74000000","Goiânia","Centro","Rua","1",null,"GO",5208707),
                 new CriarAnuncioCommand.Carro(1,null,null,null,null,null,null,null,null,null,"ABC1D23",false,null,null,null,null));
         return new AnuncioCriadoResultado(a,v,c,StatusAnuncio.PUBLICADO,agora,agora);
