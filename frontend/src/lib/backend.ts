@@ -2,7 +2,7 @@ import axios from "axios";
 import { api } from "./api";
 import type { Draft } from "../components/FormFields";
 import type { Filters } from "../data/filters";
-import type { AdPhoto, Address, HomeAdsResponse, SearchResponse, Session, UserProfile } from "./contracts";
+import type { AdPhoto, Address, HomeAdsResponse, SearchResponse, Session, StrongAuthResponse, UserProfile } from "./contracts";
 import type { Vehicle } from "../data/catalog";
 
 type RegistrationConfig = {
@@ -47,7 +47,8 @@ export function apiErrorMessage(error: unknown, fallback: string) {
   if (!axios.isAxiosError(error)) return fallback;
   if (
     error.response?.status === 401 &&
-    !error.config?.url?.includes("/usuarios/login")
+    !error.config?.url?.includes("/autenticacao/login") &&
+    !error.config?.url?.includes("/autenticacao/2fa")
   ) {
     return "Sua sessão expirou. Entre novamente.";
   }
@@ -84,7 +85,25 @@ export const authApi = {
     return pendingSession;
   },
   async login(email: string, senha: string) {
-    return (await api.post<Session>("/usuarios/login", { email, senha })).data;
+    return (await api.post<StrongAuthResponse>("/autenticacao/login", { email, senha })).data;
+  },
+  async verifySecondFactor(challengeId: string, codigo: string, confiarNesteDispositivo: boolean) {
+    return (await api.post<StrongAuthResponse>("/autenticacao/2fa/verificar", {
+      challengeId, codigo, confiarNesteDispositivo,
+    })).data;
+  },
+  async resendSecondFactor(challengeId: string) {
+    return (await api.post<StrongAuthResponse>("/autenticacao/2fa/reenviar", { challengeId })).data;
+  },
+  asSession(response: StrongAuthResponse): Session {
+    return { autenticado: response.status === "AUTENTICADO", usuarioId: response.usuarioId,
+      papel: response.papel, expiresIn: response.expiresIn };
+  },
+  async requestPasswordReset(email: string) {
+    return (await api.post<{ detail: string }>("/credenciais/redefinicoes", { email })).data;
+  },
+  async confirmPasswordReset(token: string, novaSenha: string) {
+    await api.post("/credenciais/redefinicoes/confirmar", { token, novaSenha });
   },
   async logout() {
     await api.post("/usuarios/logout");

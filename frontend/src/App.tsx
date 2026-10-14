@@ -6,10 +6,12 @@ import {
   ArrowUpRight,
   Bike,
   CarFront,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Heart,
   MapPin,
+  LogOut,
   Menu,
   Moon,
   Plus,
@@ -34,8 +36,10 @@ import { PlansView } from "./components/PlansView";
 import { readRoute, pageHash, pageTitles, type Page } from "./lib/routes";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { AnnouncePage } from "./pages/AnnouncePage";
+import { ProfileAvatar } from "./components/ProfilePhoto";
 import { VehiclePage, NotFoundPage } from "./pages/VehiclePage";
 import type { Draft } from "./components/FormFields";
 import {
@@ -76,6 +80,8 @@ export default function App() {
     () => matchMedia("(prefers-color-scheme: dark)").matches,
   );
   const [menu, setMenu] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [profilePhotoRevision, setProfilePhotoRevision] = useState(0);
   const [dialog, setDialog] = useState<"plans" | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>(initialFilters);
@@ -99,6 +105,7 @@ export default function App() {
   const homeRequestStarted = useRef(false);
   const vehicleSearchRef = useRef<HTMLDivElement>(null);
   const locationSearchRef = useRef<HTMLDivElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   const vehicleSuggestions = useMemo(() => {
     const availableVehicles = [...homeVehicles, ...vehicles];
     const brandNames = Array.from(
@@ -138,6 +145,9 @@ export default function App() {
       }
       if (!locationSearchRef.current?.contains(target)) {
         setLocationOpen(false);
+      }
+      if (!accountMenuRef.current?.contains(target)) {
+        setAccountMenuOpen(false);
       }
     }
     document.addEventListener("pointerdown", closeFloatingPanels);
@@ -304,6 +314,8 @@ export default function App() {
     if (page === "profile" || page === "announce") {
       setAnnounceIntent(true);
       navigate("login");
+    } else if (page === "account") {
+      navigate("login");
     }
   }, [authChecked, page, session]);
 
@@ -379,6 +391,7 @@ export default function App() {
       setSession(null);
       setProfileDraft({ tipoPessoa: "PF" });
       setAnnounceIntent(false);
+      setAccountMenuOpen(false);
       navigate("home");
     }
   }
@@ -465,10 +478,42 @@ export default function App() {
               {favorites.length > 0 && <b>{favorites.length}</b>}
             </button>
             <span className="header-divider" />
-            <button className="login-link" onClick={() => session ? logout() : openDestination("login")}>
-              <UserRound size={18} />
-              <span>{session ? "Sair" : "Entrar"}</span>
-            </button>
+            {session?.usuarioId ? (
+              <div className="account-menu" ref={accountMenuRef}>
+                <button
+                  className="account-menu-trigger"
+                  onClick={() => setAccountMenuOpen((open) => !open)}
+                  aria-label="Abrir menu da conta"
+                  aria-haspopup="menu"
+                  aria-expanded={accountMenuOpen}
+                >
+                  <ProfileAvatar
+                    src={`/api/v1/perfis/${session.usuarioId}/foto?v=${profilePhotoRevision}`}
+                    name={profileDraft.nome || "usuário"}
+                  />
+                  <ChevronDown size={15} aria-hidden="true" />
+                </button>
+                {accountMenuOpen && (
+                  <div className="account-menu-popover" role="menu">
+                    <div className="account-menu-heading">
+                      <strong>{profileDraft.nome || "Minha conta"}</strong>
+                      <span>{profileDraft.email || "Perfil autenticado"}</span>
+                    </div>
+                    <button role="menuitem" onClick={() => { setAccountMenuOpen(false); navigate("account"); }}>
+                      <UserRound size={17} /> Editar perfil
+                    </button>
+                    <button role="menuitem" onClick={logout}>
+                      <LogOut size={17} /> Sair
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button className="login-link" onClick={() => openDestination("login")}>
+                <UserRound size={18} />
+                <span>Entrar</span>
+              </button>
+            )}
             <button
               className="button primary header-announce"
               onClick={() => openDestination("announce")}
@@ -501,6 +546,7 @@ export default function App() {
             <button onClick={() => navigate("favorites")}>
               Favoritos ({favorites.length})
             </button>
+            {session && <button onClick={() => navigate("account")}>Editar perfil</button>}
             <button onClick={() => session ? logout() : openDestination("login")}>
               {session ? "Sair" : "Entrar"}
             </button>
@@ -523,6 +569,18 @@ export default function App() {
           <LoginPage onAuthenticated={handleAuthenticated} />
         ) : page === "register" ? (
           <RegisterPage onAuthenticated={handleAuthenticated} />
+        ) : page === "reset-password" ? (
+          <ResetPasswordPage />
+        ) : page === "account" ? (
+          session?.usuarioId ? (
+            <ProfilePage
+              mode="account"
+              values={profileDraft}
+              setValues={setProfileDraft}
+              usuarioId={session.usuarioId}
+              onPhotoUpdated={() => setProfilePhotoRevision(Date.now())}
+            />
+          ) : null
         ) : page === "profile" ? (
           session?.usuarioId ? (
             <ProfilePage
@@ -530,6 +588,7 @@ export default function App() {
               setValues={setProfileDraft}
               usuarioId={session.usuarioId}
               onContinue={() => navigate("announce")}
+              onPhotoUpdated={() => setProfilePhotoRevision(Date.now())}
             />
           ) : null
         ) : page === "announce" ? (

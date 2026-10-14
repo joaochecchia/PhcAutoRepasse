@@ -8,6 +8,8 @@ export type Page =
   | "favorites"
   | "login"
   | "register"
+  | "reset-password"
+  | "account"
   | "profile"
   | "announce"
   | "vehicle"
@@ -19,6 +21,8 @@ const paths: Partial<Record<Page, string>> = {
   favorites: "favoritos",
   login: "entrar",
   register: "cadastro",
+  "reset-password": "redefinir-senha",
+  account: "minha-conta",
   profile: "anunciar/dados",
   announce: "anunciar/veiculo",
 };
@@ -45,6 +49,8 @@ export const pageTitles: Record<Page, string> = {
   favorites: "Seus favoritos",
   login: "Entrar",
   register: "Criar conta",
+  "reset-password": "Redefinir senha",
+  account: "Meu perfil",
   profile: "Dados do anunciante",
   announce: "Anunciar veículo",
   vehicle: "Detalhes do veículo",

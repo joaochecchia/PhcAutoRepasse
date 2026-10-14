@@ -38,7 +38,7 @@ export function ProfilePhotoField({ file, onChange, currentUrl }: {
   </div>;
 }
 
-export function ProfilePhotoEditor({ userId }: { userId: string }) {
+export function ProfilePhotoEditor({ userId, onUpdated }: { userId: string; onUpdated?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -46,7 +46,13 @@ export function ProfilePhotoEditor({ userId }: { userId: string }) {
   return <form className="page-form page-panel profile-photo-editor" onSubmit={async (event) => {
     event.preventDefault(); if (!file) return;
     setSaving(true); setMessage("");
-    try { await uploadProfilePhoto(userId, file); setRevision(Date.now()); setFile(null); setMessage("Foto atualizada."); }
+    try {
+      await uploadProfilePhoto(userId, file);
+      setRevision(Date.now());
+      setFile(null);
+      setMessage("Foto atualizada.");
+      onUpdated?.();
+    }
     catch (error) { setMessage(apiErrorMessage(error, "Não foi possível salvar a foto.")); }
     finally { setSaving(false); }
   }}>

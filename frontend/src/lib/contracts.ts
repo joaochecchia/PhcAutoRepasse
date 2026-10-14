@@ -5,6 +5,16 @@ export type Session = {
   expiresIn: number;
 };
 
+export type StrongAuthResponse = {
+  status: "AUTENTICADO" | "SEGUNDO_FATOR_NECESSARIO";
+  usuarioId: string | null;
+  papel: string | null;
+  expiresIn: number;
+  challengeId: string | null;
+  challengeExpiresIn: number;
+  emailMascarado: string | null;
+};
+
 export type Address = {
   cep: string;
   cidade: string;

@@ -7,18 +7,17 @@ import {
   ProfileFields,
   type Draft,
 } from "../components/FormFields";
-import { apiErrorMessage, authApi, uploadProfilePhoto } from "../lib/backend";
+import { apiErrorMessage, authApi } from "../lib/backend";
 import type { Session } from "../lib/contracts";
 
 export function RegisterPage({
-  onAuthenticated,
+  onAuthenticated: _onAuthenticated,
 }: {
   onAuthenticated: (session: Session, values: Draft) => void;
 }) {
   const [values, setValues] = useState<Draft>({ tipoPessoa: "PF" });
   const [photo, setPhoto] = useState<File | null>(null);
   const [created, setCreated] = useState(false);
-  const [createdSession, setCreatedSession] = useState<Session | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -57,11 +56,10 @@ export function RegisterPage({
           setError("");
           try {
             if (!versions) throw new Error("DOCUMENTS_NOT_LOADED");
-            if (!created) { await authApi.register(values, versions); setCreated(true); }
-            const session = createdSession || await authApi.login(values.email, values.senha);
-            setCreatedSession(session);
-            if (photo && session.usuarioId) await uploadProfilePhoto(session.usuarioId, photo);
-            onAuthenticated(session, values);
+            if (!created) await authApi.register(values, versions);
+            setCreated(true);
+            window.location.hash = "entrar";
+            return;
           } catch (requestError) {
             setError(
               apiErrorMessage(requestError, "Não foi possível criar sua conta."),
@@ -83,8 +81,7 @@ export function RegisterPage({
         </div>
         <ProfileFields values={values} onChange={change} />
         <ProfilePhotoField file={photo} onChange={setPhoto} />
-        {created && <p role="status">Sua conta já foi criada. Você pode tentar concluir o envio da foto novamente.</p>}
-        {createdSession && <button type="button" className="button secondary" onClick={() => onAuthenticated(createdSession, values)}>Continuar sem enviar a foto</button>}
+        {created && <p role="status">Conta criada. Entre para validar seu primeiro acesso.</p>}
         <section className="form-section">
           <div className="form-section-title">
             <span>03</span>

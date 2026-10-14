@@ -10,27 +10,34 @@ export function ProfilePage({
   setValues,
   usuarioId,
   onContinue,
+  mode = "announce",
+  onPhotoUpdated,
 }: {
   values: Draft;
   setValues: Dispatch<SetStateAction<Draft>>;
   usuarioId: string;
-  onContinue: () => void;
+  onContinue?: () => void;
+  mode?: "announce" | "account";
+  onPhotoUpdated?: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
+  const isAccount = mode === "account";
   return (
     <section className="container dedicated-page">
-      <PageBreadcrumb label="Dados do anunciante" />
+      <PageBreadcrumb label={isAccount ? "Meu perfil" : "Dados do anunciante"} />
       <div className="page-title-row">
         <div>
-          <span className="eyebrow">VAMOS PREPARAR SEU ANÚNCIO</span>
-          <h1>Primeiro, vamos conhecer você.</h1>
+          <span className="eyebrow">{isAccount ? "SUA CONTA" : "VAMOS PREPARAR SEU ANÚNCIO"}</span>
+          <h1>{isAccount ? "Seus dados de perfil." : "Primeiro, vamos conhecer você."}</h1>
           <p className="page-intro">
-            Confira os dados do anunciante e depois preencha as informações do
-            veículo.
+            {isAccount
+              ? "Consulte e atualize os dados, a foto e a senha da sua conta."
+              : "Confira os dados do anunciante e depois preencha as informações do veículo."}
           </p>
         </div>
         <span className="button secondary">
@@ -38,12 +45,12 @@ export function ProfilePage({
           Sessão autenticada
         </span>
       </div>
-      <div className="workflow-trail">
+      {!isAccount && <div className="workflow-trail">
         <span className="active">01 · Seus dados</span>
         <span>02 · Seu veículo</span>
         <span>03 · Revisão do anúncio</span>
-      </div>
-      <ProfilePhotoEditor userId={usuarioId} />
+      </div>}
+      <ProfilePhotoEditor userId={usuarioId} onUpdated={onPhotoUpdated} />
       <div className="editor-layout">
         <form
           className="page-form page-panel"
@@ -51,9 +58,11 @@ export function ProfilePage({
             e.preventDefault();
             setSaving(true);
             setError("");
+            setSavedMessage("");
             try {
               await authApi.updateProfile(usuarioId, values);
-              onContinue();
+              if (isAccount) setSavedMessage("Dados do perfil atualizados com sucesso.");
+              else onContinue?.();
             } catch (requestError) {
               setError(apiErrorMessage(requestError, "Não foi possível atualizar seus dados."));
             } finally {
@@ -66,7 +75,7 @@ export function ProfilePage({
               <UserRound size={17} />
             </span>
             <div>
-              <h2>Dados do anunciante</h2>
+              <h2>{isAccount ? "Dados pessoais" : "Dados do anunciante"}</h2>
               <p>
                 Confira os dados carregados da sua conta. * Campos necessários
                 no cadastro.
@@ -84,10 +93,11 @@ export function ProfilePage({
               Voltar ao início
             </a>
             <button className="button primary" disabled={saving}>
-              {saving ? "Salvando…" : "Continuar para o veículo"}
-              <ArrowRight size={17} />
+              {saving ? "Salvando…" : isAccount ? "Salvar alterações" : "Continuar para o veículo"}
+              {!isAccount && <ArrowRight size={17} />}
             </button>
           </div>
+          {savedMessage && <p className="inline-notice" role="status">{savedMessage}</p>}
           {error && <p className="inline-notice error-notice" role="alert">{error}</p>}
         </form>
         <aside className="editor-aside">
