@@ -1,3 +1,4 @@
+import { ProfilePhotoField } from "../components/ProfilePhoto";
 import { useEffect, useState } from "react";
 import { ArrowRight, ExternalLink, FileText } from "lucide-react";
 import { AccountLayout } from "./PageLayout";
@@ -6,7 +7,7 @@ import {
   ProfileFields,
   type Draft,
 } from "../components/FormFields";
-import { apiErrorMessage, authApi } from "../lib/backend";
+import { apiErrorMessage, authApi, uploadProfilePhoto } from "../lib/backend";
 import type { Session } from "../lib/contracts";
 
 export function RegisterPage({
@@ -15,6 +16,9 @@ export function RegisterPage({
   onAuthenticated: (session: Session, values: Draft) => void;
 }) {
   const [values, setValues] = useState<Draft>({ tipoPessoa: "PF" });
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [created, setCreated] = useState(false);
+  const [createdSession, setCreatedSession] = useState<Session | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,8 +57,10 @@ export function RegisterPage({
           setError("");
           try {
             if (!versions) throw new Error("DOCUMENTS_NOT_LOADED");
-            await authApi.register(values, versions);
-            const session = await authApi.login(values.email, values.senha);
+            if (!created) { await authApi.register(values, versions); setCreated(true); }
+            const session = createdSession || await authApi.login(values.email, values.senha);
+            setCreatedSession(session);
+            if (photo && session.usuarioId) await uploadProfilePhoto(session.usuarioId, photo);
             onAuthenticated(session, values);
           } catch (requestError) {
             setError(
@@ -76,6 +82,9 @@ export function RegisterPage({
           </div>
         </div>
         <ProfileFields values={values} onChange={change} />
+        <ProfilePhotoField file={photo} onChange={setPhoto} />
+        {created && <p role="status">Sua conta já foi criada. Você pode tentar concluir o envio da foto novamente.</p>}
+        {createdSession && <button type="button" className="button secondary" onClick={() => onAuthenticated(createdSession, values)}>Continuar sem enviar a foto</button>}
         <section className="form-section">
           <div className="form-section-title">
             <span>03</span>
@@ -135,7 +144,7 @@ export function RegisterPage({
           </div>
         </div>
         <button className="button primary" type="submit" disabled={loading || !accepted || !versions}>
-          {loading ? "Criando sua conta…" : "Criar conta e continuar"}
+          {loading ? "Criando sua conta…" : created ? "Concluir cadastro" : "Criar conta e continuar"}
           <ArrowRight size={17} />
         </button>
         {error && (

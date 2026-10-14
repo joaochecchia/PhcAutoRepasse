@@ -73,3 +73,12 @@ export type AdPhoto = {
   textoAlternativo?: string | null;
   url: string;
 };
+
+export type PublicProfile = {
+  id: string; nome: string; tipoPessoa: "PF" | "PJ";
+  cidade: string | null; uf: string | null; fotoUrl: string | null;
+};
+export type StoresResponse = {
+  lojistas: PublicProfile[]; total: number; pagina: number; tamanho: number;
+  raioKmAplicado: number | null; temProximaPagina: boolean;
+};

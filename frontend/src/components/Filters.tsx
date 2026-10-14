@@ -115,6 +115,7 @@ export function FilterPanel({
   };
   return (
     <div className="filter-panel">
+      <a className="button secondary" href="#lojistas">Encontrar lojistas na minha região</a>
       <div className="filter-heading">
         <h2>
           <SlidersHorizontal size={18} /> Filtros

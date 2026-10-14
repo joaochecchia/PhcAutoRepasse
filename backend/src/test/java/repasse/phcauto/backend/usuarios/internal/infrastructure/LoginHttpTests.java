@@ -28,10 +28,12 @@ class LoginHttpTests {
 
     @BeforeEach void configurar() {
         var manager = new AutenticacaoConfiguration().authenticationManager(new UsuarioDetailsService(repository), encoder);
-        var gateway = new DatabaseAutenticacaoGateway(manager);
+        var gateway = new DatabaseAutenticacaoGateway(manager,
+                mock(repasse.phcauto.backend.usuarios.internal.infrastructure.security.LoginAttemptLimiter.class));
         var jwtEncoder = org.springframework.security.oauth2.jwt.NimbusJwtEncoder.withSecretKey(
                 new javax.crypto.spec.SecretKeySpec(new byte[32], "HmacSHA256")).build();
-        var service = new JwtLoginService(new Login(gateway), jwtEncoder, java.time.Clock.systemUTC(), "phcauto", 900);
+        var service = new JwtLoginService(new Login(gateway), jwtEncoder, java.time.Clock.systemUTC(),
+                repository, "phcauto", 900);
         var refreshTokens = mock(RefreshTokenService.class);
         when(refreshTokens.iniciar(any())).thenReturn(new RefreshTokenService.RefreshEmitido("refresh-seguro", 2592000));
         mvc = MockMvcBuilders.standaloneSetup(new LoginController(service,
@@ -44,6 +46,8 @@ class LoginHttpTests {
         when(usuario.getPapel()).thenReturn(repasse.phcauto.backend.domain.model.identidade.PapelUsuario.CLIENTE);
         when(usuario.getSenhaHash()).thenReturn(hash);
         when(usuario.getAtivo()).thenReturn(ativo);
+        when(usuario.getSessaoVersao()).thenReturn(0L);
+        when(repository.findById(usuario.getId())).thenReturn(java.util.Optional.of(usuario));
         return usuario;
     }
     private org.springframework.test.web.servlet.ResultActions login(String senha) throws Exception {

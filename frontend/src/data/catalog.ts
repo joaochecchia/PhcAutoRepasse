@@ -13,6 +13,7 @@ export type Vehicle = {
   transmission: string;
   tag?: string;
   seller: string;
+  sellerId?: string;
   live?: boolean;
   condition?: string;
   type?: string;

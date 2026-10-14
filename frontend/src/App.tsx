@@ -1,3 +1,4 @@
+import { StoresPage } from "./pages/StoresPage";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
@@ -436,6 +437,7 @@ export default function App() {
             />
           </a>
           <nav className="desktop-nav" aria-label="Navegação principal">
+            <a href="#lojistas" className={page === "stores" || page === "store" ? "active" : ""}>Lojistas</a>
             <a href="#buscar" className={page === "search" ? "active" : ""}>
               Comprar veículo
             </a>
@@ -486,6 +488,7 @@ export default function App() {
         </div>
         {menu && (
           <nav className="mobile-nav" aria-label="Navegação móvel">
+            <a href="#lojistas">Lojistas</a>
             <a href="#buscar" onClick={() => navigate("search")}>
               Comprar veículo
             </a>
@@ -511,7 +514,12 @@ export default function App() {
       </header>
 
       <main id="conteudo" tabIndex={-1}>
-        {page === "login" ? (
+        {page === "stores" || page === "store" ? (
+          <StoresPage key={id || "stores"} id={page === "store" ? id : undefined}
+            usuarioId={session?.usuarioId ?? null} authChecked={authChecked}
+            favorites={favorites} onSave={save}
+            onOpen={(v) => { setSearchVehicles((items) => [...items.filter((item) => item.id !== v.id), v]); navigate("vehicle", {}, v.id); }} />
+        ) : page === "login" ? (
           <LoginPage onAuthenticated={handleAuthenticated} />
         ) : page === "register" ? (
           <RegisterPage onAuthenticated={handleAuthenticated} />

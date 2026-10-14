@@ -348,3 +348,7 @@ Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`open
 ### Placa dos veículos
 
 Carro, moto, caminhão e caminhonete recebem `placa` completa e `exibirPlacaCompleta` no POST de anúncios. A resposta retorna a placa completa somente quando o anunciante autoriza; caso contrário, retorna apenas o último caractere. O PATCH possui DTOs parciais próprios. Consulte [a documentação do fluxo](backend/docs/criacao-anuncio.md).
+
+## Lojistas e fotos de perfil
+
+O frontend busca lojas PJ próximas ao endereço cadastrado ou à localização do navegador em `/#lojistas`, com página de anúncios de cada loja. A lista carrega 12 lojas inicialmente e até 24 adicionais por clique, em consultas de no máximo 12. PF e PJ podem enviar foto opcional no cadastro ou no perfil; os anúncios exibem a foto do anunciante ou um avatar genérico. A migration V31 adiciona a referência da imagem e índices de busca. Os arquivos usam a mesma raiz de uploads dos veículos, em `usuarios/{id}/perfil/`. Consulte [endpoints, limites e armazenamento](backend/docs/lojistas.md).

@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.security.JwtSessionVersionValidator;
 
 @Configuration(proxyBeanMethods = false)
 public class JwtConfig {
@@ -19,9 +21,11 @@ public class JwtConfig {
         return NimbusJwtEncoder.withSecretKey(jwtSecretKey).algorithm(MacAlgorithm.HS256).build();
     }
     @Bean JwtDecoder jwtDecoder(SecretKey jwtSecretKey,
-            @Value("${JWT_ISSUER:phcauto}") String issuer) {
+            @Value("${JWT_ISSUER:phcauto}") String issuer,
+            JwtSessionVersionValidator sessionVersionValidator) {
         var decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey).macAlgorithm(MacAlgorithm.HS256).build();
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuer), sessionVersionValidator));
         return decoder;
     }
 }

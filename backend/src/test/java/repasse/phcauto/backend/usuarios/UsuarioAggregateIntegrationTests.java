@@ -50,7 +50,7 @@ class UsuarioAggregateIntegrationTests {
         String cidadeOriginal = source.queryForObject("select cidade from identidade.enderecos_usuario where usuario_id=?", String.class, id);
         var tx = new TransactionTemplate(transactions);
         tx.executeWithoutResult(status -> {
-            facade.atualizar(id, new AtualizarUsuarioRequest("Nome desfeito",null,null,null,null,null,null,null,
+            facade.atualizar(id, new AtualizarUsuarioRequest("Nome desfeito",null,null,null,null,null,null,
                     new EnderecoPatchRequest(null,"Cidade desfeita",null,null,null,null,null)));
             status.setRollbackOnly();
         });
@@ -73,7 +73,7 @@ class UsuarioAggregateIntegrationTests {
         String cpfAnterior = source.queryForObject(
                 "select cpf from identidade.usuarios_pf where usuario_id=?", String.class, id).strip();
 
-        var patch = new AtualizarUsuarioRequest(null, null, null, null, null, null, null, null,
+        var patch = new AtualizarUsuarioRequest(null, null, null, null, null, null, null,
                 new EnderecoPatchRequest(null, "Campinas", null, null, null, "", null));
         mvc.perform(patch("/api/v1/usuarios/{id}", id).contentType("application/json")
                         .content(json.writeValueAsString(patch)))
@@ -108,7 +108,7 @@ class UsuarioAggregateIntegrationTests {
         var criado = criar(TipoPessoa.PJ);
         UUID id = criado.id();
         String novoCnpj = documento(false);
-        var patch = new AtualizarUsuarioRequest("Nova Empresa", null, "1133335555", null,
+        var patch = new AtualizarUsuarioRequest("Nova Empresa", null, "1133335555",
                 null, null, novoCnpj, "Nova Razão LTDA",
                 new EnderecoPatchRequest("13010000", null, null, "Rua Nova", "20", null, null));
 

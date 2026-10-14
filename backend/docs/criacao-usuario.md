@@ -155,11 +155,11 @@ Detalhes do comprovante, versões vigentes e limites operacionais estão em [com
 
 O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` grava `PHC_AUTH` como cookie `HttpOnly` e retorna somente metadados da sessão. Clientes de API também podem enviar `Authorization: Bearer <token>` nas operações protegidas.
 
-Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
+Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Cadastro e redefinição exigem pelo menos oito caracteres, uma letra maiúscula, uma minúscula, um número e um caractere especial, respeitando o limite de 72 bytes do BCrypt. A política fica no core e a redefinição ocorre exclusivamente em `PATCH /api/v1/usuarios/{usuarioId}/senha`.
 
 Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
 
-Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
+Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor, validade e a versão vigente da sessão do usuário. O refresh token é opaco, rotacionado a cada uso e armazenado somente como hash. A troca de senha incrementa a versão da sessão e revoga todos os refresh tokens da conta, encerrando imediatamente as sessões em todos os dispositivos. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
 
 
 ## Coordenadas do endereço

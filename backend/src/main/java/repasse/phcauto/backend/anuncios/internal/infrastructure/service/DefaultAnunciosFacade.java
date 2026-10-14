@@ -68,7 +68,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
     @Override
     public PaginaAnunciosResponse buscar(BuscarAnunciosRequest r, UUID usuarioAutenticadoId) {
         if (r == null) r = new BuscarAnunciosRequest(null,null,null,null,null,null,null,null,null,null,null,null,
-                null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null);
+                null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null, null);
         Double latitude = r.latitude();
         Double longitude = r.longitude();
         String cidade = r.cidade();
@@ -95,7 +95,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 r.perfil(), r.precoMinimoCentavos(), r.precoMaximoCentavos(), r.anoMinimo(), r.anoMaximo(),
                 r.cambio(), r.combustivel(), r.motorizacao(), r.condicao(), r.tipoDirecao(), r.tracao(),
                 r.ipvaPago(), r.blindado(), r.numeroPortas(), r.cilindradaLitros(), r.tipoFreio(),
-                r.carroceria(), latitude, longitude, r.pagina() == null ? 0 : r.pagina(), r.tamanho() == null ? 20 : r.tamanho());
+                r.carroceria(), latitude, longitude, r.pagina() == null ? 0 : r.pagina(), r.tamanho() == null ? 20 : r.tamanho(), r.anuncianteId());
         var pagina = buscarAnuncios.execute(filtro);
         var itens = pagina.anuncios().stream().map(this::buscaResponse).toList();
         return new PaginaAnunciosResponse(itens, pagina.total(), pagina.pagina(), pagina.tamanho(),

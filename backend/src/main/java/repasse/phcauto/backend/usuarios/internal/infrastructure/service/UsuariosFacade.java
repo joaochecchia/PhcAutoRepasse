@@ -5,11 +5,13 @@ import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.r
 import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.response.UsuarioDetalhadoResponse;
 
 import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.CriarUsuarioRequest;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.request.RedefinirSenhaRequest;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.response.UsuarioResponse;
 /** API pública do módulo de usuários. */
 public interface UsuariosFacade {
     UsuarioResponse criar(CriarUsuarioRequest request, String enderecoRede);
     UsuarioDetalhadoResponse buscar(UUID usuarioId);
     UsuarioDetalhadoResponse atualizar(UUID usuarioId, AtualizarUsuarioRequest request);
+    void redefinirSenha(UUID usuarioId, RedefinirSenhaRequest request);
     void excluir(UUID usuarioId);
 }

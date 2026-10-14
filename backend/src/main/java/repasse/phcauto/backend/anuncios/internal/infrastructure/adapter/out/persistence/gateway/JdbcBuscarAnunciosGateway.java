@@ -143,6 +143,10 @@ public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway, BuscarA
     private static void filtrosComuns(BuscarAnunciosFiltro f, List<String> where,
             MapSqlParameterSource p) {
         where.add("a.status = 'PUBLICADO'");
+        if (f.anuncianteId() != null) {
+            where.add("a.anunciante_id = :anuncianteId");
+            p.addValue("anuncianteId", f.anuncianteId());
+        }
         igualEnum(where, p, "v.tipo", "tipo", f.tipoVeiculo());
         igualTexto(where, p, "v.fabricante", "marca", f.marca());
         igualTexto(where, p, "v.modelo", "modelo", f.modelo());

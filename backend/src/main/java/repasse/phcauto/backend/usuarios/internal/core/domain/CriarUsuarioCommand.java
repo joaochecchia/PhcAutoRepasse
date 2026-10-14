@@ -6,6 +6,7 @@ import repasse.phcauto.backend.domain.model.identidade.PapelUsuario;
 import repasse.phcauto.backend.domain.model.identidade.TipoPessoa;
 import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroInvalidoException;
 import repasse.phcauto.backend.usuarios.internal.core.validation.ValidacaoCadastro;
+import repasse.phcauto.backend.usuarios.internal.core.validation.PoliticaSenha;
 public record CriarUsuarioCommand(TipoPessoa tipoPessoa, String nome, String email, String telefone,
         String senha, String cpf, LocalDate dataNascimento, String cnpj, String razaoSocial,
         EnderecoCadastro endereco, PapelUsuario papel) {
@@ -18,8 +19,7 @@ public record CriarUsuarioCommand(TipoPessoa tipoPessoa, String nome, String ema
         nome = ValidacaoCadastro.texto(nome,"Nome",160);
         email = ValidacaoCadastro.texto(email,"Email",254).toLowerCase(Locale.ROOT);
         if (!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) throw new CadastroInvalidoException("Email inválido");
-        if (senha == null || senha.isBlank() || senha.length()<8 || senha.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>72)
-            throw new CadastroInvalidoException("Senha deve ter pelo menos 8 caracteres e no máximo 72 bytes UTF-8");
+        PoliticaSenha.validar(senha);
         if (papel == PapelUsuario.DONO) {
             tipoPessoa = TipoPessoa.PF;
             if (telefone != null || cpf != null || dataNascimento != null || cnpj != null || razaoSocial != null || endereco != null)

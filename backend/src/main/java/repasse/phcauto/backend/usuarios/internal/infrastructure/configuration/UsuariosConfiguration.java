@@ -15,6 +15,8 @@ import repasse.phcauto.backend.usuarios.internal.core.gateway.ExcluirUsuarioGate
 import repasse.phcauto.backend.usuarios.internal.core.gateway.HashSenhaGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.PublicarUsuarioAlteradoGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.PublicarUsuarioCriadoGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.RedefinirSenhaGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.RevogarSessoesGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.UsuarioGateway;
 import repasse.phcauto.backend.usuarios.internal.core.usecase.AtualizarUsuario;
 import repasse.phcauto.backend.usuarios.internal.core.usecase.AtualizarUsuarioUseCase;
@@ -26,6 +28,8 @@ import repasse.phcauto.backend.usuarios.internal.core.usecase.ExcluirUsuario;
 import repasse.phcauto.backend.usuarios.internal.core.usecase.ExcluirUsuarioUseCase;
 import repasse.phcauto.backend.usuarios.internal.core.usecase.Login;
 import repasse.phcauto.backend.usuarios.internal.core.usecase.LoginUseCase;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.RedefinirSenha;
+import repasse.phcauto.backend.usuarios.internal.core.usecase.RedefinirSenhaUseCase;
 @Configuration(proxyBeanMethods = false)
 public class UsuariosConfiguration {
     @Bean public PasswordEncoder usuarioPasswordEncoder() {
@@ -50,13 +54,31 @@ public class UsuariosConfiguration {
     }
 
     @Bean AtualizarUsuarioUseCase atualizarUsuarioUseCase(ConsultarUsuarioGateway consultas,
-            AtualizarUsuarioGateway atualizacoes, HashSenhaGateway senhas,
+            AtualizarUsuarioGateway atualizacoes,
             PublicarUsuarioAlteradoGateway eventos, Clock applicationClock) {
-        return new AtualizarUsuario(consultas, atualizacoes, senhas, eventos, applicationClock);
+        return new AtualizarUsuario(consultas, atualizacoes, eventos, applicationClock);
+    }
+
+    @Bean RedefinirSenhaUseCase redefinirSenhaUseCase(RedefinirSenhaGateway usuarios,
+            HashSenhaGateway hashes, PublicarUsuarioAlteradoGateway eventos,
+            RevogarSessoesGateway sessoes, Clock applicationClock) {
+        return new RedefinirSenha(usuarios, hashes, eventos, sessoes, applicationClock);
     }
 
     @Bean ExcluirUsuarioUseCase excluirUsuarioUseCase(ExcluirUsuarioGateway usuarios,
             PublicarUsuarioAlteradoGateway eventos, Clock applicationClock) {
         return new ExcluirUsuario(usuarios, eventos, applicationClock);
+    }
+    @Bean repasse.phcauto.backend.usuarios.internal.core.usecase.BuscarLojistasUseCase buscarLojistas(
+            repasse.phcauto.backend.usuarios.internal.core.gateway.ConsultarPerfisGateway gateway) {
+        return new repasse.phcauto.backend.usuarios.internal.core.usecase.BuscarLojistas(gateway);
+    }
+    @Bean repasse.phcauto.backend.usuarios.internal.core.usecase.ConsultarPerfilPublicoUseCase consultarPerfilPublico(
+            repasse.phcauto.backend.usuarios.internal.core.gateway.ConsultarPerfisGateway gateway) {
+        return new repasse.phcauto.backend.usuarios.internal.core.usecase.ConsultarPerfilPublico(gateway);
+    }
+    @Bean repasse.phcauto.backend.usuarios.internal.core.usecase.SalvarFotoPerfilUseCase salvarFotoPerfil(
+            repasse.phcauto.backend.usuarios.internal.core.gateway.SalvarFotoPerfilGateway gateway) {
+        return new repasse.phcauto.backend.usuarios.internal.core.usecase.SalvarFotoPerfil(gateway);
     }
 }

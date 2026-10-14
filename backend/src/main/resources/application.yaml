@@ -44,8 +44,16 @@ spring:
         published: 2m
         processing: 2m
         resubmitted: 2m
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:30s}
+
+server:
+  shutdown: graceful
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:NONE}
 
 app:
+  security:
+    production: ${PRODUCTION_MODE:false}
   compliance:
     termos-uso-versao: ${TERMOS_USO_VERSAO_ATUAL:1.1}
     politica-privacidade-versao: ${POLITICA_PRIVACIDADE_VERSAO_ATUAL:1.1}
@@ -82,9 +90,71 @@ app:
     fotos:
       diretorio: ${FOTOS_DIRETORIO:./src/main/resources/static/uploads/veiculos}
       tamanho-maximo-bytes: ${FOTOS_TAMANHO_MAXIMO_BYTES:10485760}
+      tamanho-alvo-bytes: ${FOTOS_TAMANHO_ALVO_BYTES:5242880}
   cache:
     ttl: ${REDIS_CACHE_TTL:10m}
     key-prefix: ${REDIS_CACHE_PREFIX:phcauto:cache:}
+  rate-limit:
+    key-prefix: ${RATE_LIMIT_KEY_PREFIX:phcauto:ratelimit:}
+    fallback-max-keys: ${RATE_LIMIT_FALLBACK_MAX_KEYS:10000}
+    login:
+      limit: ${RATE_LIMIT_LOGIN_LIMIT:10}
+      window: ${RATE_LIMIT_LOGIN_WINDOW:1m}
+    registro:
+      limit: ${RATE_LIMIT_REGISTRO_LIMIT:5}
+      window: ${RATE_LIMIT_REGISTRO_WINDOW:1h}
+    refresh:
+      limit: ${RATE_LIMIT_REFRESH_LIMIT:20}
+      window: ${RATE_LIMIT_REFRESH_WINDOW:1m}
+    busca:
+      limit: ${RATE_LIMIT_BUSCA_LIMIT:120}
+      window: ${RATE_LIMIT_BUSCA_WINDOW:1m}
+    upload-foto-anuncio:
+      limit: ${RATE_LIMIT_FOTO_ANUNCIO_LIMIT:30}
+      window: ${RATE_LIMIT_FOTO_ANUNCIO_WINDOW:1h}
+    upload-foto-perfil:
+      limit: ${RATE_LIMIT_FOTO_PERFIL_LIMIT:10}
+      window: ${RATE_LIMIT_FOTO_PERFIL_WINDOW:1h}
+    contato-whatsapp:
+      limit: ${RATE_LIMIT_WHATSAPP_LIMIT:10}
+      window: ${RATE_LIMIT_WHATSAPP_WINDOW:1h}
+    tentativas-senha:
+      limit: ${RATE_LIMIT_PASSWORD_ATTEMPTS_LIMIT:5}
+      window: ${RATE_LIMIT_PASSWORD_ATTEMPTS_WINDOW:15m}
+  observability:
+    projection-check-interval: ${PROJECTION_OBSERVABILITY_INTERVAL:30s}
+    dependency-check-interval: ${DEPENDENCY_OBSERVABILITY_INTERVAL:30s}
+    sentry:
+      dsn: ${SENTRY_DSN:}
+      environment: ${SENTRY_ENVIRONMENT:development}
+      release: ${SENTRY_RELEASE:}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9091}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+      show-components: always
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  file:
+    name: ${LOG_FILE:./logs/backend.log}
+  logback:
+    rollingpolicy:
+      max-file-size: ${LOG_MAX_FILE_SIZE:20MB}
+      max-history: ${LOG_MAX_HISTORY:14}
+      total-size-cap: ${LOG_TOTAL_SIZE_CAP:1GB}
+      clean-history-on-start: true
 
 springdoc:
   api-docs:
@@ -92,3 +162,5 @@ springdoc:
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
     path: /swagger-ui.html
+    csrf:
+      enabled: true

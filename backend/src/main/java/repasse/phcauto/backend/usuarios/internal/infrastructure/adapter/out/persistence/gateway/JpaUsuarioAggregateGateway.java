@@ -17,6 +17,7 @@ import repasse.phcauto.backend.usuarios.internal.core.exception.UsuarioNaoEncont
 import repasse.phcauto.backend.usuarios.internal.core.gateway.AtualizarUsuarioGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.ConsultarUsuarioGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.ExcluirUsuarioGateway;
+import repasse.phcauto.backend.usuarios.internal.core.gateway.RedefinirSenhaGateway;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity.UsuarioEntity;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.repository.write.EnderecoUsuarioWriteRepository;
 import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.repository.write.UsuarioPfWriteRepository;
@@ -25,7 +26,7 @@ import repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.pers
 @Component
 @Transactional(transactionManager = "writeTransactionManager", propagation = Propagation.MANDATORY)
 public class JpaUsuarioAggregateGateway implements ConsultarUsuarioGateway,
-        AtualizarUsuarioGateway, ExcluirUsuarioGateway {
+        AtualizarUsuarioGateway, ExcluirUsuarioGateway, RedefinirSenhaGateway {
     private final UsuarioWriteRepository usuarios;
     private final UsuarioPfWriteRepository pessoasFisicas;
     private final UsuarioPjWriteRepository pessoasJuridicas;
@@ -107,6 +108,13 @@ public class JpaUsuarioAggregateGateway implements ConsultarUsuarioGateway,
         } catch (DataIntegrityViolationException failure) {
             throw new ExclusaoUsuarioBloqueadaException();
         }
+    }
+
+    @Override public TipoPessoa redefinir(UUID usuarioId, String senhaHash, Instant atualizadoEm) {
+        var usuario = usuarios.findById(usuarioId).orElseThrow(UsuarioNaoEncontradoException::new);
+        usuario.redefinirSenha(senhaHash, atualizadoEm);
+        usuarios.saveAndFlush(usuario);
+        return usuario.getTipoPessoa();
     }
 
     private UsuarioCompleto completo(UsuarioEntity usuario) {

@@ -6,7 +6,6 @@ public record AtualizarUsuarioCommand(
         String nome,
         String email,
         String telefone,
-        String senha,
         String cpf,
         LocalDate dataNascimento,
         String cnpj,

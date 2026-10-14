@@ -131,6 +131,9 @@ export const authApi = {
     };
     return (await api.patch<UserProfile>(`/usuarios/${usuarioId}`, payload)).data;
   },
+  async resetPassword(usuarioId: string, novaSenha: string) {
+    await api.patch(`/usuarios/${usuarioId}/senha`, { novaSenha });
+  },
 };
 
 const pendingSearches = new Map<string, Promise<SearchResponse>>();
@@ -199,6 +202,7 @@ export function searchAdToVehicle(
     fuel: ad.combustivel || "Não informado",
     transmission: ad.cambio || "Não informado",
     seller: ad.nomePerfil || "Anunciante",
+    sellerId: ad.anuncianteId,
     live: true,
     condition: ad.condicao,
     type: ad.tipoVeiculo,
@@ -382,4 +386,33 @@ export function prepareDeviceLocation() {
     pendingPosition = null;
   });
   return pendingPosition;
+}
+
+export async function searchStores(
+  location: (({ cidade: string; uf: string } | { latitude: number; longitude: number }) & { nome?: string }) | { nome?: string },
+  pagina = 0,
+) {
+  return (await api.get<import("./contracts").StoresResponse>("/lojistas", {
+    params: { ...location, pagina, tamanho: 12 },
+  })).data;
+}
+export function currentDeviceLocation() {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Seu navegador não oferece localização."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      timeout: 10_000,
+      maximumAge: 0,
+    });
+  });
+}
+export async function publicProfile(id: string) {
+  return (await api.get<import("./contracts").PublicProfile>(`/perfis/${id}`)).data;
+}
+export async function uploadProfilePhoto(id: string, file: File) {
+  const data = new FormData(); data.append("arquivo", file);
+  await api.put(`/usuarios/${id}/foto`, data);
 }

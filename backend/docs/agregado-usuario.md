@@ -11,6 +11,7 @@ API.
 | POST | `/api/v1/usuarios` | Cria usuário, PF ou PJ e endereço atomicamente |
 | GET | `/api/v1/usuarios/{id}` | Retorna usuário, perfil correspondente e endereço |
 | PATCH | `/api/v1/usuarios/{id}` | Altera apenas os campos/blocos enviados |
+| PATCH | `/api/v1/usuarios/{id}/senha` | Redefine a senha em fluxo próprio |
 | DELETE | `/api/v1/usuarios/{id}` | Remove endereço, perfil e usuário atomicamente |
 
 Não existem rotas HTTP para
@@ -84,7 +85,7 @@ A API recebe, persiste e retorna CPF, CNPJ e CEP somente com números: CPF possu
 
 O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz não é mantido. O login público em `POST /api/v1/usuarios/login` grava `PHC_AUTH` como cookie `HttpOnly` e retorna somente metadados da sessão. Clientes de API também podem enviar `Authorization: Bearer <token>` nas operações protegidas.
 
-Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
+Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Cadastro e redefinição exigem pelo menos oito caracteres, uma letra maiúscula, uma minúscula, um número e um caractere especial, respeitando o limite de 72 bytes do BCrypt. A senha não integra mais o PATCH geral do usuário. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
 
 Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
 

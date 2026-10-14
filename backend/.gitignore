@@ -40,7 +40,9 @@ build/
 
 ### Logs and JVM dumps ###
 *.log
-/logs/
+/logs/**
+!/logs/backend/
+!/logs/backend/.gitkeep
 hs_err_pid*
 replay_pid*
 *.hprof
@@ -71,3 +73,7 @@ Desktop.ini
 /src/main/resources/static/uploads/veiculos/**
 !/src/main/resources/static/uploads/veiculos/.gitkeep
 !/src/main/resources/static/uploads/veiculos/README.md
+
+# Artefatos locais de validação no navegador
+/.playwright-cli/
+/output/playwright/

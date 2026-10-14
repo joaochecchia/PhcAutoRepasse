@@ -66,6 +66,6 @@ class ModosLocalizacaoBuscaTests {
             Double latitude, Double longitude) {
         return new BuscarAnunciosRequest(modo, null, cidade, uf, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null,
-                latitude, longitude, 0, 52);
+                latitude, longitude, 0, 52, null);
     }
 }

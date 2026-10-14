@@ -12,7 +12,7 @@ import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroDuplicad
 import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroInvalidoException;
 import repasse.phcauto.backend.usuarios.internal.core.exception.ExclusaoUsuarioBloqueadaException;
 import repasse.phcauto.backend.usuarios.internal.core.exception.UsuarioNaoEncontradoException;
-@RestControllerAdvice(assignableTypes = UsuariosController.class)
+@RestControllerAdvice(basePackageClasses = UsuariosController.class)
 class UsuariosExceptionHandler {
     @ExceptionHandler({CadastroDuplicadoException.class, ExclusaoUsuarioBloqueadaException.class})
     ProblemDetail conflito(RuntimeException exception) {

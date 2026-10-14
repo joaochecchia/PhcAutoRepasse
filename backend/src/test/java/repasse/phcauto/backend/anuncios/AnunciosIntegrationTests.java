@@ -132,7 +132,7 @@ class AnunciosIntegrationTests {
                 50_000L, 150_000L, 2025, 2026, "automatico", "flex", "2.0",
                 repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo.USADO, null, null,
                 null, null, 4, new java.math.BigDecimal("2.0"), "disco", "suv",
-                -16.6869, -49.2648, 0, 10);
+                -16.6869, -49.2648, 0, 10, null);
         var pagina = anuncios.buscar(filtros, null);
         assertThat(pagina.total()).isOne();
         assertThat(pagina.raioKmAplicado()).isEqualTo(100);
@@ -157,7 +157,7 @@ class AnunciosIntegrationTests {
 
         var filtros = new BuscarAnunciosRequest(null, TipoVeiculo.CARRO, "Goiânia", "GO", marcaUnica, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, -16.6869, -49.2648, 0, 52);
+                null, null, null, null, null, null, -16.6869, -49.2648, 0, 52, null);
         var pagina = anuncios.buscar(filtros, null);
 
         assertThat(pagina.raioKmAplicado()).isEqualTo(200);

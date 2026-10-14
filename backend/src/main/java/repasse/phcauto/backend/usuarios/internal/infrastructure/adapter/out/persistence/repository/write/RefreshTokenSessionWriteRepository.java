@@ -17,4 +17,9 @@ public interface RefreshTokenSessionWriteRepository extends JpaRepository<Refres
     @Query("update RefreshTokenSessionEntity s set s.revogadoEm = :agora " +
             "where s.familiaId = :familia and s.revogadoEm is null")
     int revogarFamilia(@Param("familia") UUID familia, @Param("agora") Instant agora);
+
+    @Modifying
+    @Query("update RefreshTokenSessionEntity s set s.revogadoEm = :agora " +
+            "where s.usuarioId = :usuario and s.revogadoEm is null")
+    int revogarTodasDoUsuario(@Param("usuario") UUID usuario, @Param("agora") Instant agora);
 }

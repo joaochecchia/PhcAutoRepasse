@@ -37,13 +37,12 @@ class ManterUsuarioTests {
     @Test void patchDeEnderecoMantemDemaisTabelasEPublicaDepoisDaAtualizacao() {
         var consultas = mock(ConsultarUsuarioGateway.class);
         var atualizacoes = mock(AtualizarUsuarioGateway.class);
-        var senhas = mock(HashSenhaGateway.class);
         var eventos = mock(PublicarUsuarioAlteradoGateway.class);
         when(consultas.buscar(ID)).thenReturn(pf());
         when(atualizacoes.atualizar(eq(ID), any(), eq(CLOCK.instant()))).thenReturn(pf());
-        var useCase = new AtualizarUsuario(consultas, atualizacoes, senhas, eventos, CLOCK);
+        var useCase = new AtualizarUsuario(consultas, atualizacoes, eventos, CLOCK);
 
-        useCase.execute(ID, new AtualizarUsuarioCommand(null, null, null, null, null, null,
+        useCase.execute(ID, new AtualizarUsuarioCommand(null, null, null, null, null,
                 null, null, new EnderecoUsuarioPatch(null, "Campinas", null, null, null, "", null)));
 
         var captor = ArgumentCaptor.forClass(AlteracoesUsuario.class);
@@ -53,35 +52,17 @@ class ManterUsuarioTests {
         assertNull(captor.getValue().nome());
         assertEquals("Campinas", captor.getValue().endereco().cidade());
         assertNull(captor.getValue().endereco().complemento());
-        verifyNoInteractions(senhas);
-    }
-
-    @Test void patchDeSenhaGeraHashENuncaEnviaTextoPlano() {
-        var consultas = mock(ConsultarUsuarioGateway.class);
-        var atualizacoes = mock(AtualizarUsuarioGateway.class);
-        var senhas = mock(HashSenhaGateway.class);
-        var eventos = mock(PublicarUsuarioAlteradoGateway.class);
-        when(consultas.buscar(ID)).thenReturn(pf());
-        when(senhas.gerar("nova-senha")).thenReturn("novo-hash");
-        when(atualizacoes.atualizar(eq(ID), any(), any())).thenReturn(pf());
-        new AtualizarUsuario(consultas, atualizacoes, senhas, eventos, CLOCK).execute(ID,
-                new AtualizarUsuarioCommand(null, null, null, "nova-senha", null, null,
-                        null, null, null));
-        var captor = ArgumentCaptor.forClass(AlteracoesUsuario.class);
-        verify(atualizacoes).atualizar(eq(ID), captor.capture(), any());
-        assertEquals("novo-hash", captor.getValue().senhaHash());
-        assertFalse(captor.getValue().toString().contains("nova-senha"));
     }
 
     @Test void rejeitaPatchVazioEOsCamposDoOutroTipo() {
         var consultas = mock(ConsultarUsuarioGateway.class);
         when(consultas.buscar(ID)).thenReturn(pf());
         var useCase = new AtualizarUsuario(consultas, mock(AtualizarUsuarioGateway.class),
-                mock(HashSenhaGateway.class), mock(PublicarUsuarioAlteradoGateway.class), CLOCK);
+                mock(PublicarUsuarioAlteradoGateway.class), CLOCK);
         assertThrows(CadastroInvalidoException.class, () -> useCase.execute(ID,
-                new AtualizarUsuarioCommand(null, null, null, null, null, null, null, null, null)));
+                new AtualizarUsuarioCommand(null, null, null, null, null, null, null, null)));
         assertThrows(CadastroInvalidoException.class, () -> useCase.execute(ID,
-                new AtualizarUsuarioCommand(null, null, null, null, null, null,
+                new AtualizarUsuarioCommand(null, null, null, null, null,
                         "11222333000181", null, null)));
     }
 

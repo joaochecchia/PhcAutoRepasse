@@ -18,21 +18,18 @@ import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroDuplicad
 import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroInvalidoException;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.AtualizarUsuarioGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.ConsultarUsuarioGateway;
-import repasse.phcauto.backend.usuarios.internal.core.gateway.HashSenhaGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.PublicarUsuarioAlteradoGateway;
 import repasse.phcauto.backend.usuarios.internal.core.validation.ValidacaoCadastro;
 public final class AtualizarUsuario implements AtualizarUsuarioUseCase {
     private final ConsultarUsuarioGateway consultas;
     private final AtualizarUsuarioGateway atualizacoes;
-    private final HashSenhaGateway senhas;
     private final PublicarUsuarioAlteradoGateway eventos;
     private final Clock clock;
 
     public AtualizarUsuario(ConsultarUsuarioGateway consultas, AtualizarUsuarioGateway atualizacoes,
-            HashSenhaGateway senhas, PublicarUsuarioAlteradoGateway eventos, Clock clock) {
+            PublicarUsuarioAlteradoGateway eventos, Clock clock) {
         this.consultas = Objects.requireNonNull(consultas);
         this.atualizacoes = Objects.requireNonNull(atualizacoes);
-        this.senhas = Objects.requireNonNull(senhas);
         this.eventos = Objects.requireNonNull(eventos);
         this.clock = Objects.requireNonNull(clock);
     }
@@ -55,14 +52,6 @@ public final class AtualizarUsuario implements AtualizarUsuarioUseCase {
         if (telefone != null && !telefone.matches("\\+?[1-9][0-9]{9,14}")) {
             throw new CadastroInvalidoException("Telefone inválido");
         }
-        String senhaHash = null;
-        if (request.senha() != null) {
-            if (request.senha().isBlank() || request.senha().length() < 8 || request.senha().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
-                throw new CadastroInvalidoException("Senha deve ter pelo menos 8 caracteres e no máximo 72 bytes UTF-8");
-            }
-            senhaHash = senhas.gerar(request.senha());
-        }
-
         String cpf = validarCpf(request.cpf());
         LocalDate nascimento = validarNascimento(request.dataNascimento());
         String cnpj = validarCnpj(request.cnpj());
@@ -79,7 +68,7 @@ public final class AtualizarUsuario implements AtualizarUsuarioUseCase {
             throw new CadastroDuplicadoException("Já existe cadastro com os dados informados");
         }
 
-        var alteracoes = new AlteracoesUsuario(nome, email, telefone, senhaHash, cpf, nascimento,
+        var alteracoes = new AlteracoesUsuario(nome, email, telefone, null, cpf, nascimento,
                 cnpj, razaoSocial, endereco);
         var agora = clock.instant();
         var atualizado = atualizacoes.atualizar(usuarioId, alteracoes, agora);
@@ -90,7 +79,7 @@ public final class AtualizarUsuario implements AtualizarUsuarioUseCase {
 
     private boolean semAlteracoes(AtualizarUsuarioCommand request) {
         return request.nome() == null && request.email() == null && request.telefone() == null
-                && request.senha() == null && request.cpf() == null && request.dataNascimento() == null
+                && request.cpf() == null && request.dataNascimento() == null
                 && request.cnpj() == null && request.razaoSocial() == null && request.endereco() == null;
     }
 

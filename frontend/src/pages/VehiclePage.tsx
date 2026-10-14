@@ -1,3 +1,5 @@
+import { ProfileAvatar } from "../components/ProfilePhoto";
+import type { PublicProfile } from "../lib/contracts";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -16,7 +18,6 @@ import {
   Settings2,
   Share2,
   ShieldCheck,
-  Store,
   TriangleAlert,
   ZoomIn,
   ZoomOut,
@@ -24,7 +25,7 @@ import {
 import type { Vehicle } from "../data/catalog";
 import { VehicleCard } from "../components/VehicleCard";
 import { PageBreadcrumb } from "./PageLayout";
-import { apiErrorMessage, listAdPhotos, requestWhatsappContact } from "../lib/backend";
+import { apiErrorMessage, listAdPhotos, requestWhatsappContact, publicProfile } from "../lib/backend";
 import type { AdPhoto } from "../lib/contracts";
 
 export function VehiclePage({
@@ -42,6 +43,12 @@ export function VehiclePage({
   related: Vehicle[];
   authenticated: boolean;
 }) {
+  const [sellerProfile, setSellerProfile] = useState<PublicProfile | null>(null);
+  useEffect(() => {
+    let active = true; setSellerProfile(null);
+    if (vehicle.sellerId) publicProfile(vehicle.sellerId).then((p) => { if (active) setSellerProfile(p); }).catch(() => {});
+    return () => { active = false; };
+  }, [vehicle.sellerId]);
   const [zoom, setZoom] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [photos, setPhotos] = useState<AdPhoto[]>([]);
@@ -333,12 +340,11 @@ export function VehiclePage({
             </div>
             <span className="contact-rule" />
             <div className="seller-profile">
-              <span>
-                <Store size={25} />
-              </span>
+              <ProfileAvatar src={sellerProfile?.fotoUrl} name={sellerProfile?.nome || vehicle.seller} />
               <div>
                 <small>ANUNCIANTE</small>
-                <h2>{vehicle.seller}</h2>
+                <h2>{sellerProfile?.nome || vehicle.seller}</h2>
+                {sellerProfile?.tipoPessoa === "PJ" && <a className="text-button" href={`#loja/${sellerProfile.id}`}>Ver veículos desta loja</a>}
                 <p>
                   <MapPin size={13} />
                   {vehicle.location}

@@ -29,12 +29,12 @@ class CriarUsuarioTests {
 
     private CriarUsuarioCommand command(LocalDate nascimento) {
         return new CriarUsuarioCommand(TipoPessoa.PF, " Cliente ", "CLIENTE@EXAMPLE.COM", "11999999999",
-                "senha-de-teste", "52998224725", nascimento, null, null,
+                "Senha@de-teste1", "52998224725", nascimento, null, null,
                 new EnderecoCadastro("01001000", "São Paulo", "Sé", "Praça da Sé", null, null, "sp"));
     }
 
     @Test void salvaAntesDePublicarESemTransportarSenhaEmTextoAoGateway() {
-        when(senhas.gerar("senha-de-teste")).thenReturn("hash-seguro");
+        when(senhas.gerar("Senha@de-teste1")).thenReturn("hash-seguro");
         var resultado = useCase.execute(command(LocalDate.of(1990, 1, 1)));
         var dados = ArgumentCaptor.forClass(DadosNovoUsuario.class);
         var evento = ArgumentCaptor.forClass(UsuarioCriado.class);
@@ -46,7 +46,7 @@ class CriarUsuarioTests {
         assertEquals("hash-seguro", dados.getValue().senhaHash());
         assertEquals(resultado.id(), evento.getValue().usuarioId());
         assertEquals("Cliente", resultado.nome());
-        assertFalse(command(LocalDate.of(1990, 1, 1)).toString().contains("senha-de-teste"));
+        assertFalse(command(LocalDate.of(1990, 1, 1)).toString().contains("Senha@de-teste1"));
     }
 
     @Test void duplicidadeNaoGeraHashNemPersisteNemPublica() {
@@ -75,7 +75,7 @@ class CriarUsuarioTests {
     @Test void adminExigePerfilCompletoEDonoPersisteSomenteUsuario() {
         when(senhas.gerar(anyString())).thenReturn("hash");
         var admin = new CriarUsuarioCommand(TipoPessoa.PF,"admin","admin@email.com","+5561999999999",
-                "senha123","52998224725",LocalDate.of(2004,1,1),null,null,null,PapelUsuario.ADMIN);
+                "Senha@123","52998224725",LocalDate.of(2004,1,1),null,null,null,PapelUsuario.ADMIN);
         var resultadoAdmin=useCase.execute(admin);
         var dados=ArgumentCaptor.forClass(DadosNovoUsuario.class);
         verify(usuarios).salvarCadastro(eq(resultadoAdmin.id()),dados.capture(),eq(clock.instant()));
@@ -83,7 +83,7 @@ class CriarUsuarioTests {
         assertEquals("52998224725",dados.getValue().cpf());
 
         reset(usuarios,senhas,eventos); when(senhas.gerar(anyString())).thenReturn("hash");
-        var dono=new CriarUsuarioCommand(null,"Dono","dono@email.com",null,"senha123",
+        var dono=new CriarUsuarioCommand(null,"Dono","dono@email.com",null,"Senha@123",
                 null,null,null,null,null,PapelUsuario.DONO);
         var resultadoDono=useCase.execute(dono);
         verify(usuarios).existeEmail("dono@email.com");

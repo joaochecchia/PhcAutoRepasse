@@ -13,7 +13,7 @@ public class AnuncioAuthorization {
     @Transactional(transactionManager = "writeTransactionManager", readOnly = true)
     public boolean podeAlterar(UUID id, Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) return false;
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) return true;
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DONO"))) return true;
         return anuncios.findById(id).map(a -> a.getAnuncianteId().toString().equals(auth.getName())).orElse(false);
     }
 }

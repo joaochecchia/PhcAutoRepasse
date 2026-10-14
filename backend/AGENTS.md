@@ -138,6 +138,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Migrations comuns: `db/migration`; exclusivas: `db/write` e `db/read`. Preserve a V1 aplicada; versões coincidentes exclusivas possuem históricos separados. Use versões livres nas duas bases para novas migrations comuns.
 - `@Version` usa `versao` em anúncios e `lock_version` nos demais. Carregue entidades existentes para editar; não use `criar` para atualização.
 - O volume do write é preservado. O novo read usa `postgres_projection_data`; o volume antigo da réplica física não é reutilizado nem apagado. Consulte `docs/persistence.md`.
+- A busca pública de lojistas retorna no máximo 12 itens por página. Com cidade ou coordenadas, ordena por distância e nome, consulta primeiro 100 km e amplia para 200 km somente quando o raio inicial não contém lojas. Sem localização, serve como vitrine nacional para visitantes deslogados e ordena PJ ativas por quantidade de anúncios publicados, foto e nome. A resposta informa `raioKmAplicado`, nulo na vitrine nacional.
 
 ## Configuração e deploy
 
@@ -170,6 +171,15 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Verifique as mudanças com os checks pertinentes e informe limitações de validação.
 - Mantenha este contexto e o README coerentes quando mudar arquitetura, execução ou configuração.
 - O Codex não deve criar commits em nenhuma circunstância. Não executar `git commit`, `git commit --amend`, commits de merge, rebase que reescreva commits, criação de tags ou `git push`. As alterações devem permanecer no working tree para revisão e versionamento manual pelo usuário.
+
+## Proteção contra abuso e observabilidade
+
+- O rate limiting distribuído usa Redis e script Lua atômico. Login, registro, refresh, buscas, uploads, contato por WhatsApp e tentativas de senha possuem limites independentes configurados por `RATE_LIMIT_*`. Respostas bloqueadas usam HTTP 429 e `Retry-After`.
+- Actuator funciona na porta interna 9091 e expõe somente health, info e Prometheus. PostgreSQL write/read e Redis participam da saúde; não publique essa porta diretamente na internet.
+- Prometheus mede a fila persistente do Spring Modulith por `phcauto_projection_pending` e `phcauto_projection_oldest_seconds`. Alertas e Grafana estão no arquivo opcional `compose.monitoring.yaml`; consulte `docs/operacao-producao.md`.
+- Logs persistem em `logs/backend` com rotação. Sentry é opcional por `SENTRY_DSN` e não envia PII por padrão.
+- Autenticação por cookie exige CSRF em métodos de escrita pelo padrão `XSRF-TOKEN`/`X-XSRF-TOKEN`; somente clientes que usam exclusivamente `Authorization: Bearer` são dispensados. O frontend inicializa o token antes da primeira mutação. Em deploy, use `PRODUCTION_MODE=true` e `AUTH_COOKIE_SECURE=true`; a aplicação falha ao iniciar se o modo de produção permitir cookie inseguro.
+- `docs/operacao-producao.md` contém a checklist canônica para produção, separando itens implementados, bloqueadores de deploy e decisões de produto. Atualize essa lista quando uma proteção ou etapa operacional for concluída; não marque configuração externa como pronta apenas porque existe suporte no código.
 
 ## Cadastro PF/PJ e complementos da compra
 
@@ -210,6 +220,7 @@ Ajuste a porta nesses endereços ao usar `BACKEND_PORT`. A documentação expõe
 - Consulte `docs/agregado-usuario.md`. Usuário é a única raiz HTTP: POST, GET, PATCH e DELETE somente em `/api/v1/usuarios`; não criar aliases duplicados.
 - PF, PJ e endereço não possuem controllers próprios. Toda mutação ocorre pelos casos de uso do agregado e na mesma transação write.
 - PATCH altera apenas campos enviados, não permite trocar PF/PJ e mantém nome/nome_fantasia de PJ coerentes. Campos nulos ficam inalterados; string vazia limpa somente número/complemento.
+- Senha não integra `AtualizarUsuarioRequest` nem o PATCH geral. `PATCH /api/v1/usuarios/{usuarioId}/senha` usa caso de uso, comando, gateway e request próprios. Cadastro e redefinição compartilham `PoliticaSenha` no core: mínimo de oito caracteres, maiúscula, minúscula, número, caractere especial e limite de 72 bytes para BCrypt.
 - DELETE remove endereço e perfil antes de usuário. Qualquer FK externa bloqueia e reverte tudo; não há exclusão parcial.
 - JPA publica `RowChanged` somente para linhas efetivamente alteradas; a projeção read converge após commit. GET agregado usa write para consistência imediata.
 - Casos de uso e gateways de buscar, atualizar e excluir são segregados no core. `JpaUsuarioAggregateGateway` é o adaptador interno.
@@ -318,7 +329,7 @@ O cadastro público é `POST /api/v1/usuarios/registrar`; o antigo POST na raiz 
 
 Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troca da senha. Senhas novas exigem pelo menos 8 caracteres e no máximo 72 bytes UTF-8. O core permanece independente de Spring; o adaptador usa AuthenticationManager/DaoAuthenticationProvider e UserDetailsService baseado na entidade de usuários do banco write.
 
-Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
+Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; DONO também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT ou papel DONO; alteração/exclusão exigem proprietário ou DONO. Foto de perfil segue a mesma regra. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados. CORS aceita apenas origens explícitas em APP_CORS_ALLOWED_ORIGINS (padrão: http://localhost:5173); Swagger servido no próprio backend é same-origin e não precisa de liberação CORS.
 
 Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto, JWT_TTL_SECONDS tem default 900 e REFRESH_TOKEN_TTL_SECONDS tem default 2592000. O refresh token opaco fica em cookie HttpOnly e somente seu hash SHA-256 é persistido; há rotação, revogação no logout e detecção de reutilização por família. JWTs de acesso já emitidos permanecem válidos até expirar. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
 
@@ -344,3 +355,12 @@ A migration comum V13 adiciona `placa` e `exibir_placa_completa` às quatro tabe
 - Redis pode cachear consultas por código IBGE ou cidade/UF, mas PostgreSQL é a fonte de verdade. Uma tabela com 5.571 linhas não constitui gargalo relevante.
 - Não reintroduzir API externa ou coordenadas nos endereços sem uma nova decisão explícita de negócio.
 - `GET /api/v1/localizacao/municipios/coordenadas?cidade={cidade}&uf={UF}` é um endpoint público e temporário de diagnóstico. Ele fica somente no adaptador web de infraestrutura, reutiliza `LocalizacaoFacade`, não introduz caso de uso novo e deve ser removido quando os testes de integração do frontend terminarem.
+
+## Lojistas e foto de perfil
+
+- `GET /api/v1/lojistas` pesquisa exclusivamente perfis PJ ativos num raio de até 100 km da cidade/UF informadas ou de latitude/longitude autorizadas pelo navegador. Uma origem de localização é obrigatória; cada resposta contém no máximo 12 lojas. O nome da loja é o nome fantasia da empresa já informado no cadastro PJ. A página mantém os filtros de nome, cidade e estado visíveis, preenchendo cidade/estado pelo cadastro quando há sessão.
+- `GET /api/v1/perfis/{id}` expõe somente ID, nome público, PF/PJ, cidade, UF e URL opcional da foto. Nunca documentos, email, telefone ou endereço completo.
+- `GET /api/v1/anuncios?anuncianteId={id}` usa o identificador exato do anunciante e retorna apenas anúncios publicados, preservando os demais filtros e a paginação.
+- Foto opcional para PF e PJ: `PUT /api/v1/usuarios/{id}/foto`, multipart `arquivo`, somente pelo próprio usuário autenticado. `GET /api/v1/perfis/{id}/foto` serve a imagem pública. JPEG/PNG reais até 5 MB e 16 megapixels são reencodados para JPEG de até 800 px, sem metadados originais.
+- Arquivos ficam na raiz de fotos já configurada, em `usuarios/{id}/perfil/{uuid}.jpg`; somente `foto_perfil_chave` é persistida. Migration V31 adiciona coluna/índices nas duas bases. Atualização JPA dispara a projeção Modulith. Falha na persistência remove o novo arquivo; substituição bem-sucedida remove o anterior.
+- Frontend: `#lojistas` apresenta filtros padrão de nome, cidade e estado. Inicia com cidade/UF do endereço cadastrado do visitante autenticado, permite outra cidade/UF e oferece localização atual do navegador mediante permissão. Busca lojas num raio de 100 km, exige região, solicita no máximo 12 resultados por requisição e carrega até 24 adicionais em duas páginas ao clicar em "Carregar mais lojas". `#loja/{id}` lista os veículos da PJ com paginação. Cadastro PF/PJ permite escolher foto e a envia após cadastro e login; falha no upload permite repetir sem cadastrar a conta novamente ou continuar sem foto. Perfil permite substituir a foto. Anúncios PF/PJ usam avatar genérico quando não houver foto; apenas PJ possui link para a loja.

@@ -5,9 +5,44 @@ import axios from "axios";
 export const api = axios.create({
   baseURL: "/api/v1",
   withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
   timeout: 15_000,
   headers: { Accept: "application/json" },
 });
+
+const csrfBootstrapApi = axios.create({
+  baseURL: "/api/v1",
+  withCredentials: true,
+  timeout: 15_000,
+  headers: { Accept: "application/json" },
+});
+let csrfBootstrap: Promise<void> | undefined;
+
+api.interceptors.request.use(async (config) => {
+  const method = (config.method ?? "get").toLowerCase();
+  if (!["post", "put", "patch", "delete"].includes(method)) return config;
+
+  let token = csrfCookie();
+  if (!token) {
+    csrfBootstrap ??= csrfBootstrapApi
+      .get("/usuarios/sessao")
+      .then(() => undefined)
+      .finally(() => { csrfBootstrap = undefined; });
+    await csrfBootstrap;
+    token = csrfCookie();
+  }
+  if (token) config.headers.set("X-XSRF-TOKEN", token);
+  return config;
+});
+
+function csrfCookie() {
+  if (typeof document === "undefined") return undefined;
+  const prefix = "XSRF-TOKEN=";
+  const value = document.cookie.split("; ").find((cookie) => cookie.startsWith(prefix));
+  return value ? decodeURIComponent(value.slice(prefix.length)) : undefined;
+}
 
 let refreshing: Promise<void> | undefined;
 api.interceptors.response.use(undefined, async (error) => {

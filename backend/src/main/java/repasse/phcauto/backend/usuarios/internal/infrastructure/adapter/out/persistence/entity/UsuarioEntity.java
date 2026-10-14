@@ -47,6 +47,19 @@ public class UsuarioEntity extends Usuario {
     @Column(name = "telefone", length = 32)
     private String telefone;
 
+    @Column(name = "foto_perfil_chave", length = 255)
+    private String fotoPerfilChave;
+
+    @Column(name = "sessao_versao", nullable = false)
+    private long sessaoVersao;
+
+    public String getFotoPerfilChave() { return fotoPerfilChave; }
+
+    public void alterarFotoPerfil(String chave, Instant agora) {
+        this.fotoPerfilChave = Objects.requireNonNull(chave);
+        this.atualizadoEm = Objects.requireNonNull(agora);
+    }
+
     @Version
     @Column(name = "lock_version", nullable = false)
     private Long lockVersion;
@@ -115,6 +128,7 @@ public class UsuarioEntity extends Usuario {
     public String getTelefone() { return telefone; }
 
     public Long getLockVersion() { return lockVersion; }
+    public long getSessaoVersao() { return sessaoVersao; }
 
     public void aplicarPatch(String nome, String email, String telefone, String senhaHash,
             Instant atualizadoEm) {
@@ -123,6 +137,12 @@ public class UsuarioEntity extends Usuario {
         if (telefone != null) this.telefone = telefone;
         if (senhaHash != null) this.senhaHash = senhaHash;
         this.atualizadoEm = Objects.requireNonNull(atualizadoEm, "atualizadoEm");
+    }
+
+    public void redefinirSenha(String senhaHash, Instant atualizadoEm) {
+        this.senhaHash = Objects.requireNonNull(senhaHash, "senhaHash");
+        this.atualizadoEm = Objects.requireNonNull(atualizadoEm, "atualizadoEm");
+        this.sessaoVersao++;
     }
 
     public static UsuarioEntity novoCadastro(UUID id, repasse.phcauto.backend.usuarios.internal.core.domain.DadosNovoUsuario dados, java.time.Instant agora) {

@@ -20,18 +20,21 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
     private final CriarUsuarioUseCase criarUsuario;
     private final BuscarUsuarioUseCase buscarUsuario;
     private final AtualizarUsuarioUseCase atualizarUsuario;
+    private final RedefinirSenhaUseCase redefinirSenha;
     private final ExcluirUsuarioUseCase excluirUsuario;
     private final ComplianceFacade compliance;
     private final LocalizacaoFacade localizacao;
     private final TransactionTemplate transacaoWrite;
 
     public DefaultUsuariosFacade(CriarUsuarioUseCase criarUsuario, BuscarUsuarioUseCase buscarUsuario,
-            AtualizarUsuarioUseCase atualizarUsuario, ExcluirUsuarioUseCase excluirUsuario,
+            AtualizarUsuarioUseCase atualizarUsuario, RedefinirSenhaUseCase redefinirSenha,
+            ExcluirUsuarioUseCase excluirUsuario,
             ComplianceFacade compliance, LocalizacaoFacade localizacao,
             @Qualifier("writeTransactionManager") PlatformTransactionManager transactionManager) {
         this.criarUsuario = criarUsuario;
         this.buscarUsuario = buscarUsuario;
         this.atualizarUsuario = atualizarUsuario;
+        this.redefinirSenha = redefinirSenha;
         this.excluirUsuario = excluirUsuario;
         this.compliance = compliance;
         this.localizacao = localizacao;
@@ -87,9 +90,16 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
                     municipio.codigoIbge());
         }
         var command = new repasse.phcauto.backend.usuarios.internal.core.domain.AtualizarUsuarioCommand(
-                request.nome(), request.email(), request.telefone(), request.senha(), request.cpf(),
+                request.nome(), request.email(), request.telefone(), request.cpf(),
                 request.dataNascimento(), request.cnpj(), request.razaoSocial(), enderecoPatch);
         return transacaoWrite.execute(status -> response(atualizarUsuario.execute(usuarioId, command)));
+    }
+
+    @Override
+    public void redefinirSenha(UUID usuarioId, RedefinirSenhaRequest request) {
+        if (request == null) throw new CadastroInvalidoException("Nova senha obrigatória");
+        transacaoWrite.executeWithoutResult(status -> redefinirSenha.execute(usuarioId,
+                new RedefinirSenhaCommand(request.novaSenha())));
     }
 
     @Override

@@ -20,7 +20,7 @@ class UsuariosEndpointsArchitectureTests {
         Method[] metodos = UsuariosController.class.getDeclaredMethods();
         assertEquals(1, Arrays.stream(metodos).filter(m -> m.isAnnotationPresent(PostMapping.class)).count());
         assertEquals(1, Arrays.stream(metodos).filter(m -> m.isAnnotationPresent(GetMapping.class)).count());
-        assertEquals(1, Arrays.stream(metodos).filter(m -> m.isAnnotationPresent(PatchMapping.class)).count());
+        assertEquals(2, Arrays.stream(metodos).filter(m -> m.isAnnotationPresent(PatchMapping.class)).count());
         assertEquals(1, Arrays.stream(metodos).filter(m -> m.isAnnotationPresent(DeleteMapping.class)).count());
         assertEquals(0, Arrays.stream(metodos).filter(m -> m.isAnnotationPresent(PutMapping.class)).count());
     }

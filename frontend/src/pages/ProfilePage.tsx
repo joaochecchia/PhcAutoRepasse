@@ -1,6 +1,7 @@
+import { ProfilePhotoEditor } from "../components/ProfilePhoto";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { ArrowRight, UserRound, ShieldCheck } from "lucide-react";
-import { ProfileFields, type Draft } from "../components/FormFields";
+import { PasswordField, ProfileFields, type Draft } from "../components/FormFields";
 import { PageBreadcrumb } from "./PageLayout";
 import { apiErrorMessage, authApi } from "../lib/backend";
 
@@ -17,6 +18,9 @@ export function ProfilePage({
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
   return (
     <section className="container dedicated-page">
       <PageBreadcrumb label="Dados do anunciante" />
@@ -39,6 +43,7 @@ export function ProfilePage({
         <span>02 · Seu veículo</span>
         <span>03 · Revisão do anúncio</span>
       </div>
+      <ProfilePhotoEditor userId={usuarioId} />
       <div className="editor-layout">
         <form
           className="page-form page-panel"
@@ -102,6 +107,35 @@ export function ProfilePage({
           </div>
         </aside>
       </div>
+      <form className="page-form page-panel password-reset-panel" onSubmit={async (event) => {
+        event.preventDefault();
+        setPasswordSaving(true);
+        setPasswordMessage("");
+        try {
+          await authApi.resetPassword(usuarioId, newPassword);
+          setNewPassword("");
+          setPasswordMessage("Senha alterada com sucesso.");
+        } catch (requestError) {
+          setPasswordMessage(apiErrorMessage(requestError, "Não foi possível alterar a senha."));
+        } finally {
+          setPasswordSaving(false);
+        }
+      }}>
+        <div className="form-section-title">
+          <span><ShieldCheck size={17} /></span>
+          <div>
+            <h2>Alterar senha</h2>
+            <p>A nova senha precisa atender a todos os critérios de segurança.</p>
+          </div>
+        </div>
+        <PasswordField registration label="Nova senha" value={newPassword} onChange={setNewPassword} />
+        <div className="page-form-actions">
+          <button className="button primary" disabled={passwordSaving}>
+            {passwordSaving ? "Alterando…" : "Alterar senha"}
+          </button>
+        </div>
+        {passwordMessage && <p className="inline-notice" role="status">{passwordMessage}</p>}
+      </form>
     </section>
   );
 }

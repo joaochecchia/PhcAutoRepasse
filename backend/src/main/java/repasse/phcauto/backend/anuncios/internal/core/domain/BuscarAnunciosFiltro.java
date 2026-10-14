@@ -11,7 +11,7 @@ public record BuscarAnunciosFiltro(TipoVeiculo tipoVeiculo, String cidade, Strin
         String combustivel, String motorizacao, CondicaoVeiculo condicao,
         String tipoDirecao, String tracao, Boolean ipvaPago, Boolean blindado,
         Integer numeroPortas, BigDecimal cilindradaLitros, String tipoFreio,
-        String carroceria, Double latitude, Double longitude, int pagina, int tamanho) {
+        String carroceria, Double latitude, Double longitude, int pagina, int tamanho, java.util.UUID anuncianteId) {
     public BuscarAnunciosFiltro {
         if (pagina < 0) throw new IllegalArgumentException("Página não pode ser negativa");
         if (tamanho < 1 || tamanho > 52) throw new IllegalArgumentException("Tamanho deve estar entre 1 e 52");

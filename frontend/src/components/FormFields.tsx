@@ -328,17 +328,26 @@ export function PasswordField({
   value,
   onChange,
   registration = false,
+  label = "Senha",
 }: {
   value: string;
   onChange: (v: string) => void;
   registration?: boolean;
+  label?: string;
 }) {
   const id = useId();
   const [show, setShow] = useState(false);
+  const criteria = [
+    ["No mínimo 8 caracteres", value.length >= 8],
+    ["Uma letra maiúscula", /\p{Lu}/u.test(value)],
+    ["Uma letra minúscula", /\p{Ll}/u.test(value)],
+    ["Um número", /\p{N}/u.test(value)],
+    ["Um caractere especial, como @, #, $, %, !", /[^\p{L}\p{N}\s]/u.test(value)],
+  ] as const;
   return (
     <div className="page-password">
       <label htmlFor={id}>
-        Senha {registration && <span className="required-mark">*</span>}
+        {label} {registration && <span className="required-mark">*</span>}
       </label>
       <div className="password-field">
         <input
@@ -349,6 +358,9 @@ export function PasswordField({
           type={show ? "text" : "password"}
           autoComplete={registration ? "new-password" : "current-password"}
           required
+          minLength={registration ? 8 : undefined}
+          pattern={registration ? "(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[^A-Za-z0-9\\s]).{8,}" : undefined}
+          title={registration ? "Use ao menos 8 caracteres, com maiúscula, minúscula, número e caractere especial." : undefined}
           placeholder="Digite sua senha"
         />
         <button
@@ -359,6 +371,16 @@ export function PasswordField({
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>
+      {registration && (
+        <ul className="password-criteria" aria-label="Critérios da senha">
+          {criteria.map(([text, valid]) => (
+            <li key={text} className={valid ? "valid" : "pending"}>
+              {valid ? <CheckCircle2 size={14} /> : <CircleAlert size={14} />}
+              {text}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

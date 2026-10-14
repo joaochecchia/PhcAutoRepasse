@@ -18,6 +18,6 @@ class RegistroUsuarioAuthorizationTests {
         assertThat(regra.podeRegistrar(request(PapelUsuario.ADMIN),auth("ROLE_DONO"))).isTrue();
         assertThat(regra.podeRegistrar(request(PapelUsuario.DONO),auth("ROLE_DONO"))).isTrue();
     }
-    private CriarUsuarioRequest request(PapelUsuario papel){return new CriarUsuarioRequest(null,papel,"Nome","a@b.com",null,"senha123",null,null,null,null,null,null,null,null,null);}
+    private CriarUsuarioRequest request(PapelUsuario papel){return new CriarUsuarioRequest(null,papel,"Nome","a@b.com",null,"Senha@123",null,null,null,null,null,null,null,null,null);}
     private Authentication auth(String role){var a=mock(Authentication.class);when(a.getAuthorities()).thenAnswer(i->List.of(new SimpleGrantedAuthority(role)));return a;}
 }

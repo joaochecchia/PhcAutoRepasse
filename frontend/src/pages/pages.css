@@ -306,6 +306,22 @@
   min-height: 47px;
   padding-right: 44px;
 }
+.password-criteria {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.password-criteria li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.password-criteria .valid { color: #237a45; }
+.password-criteria .pending { color: var(--muted); }
+.password-reset-panel { margin-top: 24px; }
 .page-form textarea {
   resize: vertical;
   min-height: 140px;
@@ -1420,3 +1436,27 @@
   font-size: 0.86rem;
   line-height: 1.55;
 }
+
+/* Public dealer directory and profile photos */
+.profile-avatar { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #edf0f2; color: #647078; overflow: hidden; }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-photo-field { display: flex; gap: 18px; align-items: center; min-width: 0; }
+.profile-photo-field > div { min-width: 0; }
+.profile-photo-field label { display: grid; gap: 8px; font-weight: 600; }
+.profile-photo-field input { width: 100%; max-width: 100%; }
+.profile-photo-field small { display: block; margin-top: 8px; }
+.profile-photo-editor { margin-bottom: 24px; }
+.store-profile-heading { display: flex; align-items: center; gap: 18px; margin: 24px 0; }
+.store-profile-heading p, .store-card p { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.store-filters { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 16px; align-items: end; margin: 24px 0; }
+.store-filters label { display: grid; gap: 8px; min-width: 0; }
+.store-filters input, .store-filters select { width: 100%; min-width: 0; padding: 12px; border: 1px solid #c6ced2; border-radius: 8px; background: inherit; color: inherit; font: inherit; }
+.store-location-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+.stores-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.store-card { display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit; min-width: 0; }
+.store-card h2 { font-size: 18px; overflow-wrap: anywhere; }
+.store-card span:last-child { font-weight: 600; }
+.store-pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 28px; }
+.store-results-count { margin: 20px 0; }
+@media (max-width: 900px) { .stores-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .store-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .stores-grid, .store-filters { grid-template-columns: 1fr; } .store-location-actions .button { width: 100%; } .profile-photo-field { align-items: flex-start; } .profile-avatar { flex-basis: 52px; width: 52px; height: 52px; } }

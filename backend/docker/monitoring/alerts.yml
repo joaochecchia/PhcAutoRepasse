@@ -1,0 +1,64 @@
+groups:
+  - name: phcauto-backend
+    rules:
+      - alert: BackendIndisponivel
+        expr: up{job="phcauto-backend"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "Backend PHC Auto indisponível"
+          description: "O Prometheus não consegue consultar o backend há pelo menos 1 minuto."
+      - alert: DependenciaIndisponivel
+        expr: phcauto_dependency_up == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "Dependência do backend indisponível"
+          description: "A dependência {{ $labels.dependency }} está indisponível há pelo menos 1 minuto."
+      - alert: ProjecaoReadAtrasada
+        expr: phcauto_projection_oldest_seconds > 120
+        for: 3m
+        labels: {severity: critical}
+        annotations:
+          summary: "Projeção read atrasada"
+          description: "Há evento de projeção pendente há mais de 2 minutos."
+      - alert: FalhaAoObservarProjecao
+        expr: increase(phcauto_projection_observation_errors_total[5m]) > 0
+        labels: {severity: warning}
+        annotations:
+          summary: "Falha ao consultar a fila do Spring Modulith"
+      - alert: MemoriaJvmAlta
+        expr: sum(jvm_memory_used_bytes{area="heap"}) / sum(jvm_memory_max_bytes{area="heap"}) > 0.85
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Uso de heap acima de 85%"
+      - alert: CpuProcessoAlta
+        expr: process_cpu_usage > 0.85
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "CPU do backend acima de 85%"
+      - alert: DiscoAplicacaoBaixo
+        expr: disk_free_bytes / disk_total_bytes < 0.15
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Menos de 15% de disco livre"
+      - alert: ErrosHttp5xx
+        expr: sum(increase(http_server_requests_seconds_count{status=~"5.."}[5m])) > 5
+        labels: {severity: warning}
+        annotations:
+          summary: "Mais de cinco respostas 5xx em cinco minutos"
+      - alert: RedisRateLimitIndisponivel
+        expr: increase(phcauto_ratelimit_redis_errors_total[5m]) > 0
+        labels: {severity: critical}
+        annotations:
+          summary: "Rate limiting perdeu acesso ao Redis"
+          description: "O backend ativou o fallback local por instância; verifique o Redis imediatamente."
+      - alert: RateLimitFallbackBloqueando
+        expr: increase(phcauto_ratelimit_fallback_requests_total{resultado="bloqueado"}[5m]) > 0
+        labels: {severity: warning}
+        annotations:
+          summary: "Fallback local do rate limit bloqueou requisições"
+          description: "Há bloqueios enquanto o rate limit distribuído está degradado."

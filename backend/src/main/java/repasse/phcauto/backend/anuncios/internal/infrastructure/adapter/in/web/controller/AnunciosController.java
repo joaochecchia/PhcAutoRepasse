@@ -50,7 +50,7 @@ public class AnunciosController {
         return ResponseEntity.ok(anuncios.paginaInicial());
     }
 
-    @org.springframework.security.access.prepost.PreAuthorize("authentication.name == #request.anuncianteId().toString()")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('DONO') or authentication.name == #request.anuncianteId().toString()")
     @PostMapping
     public ResponseEntity<AnuncioResponse> criar(@Valid @RequestBody CriarAnuncioRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(anuncios.criar(request));

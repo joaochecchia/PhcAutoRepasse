@@ -27,6 +27,15 @@ class SecurityHttpTests {
         @Bean repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade usuarios() {
             return org.mockito.Mockito.mock(repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade.class);
         }
+        @Bean repasse.phcauto.backend.infra.security.ratelimit.RateLimitFilter rateLimitFilter() {
+            var limiter = new repasse.phcauto.backend.infra.security.ratelimit.RateLimiter() {
+                public void consumir(String regra, String identificador, int limite, java.time.Duration janela) { }
+                public void limpar(String regra, String identificador) { }
+            };
+            return new repasse.phcauto.backend.infra.security.ratelimit.RateLimitFilter(limiter,
+                    new repasse.phcauto.backend.infra.security.ratelimit.RateLimitSettings(
+                            new org.springframework.mock.env.MockEnvironment()));
+        }
     }
     @RestController static class Endpoints {
         @GetMapping({"/swagger-ui/index.html", "/v3/api-docs", "/api/v1/anuncios", "/api/v1/assinaturas/planos"})
@@ -45,11 +54,21 @@ class SecurityHttpTests {
                 .claim("roles", java.util.List.of(role)).build();
         return signer.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
     }
-    @Test void swaggerBuscaCadastroELoginPublicosSemSessao() throws Exception {
+    @Test void swaggerBuscaPublicosSemSessaoEEmitemCookieCsrf() throws Exception {
         for (String path : new String[]{"/swagger-ui/index.html", "/v3/api-docs", "/api/v1/anuncios"})
-            mvc.perform(get(path)).andExpect(status().isOk()).andExpect(cookie().doesNotExist("JSESSIONID"));
-        for (String path : new String[]{"/api/v1/usuarios/login"})
-            mvc.perform(post(path)).andExpect(status().isOk());
+            mvc.perform(get(path)).andExpect(status().isOk())
+                    .andExpect(cookie().exists("XSRF-TOKEN"))
+                    .andExpect(cookie().httpOnly("XSRF-TOKEN", false))
+                    .andExpect(cookie().doesNotExist("JSESSIONID"));
+    }
+    @Test void exigeCsrfNoLoginDoNavegadorEAceitaDoubleSubmitCookie() throws Exception {
+        mvc.perform(post("/api/v1/usuarios/login"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.title").value("Token CSRF inválido"));
+        var cookie = mvc.perform(get("/api/v1/anuncios")).andReturn().getResponse().getCookie("XSRF-TOKEN");
+        mvc.perform(post("/api/v1/usuarios/login").cookie(cookie)
+                        .header("X-XSRF-TOKEN", cookie.getValue()))
+                .andExpect(status().isOk());
     }
     @Test void protegeRotasESoAceitaBearerValido() throws Exception {
         mvc.perform(get("/api/v1/usuarios/00000000-0000-0000-0000-000000000001")).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.title").value("Não autenticado"));
@@ -67,8 +86,29 @@ class SecurityHttpTests {
     }
     @Test void usuarioNaoAcessaOutroCadastro() throws Exception {
         var valid = token("CLIENTE", "phcauto", Instant.now().plusSeconds(300), encoder);
-        mvc.perform(get("/api/v1/usuarios/00000000-0000-0000-0000-000000000002")
-                .header("Authorization", "Bearer " + valid)).andExpect(status().isForbidden());
+        var outro = "/api/v1/usuarios/00000000-0000-0000-0000-000000000002";
+        mvc.perform(get(outro).header("Authorization", "Bearer " + valid)).andExpect(status().isForbidden());
+        mvc.perform(patch(outro).header("Authorization", "Bearer " + valid)
+                .contentType("application/json").content("{}")).andExpect(status().isForbidden());
+        mvc.perform(delete(outro).header("Authorization", "Bearer " + valid)).andExpect(status().isForbidden());
+        var admin = token("ADMIN", "phcauto", Instant.now().plusSeconds(300), encoder);
+        mvc.perform(delete(outro).header("Authorization", "Bearer " + admin)).andExpect(status().isForbidden());
+        var dono = token("DONO", "phcauto", Instant.now().plusSeconds(300), encoder);
+        mvc.perform(delete(outro).header("Authorization", "Bearer " + dono)).andExpect(status().isNoContent());
+    }
+    @Test void corsPermiteFrontendEBloqueiaOrigemDesconhecida() throws Exception {
+        mvc.perform(options("/api/v1/usuarios/registrar")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "content-type,x-xsrf-token"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"))
+                .andExpect(header().string("Access-Control-Allow-Headers", org.hamcrest.Matchers.containsStringIgnoringCase("x-xsrf-token")));
+        mvc.perform(options("/api/v1/usuarios/registrar")
+                        .header("Origin", "https://origem-desconhecida.example")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden());
     }
     @Test void rejeitaExpiracaoEmissorEAssinaturaInvalidos() throws Exception {
         byte[] otherKey = new byte[32];

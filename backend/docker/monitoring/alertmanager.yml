@@ -1,0 +1,12 @@
+route:
+  receiver: observacao-local
+  group_by: [alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: observacao-local
+
+# Antes da produção, configure aqui um receiver real (e-mail, PagerDuty,
+# Opsgenie ou webhook). O Alertmanager já agrupa e mantém os alertas ativos.

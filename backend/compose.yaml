@@ -14,6 +14,7 @@ services:
       JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-900}
       REFRESH_TOKEN_TTL_SECONDS: ${REFRESH_TOKEN_TTL_SECONDS:-2592000}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      PRODUCTION_MODE: ${PRODUCTION_MODE:-false}
       APP_BOOTSTRAP_PRIVILEGED_USERS_ENABLED: ${BOOTSTRAP_PRIVILEGED_USERS_ENABLED:-false}
       BOOTSTRAP_DONO_EMAIL: ${BOOTSTRAP_DONO_EMAIL:-}
       BOOTSTRAP_DONO_PASSWORD: ${BOOTSTRAP_DONO_PASSWORD:-}
@@ -38,10 +39,35 @@ services:
       REDIS_CACHE_PREFIX: ${REDIS_CACHE_PREFIX:-phcauto:cache:}
       DOCKER_COMPOSE_ENABLED: "false"
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
       FOTOS_DIRETORIO: /app/uploads/veiculos
       FOTOS_TAMANHO_MAXIMO_BYTES: ${FOTOS_TAMANHO_MAXIMO_BYTES:-10485760}
+      FOTOS_TAMANHO_ALVO_BYTES: ${FOTOS_TAMANHO_ALVO_BYTES:-5242880}
+      MANAGEMENT_PORT: 9091
+      LOG_FILE: /app/logs/backend.log
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      RATE_LIMIT_LOGIN_LIMIT: ${RATE_LIMIT_LOGIN_LIMIT:-10}
+      RATE_LIMIT_REGISTRO_LIMIT: ${RATE_LIMIT_REGISTRO_LIMIT:-5}
+      RATE_LIMIT_REFRESH_LIMIT: ${RATE_LIMIT_REFRESH_LIMIT:-20}
+      RATE_LIMIT_BUSCA_LIMIT: ${RATE_LIMIT_BUSCA_LIMIT:-120}
+      RATE_LIMIT_FOTO_ANUNCIO_LIMIT: ${RATE_LIMIT_FOTO_ANUNCIO_LIMIT:-30}
+      RATE_LIMIT_FOTO_PERFIL_LIMIT: ${RATE_LIMIT_FOTO_PERFIL_LIMIT:-10}
+      RATE_LIMIT_WHATSAPP_LIMIT: ${RATE_LIMIT_WHATSAPP_LIMIT:-10}
+      RATE_LIMIT_PASSWORD_ATTEMPTS_LIMIT: ${RATE_LIMIT_PASSWORD_ATTEMPTS_LIMIT:-5}
+      RATE_LIMIT_FALLBACK_MAX_KEYS: ${RATE_LIMIT_FALLBACK_MAX_KEYS:-10000}
     volumes:
       - ./src/main/resources/static/uploads/veiculos:/app/uploads/veiculos
+      - ./logs/backend:/app/logs
+    expose:
+      - "9091"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:9091/actuator/health/liveness"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,6 +75,11 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   postgres:
     image: postgres:17
@@ -67,6 +98,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
 
   postgres-read:
     image: postgres:17
@@ -89,6 +123,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
 
   postgres-bootstrap:
     image: postgres:17
@@ -105,6 +142,9 @@ services:
     depends_on:
       postgres-read:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
 
   redis:
     image: redis:7.4
@@ -119,6 +159,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
 
 volumes:
   postgres_data:
