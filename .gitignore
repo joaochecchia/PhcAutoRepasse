@@ -1,0 +1,4 @@
+
+# Saídas do Playwright
+.playwright-cli/
+output/playwright/
