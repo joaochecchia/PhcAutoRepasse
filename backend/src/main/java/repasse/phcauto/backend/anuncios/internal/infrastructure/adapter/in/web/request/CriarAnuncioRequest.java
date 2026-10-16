@@ -17,8 +17,8 @@ public record CriarAnuncioRequest(
         @NotNull UUID anuncianteId,
         @NotNull TipoVeiculo tipoVeiculo,
         @NotBlank @Size(max = 100) String fabricante,
-        @NotBlank @Size(max = 120) String modelo,
-        @Size(max = 180) String versao,
+        @NotBlank @Size(max = 250) String modelo,
+        @Size(max = 250) String versao,
         @NotNull @Positive Integer anoFabricacao,
         @NotNull @Positive Integer anoModelo,
         @Size(max = 60) String cor,
@@ -40,7 +40,39 @@ public record CriarAnuncioRequest(
         @Valid CaminhaoRequest caminhao,
         @Valid CaminhoneteRequest caminhonete,
         @Valid BarcoRequest barco,
-        @Valid LinhaAmarelaRequest linhaAmarela) {
+        @Valid LinhaAmarelaRequest linhaAmarela,
+        UUID fipeReferenciaId) {
+    public CriarAnuncioRequest(
+        UUID anuncianteId,
+        TipoVeiculo tipoVeiculo,
+        String fabricante,
+        String modelo,
+        String versao,
+        Integer anoFabricacao,
+        Integer anoModelo,
+        String cor,
+        String identificadorPublico,
+        repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao,
+        String tipoFreio,
+        Boolean historicoLeilao,
+        Boolean historicoSinistro,
+        String titulo,
+        String descricao,
+        TipoPreco tipoPreco,
+        Long precoCentavos,
+        Boolean aceitaTroca,
+        Boolean publicarAgora,
+        ContatoAnuncianteRequest contato,
+        EnderecoAnuncioRequest endereco,
+        CarroRequest carro,
+        MotoRequest moto,
+        CaminhaoRequest caminhao,
+        CaminhoneteRequest caminhonete,
+        BarcoRequest barco,
+        LinhaAmarelaRequest linhaAmarela) {
+        this(anuncianteId, tipoVeiculo, fabricante, modelo, versao, anoFabricacao, anoModelo, cor, identificadorPublico, condicao, tipoFreio, historicoLeilao, historicoSinistro, titulo, descricao, tipoPreco, precoCentavos, aceitaTroca, publicarAgora, contato, endereco, carro, moto, caminhao, caminhonete, barco, linhaAmarela, null);
+    }
+
 
     public record ContatoAnuncianteRequest(boolean whatsapp, boolean ligacao,
             boolean naoDivulgar, @Size(max = 32) String versaoTexto) {

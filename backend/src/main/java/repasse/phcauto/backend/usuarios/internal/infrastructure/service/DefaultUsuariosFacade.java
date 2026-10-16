@@ -109,7 +109,7 @@ public class DefaultUsuariosFacade implements UsuariosFacade {
     private UsuarioDetalhadoResponse response(UsuarioCompleto usuario) {
         var endereco = usuario.endereco();
         return new UsuarioDetalhadoResponse(usuario.id(), usuario.tipoPessoa(), usuario.nome(),
-                usuario.email(), usuario.telefone(), usuario.ativo(), usuario.cpf(),
+                usuario.email(), usuario.telefone(), usuario.ativo(), usuario.possuiSenhaLocal(), usuario.cpf(),
                 usuario.dataNascimento(), usuario.cnpj(), usuario.razaoSocial(),
                 new EnderecoUsuarioResponse(endereco.cep(), endereco.cidade(), endereco.bairro(),
                         endereco.rua(), endereco.numero(), endereco.complemento(), endereco.uf()),

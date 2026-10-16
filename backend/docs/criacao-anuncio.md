@@ -74,3 +74,7 @@ Carros, motos, caminhões e caminhonetes exigem `placa` completa no cadastro, co
 A placa completa sempre fica armazenada. `exibirPlacaCompleta=true` devolve a placa completa em `detalhes.placa`; quando falso, a resposta devolve somente o último caractere. `detalhes.placaCompletaVisivel` informa qual regra foi aplicada. A API nunca depende do frontend para ocultar a placa. Registros anteriores à V13 permanecem com `placa` nula até que sejam corrigidos; a coluna legada `final_placa` foi preservada nesta etapa para uma implantação compatível.
 
 A migration comum V13 adiciona `placa` e `exibir_placa_completa` às quatro tabelas e a projeção Modulith replica os dois campos. V28 adiciona `historico_leilao` e `historico_sinistro` em `catalogo.veiculos`; V29 do write exige os dois valores nas novas gravações e alterações, preservando os registros legados sem inventar histórico.
+
+## Referência FIPE
+
+O request aceita `fipeReferenciaId` opcional para carro, moto, caminhão e caminhonete. O backend valida a versão e copia código, mês e valor da referência local para o veículo. A resposta inclui `fipe` ou null. Consulte [FIPE](fipe.md) para seleção, validação e regras de PATCH; o frontend não fornece o preço FIPE.

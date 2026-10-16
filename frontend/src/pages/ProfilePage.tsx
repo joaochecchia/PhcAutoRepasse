@@ -1,7 +1,7 @@
 import { ProfilePhotoEditor } from "../components/ProfilePhoto";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { ArrowRight, UserRound, ShieldCheck } from "lucide-react";
-import { PasswordField, ProfileFields, type Draft } from "../components/FormFields";
+import { ProfileFields, type Draft } from "../components/FormFields";
 import { PageBreadcrumb } from "./PageLayout";
 import { apiErrorMessage, authApi } from "../lib/backend";
 
@@ -11,6 +11,7 @@ export function ProfilePage({
   usuarioId,
   onContinue,
   mode = "announce",
+  possuiSenhaLocal = true,
   onPhotoUpdated,
 }: {
   values: Draft;
@@ -18,13 +19,11 @@ export function ProfilePage({
   usuarioId: string;
   onContinue?: () => void;
   mode?: "announce" | "account";
+  possuiSenhaLocal?: boolean;
   onPhotoUpdated?: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
   const isAccount = mode === "account";
   return (
@@ -36,7 +35,9 @@ export function ProfilePage({
           <h1>{isAccount ? "Seus dados de perfil." : "Primeiro, vamos conhecer você."}</h1>
           <p className="page-intro">
             {isAccount
-              ? "Consulte e atualize os dados, a foto e a senha da sua conta."
+              ? possuiSenhaLocal
+                ? "Consulte e atualize os dados, a foto e a senha da sua conta."
+                : "Consulte e atualize os dados e a foto da sua conta Google."
               : "Confira os dados do anunciante e depois preencha as informações do veículo."}
           </p>
         </div>
@@ -117,35 +118,18 @@ export function ProfilePage({
           </div>
         </aside>
       </div>
-      <form className="page-form page-panel password-reset-panel" onSubmit={async (event) => {
-        event.preventDefault();
-        setPasswordSaving(true);
-        setPasswordMessage("");
-        try {
-          await authApi.resetPassword(usuarioId, newPassword);
-          setNewPassword("");
-          setPasswordMessage("Senha alterada com sucesso.");
-        } catch (requestError) {
-          setPasswordMessage(apiErrorMessage(requestError, "Não foi possível alterar a senha."));
-        } finally {
-          setPasswordSaving(false);
-        }
-      }}>
+      {isAccount && possuiSenhaLocal && <section className="page-form page-panel password-reset-panel">
         <div className="form-section-title">
           <span><ShieldCheck size={17} /></span>
           <div>
             <h2>Alterar senha</h2>
-            <p>A nova senha precisa atender a todos os critérios de segurança.</p>
+            <p>Confirme o código de verificação antes de criar uma nova senha.</p>
           </div>
         </div>
-        <PasswordField registration label="Nova senha" value={newPassword} onChange={setNewPassword} />
         <div className="page-form-actions">
-          <button className="button primary" disabled={passwordSaving}>
-            {passwordSaving ? "Alterando…" : "Alterar senha"}
-          </button>
+          <a className="button primary" href="#redefinir-senha?origem=perfil">Alterar senha</a>
         </div>
-        {passwordMessage && <p className="inline-notice" role="status">{passwordMessage}</p>}
-      </form>
+      </section>}
     </section>
   );
 }

@@ -123,3 +123,16 @@ docker compose -f compose.yaml -f compose.monitoring.yaml up -d --build
 ```
 
 Prometheus, Alertmanager e Grafana ficam vinculados ao localhost da VPS nas portas 9090, 9093 e 3000. Acesse-os por túnel SSH ou publique o Grafana por proxy com autenticação. O Prometheus já carrega alertas de indisponibilidade, atraso da projeção, CPU, heap, disco, respostas 5xx e falha do rate limiter. Antes da produção, configure um receiver real em `docker/monitoring/alertmanager.yml` para enviar as notificações por e-mail, PagerDuty, Opsgenie ou webhook; sem esse destino, os alertas ficam visíveis somente no Alertmanager/Grafana.
+
+## Operação FIPE
+
+Implementado: catálogo histórico, importação incremental administrativa, consulta complementar com cache/quota Redis e snapshot no veículo, sem chamadas externas na vitrine. Consulte [FIPE](fipe.md).
+
+Antes de ativar: definir fornecedor autorizado para o arquivo mensal, validar cobertura/qualidade da base e configurar token Parallelum e orçamento compatível com a conta. Isso permanece pendente, assim como teste de carga com o catálogo real.
+
+No deploy: persistir e dar permissão ao diretório `data/fipe`, compartilhá-lo entre instâncias quando aplicável, incluir arquivos pendentes no backup, definir retenção e monitorar uso de disco, erros de importação e consumo externo. Configurar alertas efetivos para as métricas FIPE; a presença das métricas não significa que alertas externos já estejam ativos.
+
+
+### FIPE local (15/10/2026)
+
+Implementados catálogo persistente, paginação, cache com fallback, fila de sincronização controlada e formulário dependente. Sincronização externa **desativada por decisão do usuário**, até autorização de armazenamento comercial. Antes de ativar: contrato/permissão, retenção e carga licenciada; depois validar carga HTTP sustentada e múltiplas instâncias. `scripts/load/fipe.js` contém cenário reproduzível; latências de testes locais não são garantia de produção. Consulte `fipe-catalogo-local.md`.

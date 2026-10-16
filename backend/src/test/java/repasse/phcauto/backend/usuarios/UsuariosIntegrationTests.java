@@ -87,12 +87,12 @@ class UsuariosIntegrationTests {
                     .andExpect(jsonPath("senhaHash").doesNotExist()).andReturn();
             var loginBody = json.createObjectNode().put("email", request.email().toUpperCase(java.util.Locale.ROOT))
                     .put("senha", request.senha());
-            mvc.perform(post("/api/v1/usuarios/login").contentType("application/json").content(json.writeValueAsString(loginBody)))
-                    .andExpect(status().isOk()).andExpect(jsonPath("autenticado").value(true))
+            mvc.perform(post("/api/v1/autenticacao/login").contentType("application/json").content(json.writeValueAsString(loginBody)))
+                    .andExpect(status().isOk()).andExpect(jsonPath("status").value("AUTENTICADO"))
                     .andExpect(jsonPath("accessToken").doesNotExist())
                     .andExpect(cookie().httpOnly("PHC_AUTH", true));
             loginBody.put("senha", "senha-incorreta");
-            mvc.perform(post("/api/v1/usuarios/login").contentType("application/json").content(json.writeValueAsString(loginBody)))
+            mvc.perform(post("/api/v1/autenticacao/login").contentType("application/json").content(json.writeValueAsString(loginBody)))
                     .andExpect(status().isUnauthorized());
             UUID id = UUID.fromString(json.readTree(result.getResponse().getContentAsString()).get("id").asText());
             var source = new JdbcTemplate(write);

@@ -12,6 +12,9 @@ public abstract class Veiculo {
     /** Obrigatório no modelo inicial. */
     public abstract UUID getId();
 
+    /** Referência selecionada; ausente em legados e veículos sem cobertura. */
+    public FipeVeiculo getFipe() { return null; }
+
     /** Obrigatório no modelo inicial. */
     public abstract UUID getProprietarioId();
 

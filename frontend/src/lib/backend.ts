@@ -9,6 +9,13 @@ type RegistrationConfig = {
   versaoTermosUso: string;
   versaoPoliticaPrivacidade: string;
 };
+type PasswordChangeResponse = {
+  status: "AUTORIZADA" | "SEGUNDO_FATOR_NECESSARIO";
+  challengeId: string | null;
+  challengeExpiresIn: number;
+  emailMascarado: string | null;
+  token: string | null;
+};
 
 export type AdFormCatalog = {
   fabricantes: { valor: string; aliases: string[] }[];
@@ -37,6 +44,35 @@ export type AdFormCatalog = {
   direcoesCaminhao: string[];
   tiposFreioCaminhao: string[];
   implementosCaminhao: string[];
+};
+
+export type FipeOption = {
+  codigo: string;
+  nome: string;
+  mesReferencia: string | null;
+};
+
+export type FipeReference = {
+  id: string;
+  codigoFipe: string;
+  tipo: "CARRO" | "MOTO" | "CAMINHAO";
+  marca: string;
+  modelo: string;
+  anoModelo: number;
+  zeroKm: boolean;
+  combustivel: string;
+  mesReferencia: string;
+  valorCentavos: number;
+  fonte: string;
+};
+
+export type FipeOptionsResponse = {
+  opcoes: FipeOption[];
+  pagina: number;
+  tamanho: number;
+  temProximaPagina: boolean;
+  /** O backend ainda está carregando este nível do catálogo FIPE em segundo plano. */
+  catalogoPendente: boolean;
 };
 
 let pendingSession: Promise<Session> | undefined;
@@ -100,10 +136,13 @@ export const authApi = {
       papel: response.papel, expiresIn: response.expiresIn };
   },
   async requestPasswordReset(email: string) {
-    return (await api.post<{ detail: string }>("/credenciais/redefinicoes", { email })).data;
+    return (await api.post<PasswordChangeResponse>("/credenciais/redefinicoes", { email })).data;
   },
-  async confirmPasswordReset(token: string, novaSenha: string) {
-    await api.post("/credenciais/redefinicoes/confirmar", { token, novaSenha });
+  async authorizePasswordReset(challengeId: string, codigo: string) {
+    return (await api.post<PasswordChangeResponse>("/credenciais/redefinicoes/autorizar", { challengeId, codigo })).data;
+  },
+  async confirmPasswordReset(token: string, novaSenha: string, confirmacaoSenha: string) {
+    await api.post("/credenciais/redefinicoes/confirmar", { token, novaSenha, confirmacaoSenha });
   },
   async logout() {
     await api.post("/usuarios/logout");
@@ -118,6 +157,7 @@ export const authApi = {
       email: values.email,
       telefone: onlyDigits(values.telefone),
       senha: values.senha,
+      confirmacaoSenha: values.confirmacaoSenha,
       cpf: values.tipoPessoa === "PF" ? onlyDigits(values.cpf) : undefined,
       dataNascimento:
         values.tipoPessoa === "PF" ? values.dataNascimento : undefined,
@@ -131,6 +171,33 @@ export const authApi = {
       versaoPoliticaPrivacidade: versions.versaoPoliticaPrivacidade,
     };
     return (await api.post<{ id: string }>("/usuarios/registrar", payload)).data;
+  },
+  async socialRegistrationInfo(token: string) {
+    return (await api.get<{ provedor: string; nome: string; email: string }>(
+      `/autenticacao/social/cadastro/${encodeURIComponent(token)}`,
+    )).data;
+  },
+  async socialRegister(
+    token: string,
+    values: Draft,
+    versions: { versaoTermosUso: string; versaoPoliticaPrivacidade: string },
+  ) {
+    const cadastro = {
+      tipoPessoa: values.tipoPessoa,
+      nome: values.nome,
+      email: values.email,
+      telefone: onlyDigits(values.telefone),
+      cpf: values.tipoPessoa === "PF" ? onlyDigits(values.cpf) : undefined,
+      dataNascimento: values.tipoPessoa === "PF" ? values.dataNascimento : undefined,
+      cnpj: values.tipoPessoa === "PJ" ? onlyDigits(values.cnpj) : undefined,
+      razaoSocial: values.tipoPessoa === "PJ" ? values.razaoSocial : undefined,
+      endereco: addressFromDraft(values),
+      aceitouTermos: true,
+      aceiteTermosEm: new Date().toISOString(),
+      versaoTermosUso: versions.versaoTermosUso,
+      versaoPoliticaPrivacidade: versions.versaoPoliticaPrivacidade,
+    };
+    return (await api.post<StrongAuthResponse>("/autenticacao/social/cadastro", { token, cadastro })).data;
   },
   async profile(usuarioId: string) {
     return (await api.get<UserProfile>(`/usuarios/${usuarioId}`)).data;
@@ -150,8 +217,13 @@ export const authApi = {
     };
     return (await api.patch<UserProfile>(`/usuarios/${usuarioId}`, payload)).data;
   },
-  async resetPassword(usuarioId: string, novaSenha: string) {
-    await api.patch(`/usuarios/${usuarioId}/senha`, { novaSenha });
+  async requestPasswordChange() {
+    return (await api.post<PasswordChangeResponse>("/credenciais/senha/desafio")).data;
+  },
+  async authorizePasswordChange(challengeId: string, codigo: string) {
+    return (await api.post<PasswordChangeResponse>("/credenciais/senha/autorizar", {
+      challengeId, codigo,
+    })).data;
   },
 };
 
@@ -238,6 +310,36 @@ export async function getAdFormCatalog() {
   return (await api.get<AdFormCatalog>("/anuncios/opcoes-cadastro")).data;
 }
 
+export type FipeOptionsQuery = {
+  tipo?: "cars" | "motorcycles" | "trucks";
+  marcaId?: string; modeloId?: string; referencia?: number; termo?: string; pagina?: number;
+};
+const fipePages = new Map<string, { expires: number; page: FipeOptionsResponse }>();
+export async function getFipePage(params: FipeOptionsQuery, signal?: AbortSignal) {
+  const key = JSON.stringify(params);
+  const cached = fipePages.get(key);
+  if (cached && cached.expires > Date.now()) return cached.page;
+  const page = (await api.get<FipeOptionsResponse>("/fipe/catalogo/opcoes", {
+    params: { ...params, tamanho: 50 }, signal,
+  })).data;
+  if (fipePages.size >= 100) fipePages.delete(fipePages.keys().next().value!);
+  if (page.opcoes.length && !page.catalogoPendente) fipePages.set(key, { page, expires: Date.now() + 60000 });
+  return page;
+}
+export async function getFipeActiveEdition(tipo: "cars" | "motorcycles" | "trucks", signal?: AbortSignal) {
+  return (await api.get<FipeOption>("/fipe/catalogo/edicao-ativa", { params: { tipo }, signal })).data;
+}
+export async function resolveFipeReference(input: {
+  tipo: "cars" | "motorcycles" | "trucks";
+  marcaId: string;
+  modeloId: string;
+  anoId: string;
+  referencia: number;
+  mesReferencia: string;
+}, signal?: AbortSignal) {
+  return (await api.post<FipeReference>("/fipe/consultas", input, { signal })).data;
+}
+
 export async function uploadAdPhoto(
   anuncioId: string,
   file: File,
@@ -263,6 +365,7 @@ export function adPayloadFromDraft(
   values: Draft,
   motors: Draft[],
   usuarioId: string,
+  fipeReferenciaId?: string,
 ) {
   const tipo = values.tipoVeiculo;
   const details: Record<string, unknown> = Object.fromEntries(
@@ -311,6 +414,7 @@ export function adPayloadFromDraft(
         : null,
     aceitaTroca: optionalBoolean(values.aceitaTroca),
     publicarAgora: optionalBoolean(values.publicarAgora) ?? false,
+    fipeReferenciaId: fipeReferenciaId || null,
     contato: {
       whatsapp: values.contatoWhatsapp === "true",
       ligacao: values.contatoLigacao === "true",

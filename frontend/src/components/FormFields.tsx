@@ -9,6 +9,63 @@ import {
 } from "lucide-react";
 import { findAddressByCep } from "../lib/viacep";
 
+export function VerificationCodeField({ value, onChange, autoFocus = false, label = "Código de verificação" }: {
+  value: string;
+  onChange: (value: string) => void;
+  autoFocus?: boolean;
+  label?: string;
+}) {
+  const inputs = useRef<Array<HTMLInputElement | null>>([]);
+  const digits = Array.from({ length: 6 }, (_, index) => value[index] || "");
+  const apply = (text: string, start: number) => {
+    const incoming = text.replace(/\D/g, "");
+    if (!incoming) return;
+    const next = [...digits];
+    incoming.slice(0, 6 - start).split("").forEach((digit, offset) => { next[start + offset] = digit; });
+    const result = next.join("").slice(0, 6);
+    onChange(result);
+    inputs.current[Math.min(start + incoming.length, 5)]?.focus();
+  };
+  return <fieldset className="verification-code-field">
+    <legend>{label}</legend>
+    <div className="verification-code-inputs" onPaste={(event) => {
+      const pasted = event.clipboardData.getData("text").replace(/\D/g, "");
+      if (!pasted) return;
+      event.preventDefault(); apply(pasted, 0);
+    }}>
+      {digits.map((digit, index) => <input
+        key={index}
+        ref={(element) => { inputs.current[index] = element; }}
+        className="verification-code-digit"
+        aria-label={`${label}, dígito ${index + 1} de 6`}
+        inputMode="numeric"
+        autoComplete={index === 0 ? "one-time-code" : "off"}
+        pattern="[0-9]"
+        maxLength={1}
+        value={digit}
+        autoFocus={autoFocus && index === 0}
+        required
+        onFocus={(event) => event.currentTarget.select()}
+        onChange={(event) => {
+          const incoming = event.target.value.replace(/\D/g, "");
+          if (incoming.length > 1) { apply(incoming, index); return; }
+          const next = [...digits]; next[index] = incoming;
+          onChange(next.join("").slice(0, 6));
+          if (incoming && index < 5) inputs.current[index + 1]?.focus();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Backspace" && !digits[index] && index > 0) {
+            event.preventDefault();
+            const next = [...digits]; next[index - 1] = ""; onChange(next.join(""));
+            inputs.current[index - 1]?.focus();
+          } else if (event.key === "ArrowLeft" && index > 0) inputs.current[index - 1]?.focus();
+          else if (event.key === "ArrowRight" && index < 5) inputs.current[index + 1]?.focus();
+        }}
+      />)}
+    </div>
+  </fieldset>;
+}
+
 export type Draft = Record<string, string>;
 export type Field = {
   key: string;
@@ -329,11 +386,13 @@ export function PasswordField({
   onChange,
   registration = false,
   label = "Senha",
+  confirmation = false,
 }: {
   value: string;
   onChange: (v: string) => void;
   registration?: boolean;
   label?: string;
+  confirmation?: boolean;
 }) {
   const id = useId();
   const [show, setShow] = useState(false);
@@ -352,11 +411,11 @@ export function PasswordField({
       <div className="password-field">
         <input
           id={id}
-          name="senha"
+          name={confirmation ? "confirmacaoSenha" : "senha"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           type={show ? "text" : "password"}
-          autoComplete={registration ? "new-password" : "current-password"}
+          autoComplete={registration || confirmation ? "new-password" : "current-password"}
           required
           minLength={registration ? 8 : undefined}
           pattern={registration ? "(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[^A-Za-z0-9\\s]).{8,}" : undefined}

@@ -46,3 +46,7 @@ Anúncios antigos sem coordenadas não aparecem na busca por raio até terem a l
 `GET /api/v1/anuncios/pagina-inicial` é exclusivo da vitrine inicial e retorna no máximo 20 anúncios publicados. Ele não altera a ordenação da busca paginada. A relevância usa, nesta ordem: existência de foto, quantidade de fotos, completude dos dados disponíveis, data de publicação e ID como desempate estável. Planos e assinaturas não influenciam o ranking enquanto seus benefícios comerciais não forem definidos.
 
 A resposta é armazenada no Redis no cache `anunciosPaginaInicial`, chave `v1`, com o TTL geral configurado por `REDIS_CACHE_TTL`. Alterações projetadas em anúncio, veículo, especialização, endereço, foto ou perfil do anunciante limpam esse cache depois que a transação da projeção read termina. Assim, o cache não é reconstruído com uma versão anterior à alteração recém-projetada.
+
+## FIPE nos cards
+
+Cada resultado inclui `fipe` (nulo sem associação), com código, valor em centavos, mês, modelo, fonte e diferença para o preço pedido. A consulta lê o snapshot de `catalogo.veiculos` no mesmo SELECT e não acessa fornecedores externos. A página continua limitada a 52 itens. Consulte [FIPE](fipe.md).

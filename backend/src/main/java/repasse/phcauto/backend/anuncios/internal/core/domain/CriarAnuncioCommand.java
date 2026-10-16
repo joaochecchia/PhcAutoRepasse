@@ -18,8 +18,29 @@ public record CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, St
         repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao, String tipoFreio,
         Boolean historicoLeilao, Boolean historicoSinistro, String titulo, String descricao, TipoPreco tipoPreco,
         Long precoCentavos, Boolean aceitaTroca, boolean publicarAgora, Endereco endereco,
+        DetalhesVeiculo detalhes,
+        UUID fipeReferenciaId, repasse.phcauto.backend.domain.model.catalogo.FipeVeiculo fipe) {
+    public CriarAnuncioCommand(UUID anuncianteId, TipoVeiculo tipoVeiculo, String fabricante,
+        String modelo, String versao, Integer anoFabricacao, Integer anoModelo, String cor,
+        String identificadorPublico,
+        repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao, String tipoFreio,
+        Boolean historicoLeilao, Boolean historicoSinistro, String titulo, String descricao, TipoPreco tipoPreco,
+        Long precoCentavos, Boolean aceitaTroca, boolean publicarAgora, Endereco endereco,
         DetalhesVeiculo detalhes) {
+        this(anuncianteId, tipoVeiculo, fabricante, modelo, versao, anoFabricacao, anoModelo, cor, identificadorPublico, condicao, tipoFreio, historicoLeilao, historicoSinistro, titulo, descricao, tipoPreco, precoCentavos, aceitaTroca, publicarAgora, endereco, detalhes, null, null);
+    }
 
+
+    public CriarAnuncioCommand comFipe(repasse.phcauto.backend.domain.model.catalogo.FipeVeiculo snapshot) {
+        return new CriarAnuncioCommand(anuncianteId, tipoVeiculo, fabricante, modelo, versao, anoFabricacao, anoModelo, cor, identificadorPublico, condicao, tipoFreio, historicoLeilao, historicoSinistro, titulo, descricao, tipoPreco, precoCentavos, aceitaTroca, publicarAgora, endereco, detalhes, snapshot == null ? null : snapshot.referenciaId(), snapshot);
+    }
+    public String combustivel() {
+        if(detalhes instanceof Carro d)return d.combustivel();
+        if(detalhes instanceof Moto d)return d.combustivel();
+        if(detalhes instanceof Caminhao d)return d.combustivel();
+        if(detalhes instanceof Caminhonete d)return d.combustivel();
+        return null;
+    }
     public record Endereco(String cep, String cidade, String bairro, String rua, String numero,
             String complemento, String uf, Integer municipioCodigoIbge) { }
 

@@ -46,6 +46,7 @@ public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway, BuscarA
             """;
     private static final String SELECT = """
             select a.id anuncio_id, v.id veiculo_id, a.anunciante_id, v.tipo, v.fabricante,
+                   v.fipe_referencia_id,v.fipe_codigo,v.fipe_valor_centavos,v.fipe_mes_referencia,v.fipe_modelo,v.fipe_fonte,
                    v.modelo, v.ano_fabricacao, v.ano_modelo, v.condicao, a.titulo,
                    a.tipo_preco, a.preco_centavos, e.cidade, e.uf, u.tipo_pessoa,
                    coalesce(nullif(pj.nome_fantasia, ''), u.nome) nome_perfil,
@@ -215,7 +216,10 @@ public class JdbcBuscarAnunciosGateway implements BuscarAnunciosGateway, BuscarA
                 r.getObject("blindado", Boolean.class), inteiro(r, "numero_portas"), r.getBigDecimal("cilindrada_litros"),
                 inteiro(r, "cilindradas"), r.getString("tipo_freio"), r.getString("carroceria"),
                 r.getObject("historico_leilao", Boolean.class), r.getObject("historico_sinistro", Boolean.class), distancia,
-                r.getObject("foto_principal_id", java.util.UUID.class));
+                r.getObject("foto_principal_id", java.util.UUID.class),
+                r.getObject("fipe_referencia_id")==null?null:new repasse.phcauto.backend.domain.model.catalogo.FipeVeiculo(
+                    r.getObject("fipe_referencia_id",java.util.UUID.class),r.getString("fipe_codigo"),r.getLong("fipe_valor_centavos"),
+                    r.getObject("fipe_mes_referencia",java.time.LocalDate.class),r.getString("fipe_modelo"),r.getString("fipe_fonte")));
     }
 
     private static Integer inteiro(ResultSet r, String coluna) throws SQLException { return r.getObject(coluna, Integer.class); }

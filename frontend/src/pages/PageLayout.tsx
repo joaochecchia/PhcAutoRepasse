@@ -28,15 +28,17 @@ export function AccountLayout({
   description,
   children,
   wide = false,
+  compact = false,
 }: {
   title: string;
   eyebrow: string;
   description: string;
   children: ReactNode;
   wide?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <section className="container dedicated-page">
+    <section className={`container dedicated-page ${compact ? "account-page-compact" : ""}`}>
       <PageBreadcrumb label={eyebrow} />
       <div className={`account-page-layout ${wide ? "account-page-wide" : ""}`}>
         <aside className="account-story">

@@ -58,7 +58,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
     }
 
     @Override
-    @org.springframework.cache.annotation.Cacheable(cacheNames = "anunciosPaginaInicial", key = "'v1'")
+    @org.springframework.cache.annotation.Cacheable(cacheNames = "anunciosPaginaInicial", key = "'v2-fipe'")
     public PaginaInicialAnunciosResponse paginaInicial() {
         var anuncios = buscarPaginaInicial.execute(20).stream().map(this::buscaResponse).toList();
         return new PaginaInicialAnunciosResponse(
@@ -112,7 +112,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 item.motorizacao(), item.tipoDirecao(), item.tracao(), item.ipvaPago(),
                 item.blindado(), item.numeroPortas(), item.cilindradaLitros(), item.cilindradas(),
                 item.tipoFreio(), item.carroceria(), item.historicoLeilao(), item.historicoSinistro(),
-                item.distanciaKm(), fotoPrincipalUrl(item));
+                item.distanciaKm(), fotoPrincipalUrl(item), repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.FipeAnuncioResponse.de(item.fipe(), item.precoCentavos()));
     }
 
     private static String fotoPrincipalUrl(repasse.phcauto.backend.anuncios.internal.core.domain.AnuncioResumo item) {
@@ -155,7 +155,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
         var command=new AtualizarAnuncioCommand(request.fabricante(),request.modelo(),request.versao(),request.anoFabricacao(),
                 request.anoModelo(),request.cor(),request.identificadorPublico(),request.condicao(),request.tipoFreio(),
                 request.historicoLeilao(), request.historicoSinistro(), request.titulo(),request.descricao(),
-                request.tipoPreco(),request.precoCentavos(),request.aceitaTroca(),request.publicarAgora(),endereco,detalhes(request));
+                request.tipoPreco(),request.precoCentavos(),request.aceitaTroca(),request.publicarAgora(),endereco,detalhes(request),request.fipeReferenciaId(),Boolean.TRUE.equals(request.removerFipe()));
         return response(atualizarAnuncio.execute(anuncioId, command));
     }
 
@@ -169,7 +169,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 c.tipoVeiculo(), c.fabricante(), c.modelo(), c.versao(), c.anoFabricacao(), c.anoModelo(),
                 c.cor(), c.condicao(), c.tipoFreio(), c.historicoLeilao(), c.historicoSinistro(),
                 c.titulo(), c.descricao(), c.tipoPreco(), c.precoCentavos(), c.aceitaTroca(),
-                c.endereco().cidade(), resultado.status(), response(c.detalhes()), resultado.criadoEm(), resultado.publicadoEm());
+                c.endereco().cidade(), resultado.status(), response(c.detalhes()), resultado.criadoEm(), resultado.publicadoEm(), repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.in.web.response.FipeAnuncioResponse.de(c.fipe(),c.precoCentavos()));
     }
 
     private CriarAnuncioCommand.DetalhesVeiculo detalhes(AtualizarAnuncioRequest r) {
@@ -222,7 +222,7 @@ public class DefaultAnunciosFacade implements AnunciosFacade {
                 r.versao(), r.anoFabricacao(), r.anoModelo(), r.cor(), r.identificadorPublico(),
                 r.condicao(), opcao(r.tipoFreio(), tiposFreio, "tipo de freio"),
                 r.historicoLeilao(), r.historicoSinistro(), r.titulo(), r.descricao(), r.tipoPreco(), r.precoCentavos(), r.aceitaTroca(),
-                Boolean.TRUE.equals(r.publicarAgora()), endereco, detalhes(r));
+                Boolean.TRUE.equals(r.publicarAgora()), endereco, detalhes(r),r.fipeReferenciaId(),null);
     }
 
     private CriarAnuncioCommand.DetalhesVeiculo detalhes(CriarAnuncioRequest r) {

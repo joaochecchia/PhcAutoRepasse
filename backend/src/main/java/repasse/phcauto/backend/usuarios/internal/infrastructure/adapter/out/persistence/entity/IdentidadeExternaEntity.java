@@ -30,6 +30,16 @@ public class IdentidadeExternaEntity extends IdentidadeExterna {
 
     protected IdentidadeExternaEntity() { }
 
+    public static IdentidadeExternaEntity nova(UUID usuarioId, ProvedorAutenticacao provedor,
+            String identificadorExterno) {
+        var entity = new IdentidadeExternaEntity();
+        entity.id = UUID.randomUUID();
+        entity.usuarioId = Objects.requireNonNull(usuarioId, "usuarioId");
+        entity.provedor = Objects.requireNonNull(provedor, "provedor");
+        entity.identificadorExterno = Objects.requireNonNull(identificadorExterno, "identificadorExterno");
+        return entity;
+    }
+
     public static IdentidadeExternaEntity criar(IdentidadeExterna dados) {
         Objects.requireNonNull(dados, "dados");
         var entity = new IdentidadeExternaEntity();

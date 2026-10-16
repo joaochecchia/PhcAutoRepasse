@@ -21,8 +21,13 @@ public final class CriarAnuncio implements CriarAnuncioUseCase {
     private final CriarAnuncioGateway gateway;
     private final PublicarAnuncioCriadoGateway eventos;
     private final Clock clock;
+    private final VincularFipeVeiculoUseCase fipe;
 
     public CriarAnuncio(CriarAnuncioGateway gateway, PublicarAnuncioCriadoGateway eventos, Clock clock) {
+        this(gateway,eventos,clock,new VincularFipeVeiculo(id -> {throw new AnuncioInvalidoException("Gateway FIPE não configurado");}));
+    }
+    public CriarAnuncio(CriarAnuncioGateway gateway, PublicarAnuncioCriadoGateway eventos, Clock clock, VincularFipeVeiculoUseCase fipe) {
+        this.fipe = Objects.requireNonNull(fipe);
         this.gateway = Objects.requireNonNull(gateway);
         this.eventos = Objects.requireNonNull(eventos);
         this.clock = Objects.requireNonNull(clock);
@@ -32,6 +37,7 @@ public final class CriarAnuncio implements CriarAnuncioUseCase {
     public AnuncioCriadoResultado execute(CriarAnuncioCommand c) {
         validar(c);
         if (!gateway.usuarioAtivo(c.anuncianteId())) throw new AnuncianteInvalidoException();
+        c = fipe.execute(c, c.fipeReferenciaId());
         var agora = clock.instant();
         var anuncioId = UUID.randomUUID();
         var veiculoId = UUID.randomUUID();
@@ -50,6 +56,9 @@ public final class CriarAnuncio implements CriarAnuncioUseCase {
         Objects.requireNonNull(c.tipoVeiculo(), "tipoVeiculo");
         obrigatorio(c.fabricante(), "fabricante");
         obrigatorio(c.modelo(), "modelo");
+        if (c.tipoVeiculo() == TipoVeiculo.CARRO || c.tipoVeiculo() == TipoVeiculo.MOTO
+                || c.tipoVeiculo() == TipoVeiculo.CAMINHAO || c.tipoVeiculo() == TipoVeiculo.CAMINHONETE)
+            obrigatorio(c.versao(), "versao");
         obrigatorio(c.titulo(), "titulo");
         if (c.endereco() == null) throw new AnuncioInvalidoException("Endereço é obrigatório");
         obrigatorio(c.endereco().cep(), "CEP");

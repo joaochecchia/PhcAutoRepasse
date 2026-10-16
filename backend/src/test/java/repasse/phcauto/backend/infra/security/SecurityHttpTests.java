@@ -25,7 +25,15 @@ class SecurityHttpTests {
     @Configuration @EnableWebMvc @Import({SecurityConfig.class, JwtConfig.class, Endpoints.class, repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.in.web.controller.UsuariosController.class})
     static class Config {
         @Bean repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade usuarios() {
-            return org.mockito.Mockito.mock(repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade.class);
+            return (repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade)
+                    java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),
+                            new Class<?>[]{repasse.phcauto.backend.usuarios.internal.infrastructure.service.UsuariosFacade.class},
+                            (proxy, method, args) -> switch (method.getName()) {
+                                case "hashCode" -> System.identityHashCode(proxy);
+                                case "equals" -> proxy == args[0];
+                                case "toString" -> "UsuariosFacadeTestDouble";
+                                default -> null;
+                            });
         }
         @Bean repasse.phcauto.backend.infra.security.ratelimit.RateLimitFilter rateLimitFilter() {
             var limiter = new repasse.phcauto.backend.infra.security.ratelimit.RateLimiter() {
@@ -36,11 +44,22 @@ class SecurityHttpTests {
                     new repasse.phcauto.backend.infra.security.ratelimit.RateLimitSettings(
                             new org.springframework.mock.env.MockEnvironment()));
         }
+        @Bean repasse.phcauto.backend.usuarios.internal.infrastructure.security.JwtSessionVersionValidator sessionVersionValidator() {
+            return new repasse.phcauto.backend.usuarios.internal.infrastructure.security.JwtSessionVersionValidator(null) {
+                @Override public org.springframework.security.oauth2.core.OAuth2TokenValidatorResult validate(
+                        org.springframework.security.oauth2.jwt.Jwt token) {
+                    return org.springframework.security.oauth2.core.OAuth2TokenValidatorResult.success();
+                }
+            };
+        }
+        @Bean repasse.phcauto.backend.usuarios.internal.infrastructure.security.AuthCookieService authCookieService() {
+            return new repasse.phcauto.backend.usuarios.internal.infrastructure.security.AuthCookieService(false);
+        }
     }
     @RestController static class Endpoints {
         @GetMapping({"/swagger-ui/index.html", "/v3/api-docs", "/api/v1/anuncios", "/api/v1/assinaturas/planos"})
         String get() { return "ok"; }
-        @PostMapping({"/api/v1/usuarios/login", "/api/v1/usuarios"})
+        @PostMapping({"/api/v1/autenticacao/login", "/api/v1/usuarios"})
         String post() { return "ok"; }
     }
     @Autowired WebApplicationContext context;
@@ -62,11 +81,11 @@ class SecurityHttpTests {
                     .andExpect(cookie().doesNotExist("JSESSIONID"));
     }
     @Test void exigeCsrfNoLoginDoNavegadorEAceitaDoubleSubmitCookie() throws Exception {
-        mvc.perform(post("/api/v1/usuarios/login"))
+        mvc.perform(post("/api/v1/autenticacao/login"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.title").value("Token CSRF inválido"));
         var cookie = mvc.perform(get("/api/v1/anuncios")).andReturn().getResponse().getCookie("XSRF-TOKEN");
-        mvc.perform(post("/api/v1/usuarios/login").cookie(cookie)
+        mvc.perform(post("/api/v1/autenticacao/login").cookie(cookie)
                         .header("X-XSRF-TOKEN", cookie.getValue()))
                 .andExpect(status().isOk());
     }

@@ -102,7 +102,10 @@ public class PersistenceConfig {
                 "repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.entity",
                 "repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.entity",
                 "repasse.phcauto.backend.planos.internal.infrastructure.adapter.out.persistence.entity",
-                "repasse.phcauto.backend.compliance.internal.infrastructure.adapter.out.persistence.entity");
+                "repasse.phcauto.backend.compliance.internal.infrastructure.adapter.out.persistence.entity",
+                "repasse.phcauto.backend.autenticacao.internal.persistence",
+                "repasse.phcauto.backend.credenciais.internal.persistence",
+                "repasse.phcauto.backend.fipe.internal.infrastructure.adapter.out.persistence.entity");
         factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         factory.setJpaPropertyMap(Map.of(
                 "hibernate.hbm2ddl.auto", "validate",

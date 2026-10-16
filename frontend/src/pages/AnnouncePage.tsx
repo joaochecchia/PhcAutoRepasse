@@ -1,3 +1,4 @@
+import { FipeVehicleFields, FipeSummary, fipeVehicleTypes } from "../components/FipeVehicleSelector";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -34,6 +35,7 @@ import {
   createAd,
   getAdFormCatalog,
   type AdFormCatalog,
+  type FipeReference,
   uploadAdPhoto,
 } from "../lib/backend";
 
@@ -47,6 +49,8 @@ function PhotoPreview({ file }: { file: File }) {
   }, [file]);
   return <img src={url || undefined} alt="Prévia local da foto selecionada" />;
 }
+
+
 const stepLabels = ["Veículo", "Localização", "Fotos e anúncio", "Conferência"];
 export function AnnouncePage({
   profile,
@@ -73,6 +77,7 @@ export function AnnouncePage({
   const [submitError, setSubmitError] = useState("");
   const [catalog, setCatalog] = useState<AdFormCatalog | null>(null);
   const [catalogError, setCatalogError] = useState("");
+  const [fipeReference, setFipeReference] = useState<FipeReference | null>(null);
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const initialStep = useRef(true);
   useEffect(() => {
@@ -91,10 +96,20 @@ export function AnnouncePage({
       .then(setCatalog)
       .catch(() => setCatalogError("Não foi possível carregar as opções do catálogo. Tente atualizar a página."));
   }, []);
-  const change = (key: string, value: string) =>
-    setValues((prev) => key === "fabricante"
-      ? { ...prev, fabricante: value, modelo: "" }
-      : { ...prev, [key]: value });
+  const change = (key: string, value: string) => {
+    const affectsFipe = key === "tipoVeiculo" || key === "fabricante" || key === "modelo" || key === "versao"
+      || key === "anoModelo" || key === "condicao" || key.endsWith(".combustivel");
+    if (affectsFipe) {
+      setFipeReference(null);
+    }
+    setValues((prev) => key === "tipoVeiculo"
+      ? { ...prev, tipoVeiculo: value, fabricante: "", modelo: "", versao: "", anoModelo: "", [`${prev.tipoVeiculo}.combustivel`]: "", [`${value}.combustivel`]: "" }
+      : key === "fabricante"
+        ? { ...prev, fabricante: value, modelo: "", versao: "", anoModelo: "", [`${prev.tipoVeiculo}.combustivel`]: "" }
+      : key === "modelo" && prev.tipoVeiculo in fipeVehicleTypes
+        ? { ...prev, modelo: value, versao: value, anoModelo: "", [`${prev.tipoVeiculo}.combustivel`]: "" }
+        : { ...prev, [key]: value });
+  };
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9]/g, "").toLocaleLowerCase("pt-BR");
   const strictVehicleCatalog = values.tipoVeiculo === "CARRO" || values.tipoVeiculo === "CAMINHONETE";
@@ -130,7 +145,7 @@ export function AnnouncePage({
     };
     const source = field.key === "cor" ? catalog?.cores : field.key === "tipoFreio" ? catalog?.tiposFreio : undefined;
     return source ? { ...field, suggestions: asSuggestions(source), strictSuggestions: false, autoCorrectSuggestions: false } : field;
-  }), [catalog, chosenManufacturer, suggestedManufacturers, suggestedModels]);
+  }).filter((field) => !(values.tipoVeiculo in fipeVehicleTypes && ["fabricante", "modelo", "versao", "anoModelo"].includes(field.key))), [catalog, chosenManufacturer, suggestedManufacturers, suggestedModels, values.tipoVeiculo]);
   const specific = useMemo(() => (vehicleFields[values.tipoVeiculo] || []).map((field) => {
     const sources: Record<string, string[] | undefined> = {
       configuracao: values.tipoVeiculo === "CAMINHAO" ? catalog?.configuracoesCaminhao : undefined,
@@ -151,6 +166,18 @@ export function AnnouncePage({
     const free = ["motorizacao", "combustivel", "categoria", "partida", "refrigeracao", "configuracao", "implemento"].includes(field.key);
     return source ? { ...field, suggestions: asSuggestions(source), strictSuggestions: !free, autoCorrectSuggestions: !free } : field;
   }), [catalog, values.tipoVeiculo]);
+  function applyFipeReference(reference: FipeReference) {
+    setFipeReference(reference);
+    setValues((previous) => ({
+      ...previous,
+      fabricante: reference.marca,
+      modelo: reference.modelo,
+      versao: reference.modelo,
+      anoModelo: reference.zeroKm ? previous.anoModelo : String(reference.anoModelo),
+      condicao: reference.zeroKm ? "ZERO_KM" : "USADO",
+      [`${previous.tipoVeiculo}.combustivel`]: reference.combustivel,
+    }));
+  }
   function copyAddress(checked: boolean) {
     setSameAddress(checked);
     if (checked)
@@ -221,7 +248,7 @@ export function AnnouncePage({
             setSubmitError("");
             try {
               const anuncio = await createAd(
-                adPayloadFromDraft(values, motors, usuarioId),
+                adPayloadFromDraft(values, motors, usuarioId, fipeReference?.id),
               );
               for (const [index, photo] of photos.entries()) {
                 await uploadAdPhoto(anuncio.id, photo.file, index, photo.alt);
@@ -287,6 +314,12 @@ export function AnnouncePage({
                   })}
                 </div>
               </fieldset>
+              {values.tipoVeiculo in fipeVehicleTypes && <FipeVehicleFields
+                key={values.tipoVeiculo}
+                vehicleType={values.tipoVeiculo as keyof typeof fipeVehicleTypes}
+                fabricante={values.fabricante || ""} modelo={values.modelo || ""} anoModelo={values.anoModelo || ""}
+                reference={fipeReference} onChange={change} onResolved={applyFipeReference} onClear={() => setFipeReference(null)}
+              />}
               <Fields
                 fields={commonFields}
                 values={values}
@@ -412,6 +445,7 @@ export function AnnouncePage({
           )}
           {step === 2 && (
             <>
+              {fipeReference && <FipeSummary reference={fipeReference} />}
               <Fields
                 fields={[
                   {
@@ -607,6 +641,12 @@ export function AnnouncePage({
                   <div>
                     <dt>Fotos selecionadas</dt>
                     <dd>{photos.length}</dd>
+                  </div>
+                  <div>
+                    <dt>Referência FIPE</dt>
+                    <dd>{fipeReference
+                      ? `${fipeReference.codigoFipe} · ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(fipeReference.valorCentavos / 100)}`
+                      : "Não vinculada"}</dd>
                   </div>
                 </dl>
               </div>

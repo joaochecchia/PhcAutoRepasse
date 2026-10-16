@@ -9,9 +9,10 @@ import {
 } from "../components/FormFields";
 import { apiErrorMessage, authApi } from "../lib/backend";
 import type { Session } from "../lib/contracts";
+import { SocialAuthButtons } from "../components/SocialAuthButtons";
 
 export function RegisterPage({
-  onAuthenticated: _onAuthenticated,
+  onAuthenticated,
 }: {
   onAuthenticated: (session: Session, values: Draft) => void;
 }) {
@@ -26,6 +27,7 @@ export function RegisterPage({
     versaoPoliticaPrivacidade: string;
   } | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
+  const socialToken = new URLSearchParams(window.location.hash.split("?")[1] || "").get("social_token");
   const change = (key: string, value: string) =>
     setValues((prev) => ({ ...prev, [key]: value }));
   useEffect(() => {
@@ -41,6 +43,13 @@ export function RegisterPage({
         ),
       );
   }, []);
+  useEffect(() => {
+    if (!socialToken) return;
+    authApi.socialRegistrationInfo(socialToken).then((social) => {
+      setValues((current) => ({ ...current, nome: social.nome, email: social.email }));
+    }).catch((requestError) => setError(apiErrorMessage(requestError,
+      "Não foi possível continuar o cadastro social.")));
+  }, [socialToken]);
   return (
     <AccountLayout
       wide
@@ -48,6 +57,7 @@ export function RegisterPage({
       title="Seu próximo passo começa aqui."
       description="Cadastre seus dados para comprar e anunciar na PHC Auto. Campos com * são obrigatórios no cadastro."
     >
+      {!socialToken && <SocialAuthButtons action="cadastrar" />}
       <form
         className="page-form"
         onSubmit={async (e) => {
@@ -56,6 +66,15 @@ export function RegisterPage({
           setError("");
           try {
             if (!versions) throw new Error("DOCUMENTS_NOT_LOADED");
+            if (socialToken) {
+              const response = await authApi.socialRegister(socialToken, values, versions);
+              onAuthenticated(authApi.asSession(response), values);
+              return;
+            }
+            if (values.senha !== values.confirmacaoSenha) {
+              setError("As senhas não coincidem.");
+              return;
+            }
             if (!created) await authApi.register(values, versions);
             setCreated(true);
             window.location.hash = "entrar";
@@ -90,11 +109,20 @@ export function RegisterPage({
               <p>Use uma senha exclusiva para a PHC Auto.</p>
             </div>
           </div>
-          <PasswordField
+          {!socialToken && <PasswordField
             registration
             value={values.senha || ""}
             onChange={(v) => change("senha", v)}
-          />
+          />}
+          {!socialToken && <PasswordField
+            confirmation
+            label="Confirme sua senha"
+            value={values.confirmacaoSenha || ""}
+            onChange={(v) => change("confirmacaoSenha", v)}
+          />}
+          {socialToken && <p className="inline-notice" role="status">
+            Conta Google confirmada. Você não precisa criar uma senha.
+          </p>}
         </section>
         <div className="terms-preview">
           <FileText size={19} />

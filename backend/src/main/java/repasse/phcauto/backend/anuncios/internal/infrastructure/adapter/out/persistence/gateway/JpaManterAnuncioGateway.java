@@ -46,6 +46,7 @@ class JpaManterAnuncioGateway implements AtualizarAnuncioGateway, ExcluirAnuncio
     private final CaminhoneteWriteRepository caminhonetes; private final BarcoWriteRepository barcos;
     private final MotorBarcoWriteRepository motores; private final LinhaAmarelaWriteRepository linhas;
     private final FotoWriteRepository fotos; private final VeiculoCaracteristicaWriteRepository caracteristicas;
+    private final repasse.phcauto.backend.anuncios.internal.core.usecase.ReconciliarFipeVeiculoUseCase fipe;
     @PersistenceContext(unitName="write") private EntityManager entityManager;
 
     JpaManterAnuncioGateway(AnuncioWriteRepository anuncios, VeiculoWriteRepository veiculos,
@@ -53,7 +54,8 @@ class JpaManterAnuncioGateway implements AtualizarAnuncioGateway, ExcluirAnuncio
             CaminhaoWriteRepository caminhoes, CaminhoneteWriteRepository caminhonetes,
             BarcoWriteRepository barcos, MotorBarcoWriteRepository motores,
             LinhaAmarelaWriteRepository linhas, FotoWriteRepository fotos,
-            VeiculoCaracteristicaWriteRepository caracteristicas) {
+            VeiculoCaracteristicaWriteRepository caracteristicas, repasse.phcauto.backend.anuncios.internal.core.usecase.ReconciliarFipeVeiculoUseCase fipe) {
+        this.fipe=fipe;
         this.anuncios=anuncios; this.veiculos=veiculos; this.enderecos=enderecos; this.carros=carros;
         this.motos=motos; this.caminhoes=caminhoes; this.caminhonetes=caminhonetes;
         this.barcos=barcos; this.motores=motores; this.linhas=linhas; this.fotos=fotos;
@@ -89,6 +91,7 @@ class JpaManterAnuncioGateway implements AtualizarAnuncioGateway, ExcluirAnuncio
         if (c.fabricante()==null || c.fabricante().isBlank() || c.modelo()==null || c.modelo().isBlank()
                 || c.titulo()==null || c.titulo().isBlank()) throw new AnuncioInvalidoException("Campos obrigatórios não podem ficar vazios");
 
+        c=fipe.execute(atual,c,p,veiculo.getFipe());
         veiculo.atualizar(new JpaCriarAnuncioGateway.VeiculoDados(veiculo.getId(), c, agora));
         endereco.atualizar(new JpaCriarAnuncioGateway.EnderecoDados(endereco.getId(), enderecoNovo));
         atualizarDetalhes(veiculo.getTipo(), veiculo.getId(), detalhesNovos, p.detalhes()!=null);

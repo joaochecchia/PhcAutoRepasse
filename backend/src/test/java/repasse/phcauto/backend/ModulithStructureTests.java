@@ -17,6 +17,7 @@ class ModulithStructureTests {
         var nomes = StreamSupport.stream(modules.spliterator(), false)
                 .map(module -> module.getIdentifier().toString())
                 .collect(Collectors.toSet());
-        assertEquals(Set.of("assinaturas", "vendas", "usuarios", "anuncios", "compliance", "planos", "localizacao"), nomes);
+        assertEquals(Set.of("assinaturas", "vendas", "usuarios", "anuncios", "compliance", "planos", "localizacao",
+                "autenticacao", "credenciais", "notificacoes", "fipe"), nomes);
     }
 }

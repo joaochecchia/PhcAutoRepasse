@@ -64,6 +64,7 @@ export default function App() {
   const [route, setRoute] = useState(readRoute);
   const { page, id } = route;
   const [profileDraft, setProfileDraft] = useState<Draft>({ tipoPessoa: "PF" });
+  const [possuiSenhaLocal, setPossuiSenhaLocal] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [announceIntent, setAnnounceIntent] = useState(false);
@@ -270,6 +271,7 @@ export default function App() {
         if (current.autenticado && current.usuarioId) {
           const profile = await authApi.profile(current.usuarioId);
           setProfileDraft(profileToDraft(profile));
+          setPossuiSenhaLocal(profile.possuiSenhaLocal);
         }
       })
       .catch(() => setSession(null))
@@ -375,7 +377,9 @@ export default function App() {
     if (draft) setProfileDraft(draft);
     if (current.usuarioId) {
       try {
-        setProfileDraft(profileToDraft(await authApi.profile(current.usuarioId)));
+        const profile = await authApi.profile(current.usuarioId);
+        setProfileDraft(profileToDraft(profile));
+        setPossuiSenhaLocal(profile.possuiSenhaLocal);
       } catch {
         // The registration draft remains available if the read projection has
         // not received the newly created profile yet.
@@ -390,6 +394,7 @@ export default function App() {
     } finally {
       setSession(null);
       setProfileDraft({ tipoPessoa: "PF" });
+      setPossuiSenhaLocal(true);
       setAnnounceIntent(false);
       setAccountMenuOpen(false);
       navigate("home");
@@ -570,7 +575,7 @@ export default function App() {
         ) : page === "register" ? (
           <RegisterPage onAuthenticated={handleAuthenticated} />
         ) : page === "reset-password" ? (
-          <ResetPasswordPage />
+          <ResetPasswordPage authenticated={Boolean(session?.autenticado)} />
         ) : page === "account" ? (
           session?.usuarioId ? (
             <ProfilePage
@@ -578,6 +583,7 @@ export default function App() {
               values={profileDraft}
               setValues={setProfileDraft}
               usuarioId={session.usuarioId}
+              possuiSenhaLocal={possuiSenhaLocal}
               onPhotoUpdated={() => setProfilePhotoRevision(Date.now())}
             />
           ) : null

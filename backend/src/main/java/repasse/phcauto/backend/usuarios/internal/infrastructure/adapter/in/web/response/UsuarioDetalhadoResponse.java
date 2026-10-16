@@ -12,6 +12,7 @@ public record UsuarioDetalhadoResponse(
         String email,
         String telefone,
         boolean ativo,
+        boolean possuiSenhaLocal,
         String cpf,
         LocalDate dataNascimento,
         String cnpj,

@@ -30,10 +30,10 @@ public class VeiculoEntity extends Veiculo {
     @Column(name = "fabricante", nullable = false, length = 100)
     private String fabricante;
 
-    @Column(name = "modelo", nullable = false, length = 120)
+    @Column(name = "modelo", nullable = false, length = 250)
     private String modelo;
 
-    @Column(name = "versao", nullable = true, length = 180)
+    @Column(name = "versao", nullable = true, length = 250)
     private String versao;
 
     @JdbcTypeCode(SqlTypes.SMALLINT)
@@ -73,7 +73,23 @@ public class VeiculoEntity extends Veiculo {
     @Column(name = "lock_version", nullable = false)
     private Long lockVersion;
 
+    @Column(name="fipe_referencia_id") private UUID fipeReferenciaId;
+    @Column(name="fipe_codigo",length=16) private String fipeCodigo;
+    @Column(name="fipe_valor_centavos") private Long fipeValorCentavos;
+    @Column(name="fipe_mes_referencia") private java.time.LocalDate fipeMesReferencia;
+    @Column(name="fipe_modelo",length=250) private String fipeModelo;
+    @Column(name="fipe_fonte",length=120) private String fipeFonte;
     protected VeiculoEntity() { }
+    private void definirFipe(repasse.phcauto.backend.domain.model.catalogo.FipeVeiculo f) {
+        fipeReferenciaId=f==null?null:f.referenciaId();fipeCodigo=f==null?null:f.codigo();
+        fipeValorCentavos=f==null?null:f.valorCentavos();fipeMesReferencia=f==null?null:f.mesReferencia();
+        fipeModelo=f==null?null:f.modelo();fipeFonte=f==null?null:f.fonte();
+    }
+    @Override public repasse.phcauto.backend.domain.model.catalogo.FipeVeiculo getFipe() {
+        return fipeReferenciaId==null?null:new repasse.phcauto.backend.domain.model.catalogo.FipeVeiculo(
+            fipeReferenciaId,fipeCodigo,fipeValorCentavos,fipeMesReferencia,fipeModelo,fipeFonte);
+    }
+
 
     public static VeiculoEntity criar(Veiculo dados) {
         Objects.requireNonNull(dados, "dados");
@@ -84,6 +100,7 @@ public class VeiculoEntity extends Veiculo {
         entity.fabricante = Objects.requireNonNull(dados.getFabricante(), "fabricante");
         entity.modelo = Objects.requireNonNull(dados.getModelo(), "modelo");
         entity.versao = dados.getVersao();
+        entity.definirFipe(dados.getFipe());
         entity.anoFabricacao = dados.getAnoFabricacao();
         entity.anoModelo = dados.getAnoModelo();
         entity.cor = dados.getCor();
@@ -107,6 +124,7 @@ public class VeiculoEntity extends Veiculo {
         this.fabricante = Objects.requireNonNull(dados.getFabricante(), "fabricante");
         this.modelo = Objects.requireNonNull(dados.getModelo(), "modelo");
         this.versao = dados.getVersao();
+        definirFipe(dados.getFipe());
         this.anoFabricacao = dados.getAnoFabricacao();
         this.anoModelo = dados.getAnoModelo();
         this.cor = dados.getCor();

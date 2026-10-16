@@ -41,9 +41,26 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private RegraHttp regra(HttpServletRequest request) {
         String metodo = request.getMethod();
         String caminho = request.getRequestURI();
-        if ("POST".equals(metodo) && caminho.equals("/api/v1/usuarios/login"))
+        if ((caminho.startsWith("/api/v1/fipe/importacoes") || caminho.startsWith("/api/v1/fipe/sincronizacoes")))
+            return regra("fipe-importacao", 30, Duration.ofHours(1), true);
+        if (caminho.startsWith("/api/v1/fipe/"))
+            return regra("fipe-catalogo", 120, Duration.ofMinutes(1), true);
+        if ("POST".equals(metodo) && (caminho.equals("/api/v1/usuarios/login")
+                || caminho.equals("/api/v1/autenticacao/login")))
             return regra("login", 10, Duration.ofMinutes(1), false);
-        if ("POST".equals(metodo) && caminho.equals("/api/v1/usuarios/registrar"))
+        if ("POST".equals(metodo) && caminho.equals("/api/v1/autenticacao/2fa/verificar"))
+            return regra("validacao-2fa", 10, Duration.ofMinutes(5), false);
+        if ("POST".equals(metodo) && caminho.equals("/api/v1/autenticacao/2fa/reenviar"))
+            return regra("reenvio-2fa", 3, Duration.ofMinutes(10), false);
+        if ("POST".equals(metodo) && caminho.equals("/api/v1/credenciais/redefinicoes"))
+            return regra("redefinicao-senha", 5, Duration.ofHours(1), false);
+        if ("POST".equals(metodo) && (caminho.equals("/api/v1/credenciais/redefinicoes/autorizar")
+                || caminho.equals("/api/v1/credenciais/senha/autorizar")))
+            return regra("validacao-2fa-senha", 10, Duration.ofMinutes(5), false);
+        if ("POST".equals(metodo) && caminho.equals("/api/v1/credenciais/redefinicoes/confirmar"))
+            return regra("confirmacao-redefinicao-senha", 10, Duration.ofMinutes(15), false);
+        if ("POST".equals(metodo) && (caminho.equals("/api/v1/usuarios/registrar")
+                || caminho.equals("/api/v1/autenticacao/social/cadastro")))
             return regra("registro", 5, Duration.ofHours(1), false);
         if ("POST".equals(metodo) && caminho.equals("/api/v1/usuarios/refresh"))
             return regra("refresh", 20, Duration.ofMinutes(1), false);

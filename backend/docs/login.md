@@ -22,4 +22,27 @@ A troca de senha incrementa a versão de sessão do usuário e revoga todas as f
 
 Credenciais inválidas retornam 401; dados de entrada inválidos, 400; falta de permissão, 403. Novas senhas usam BCrypt e exigem no mínimo oito caracteres, maiúscula, minúscula, número e caractere especial; PBKDF2 legado continua aceito.
 
-`JWT_SECRET` é obrigatório: Base64 de pelo menos 32 bytes aleatórios. Os defaults são `JWT_ISSUER=phcauto`, `JWT_TTL_SECONDS=900` e `REFRESH_TOKEN_TTL_SECONDS=2592000` (30 dias). O JWT de acesso já emitido permanece válido no máximo até completar seus 15 minutos; logout e detecção de reutilização impedem novas renovações. OAuth Google/Facebook permanece pendente.
+`JWT_SECRET` é obrigatório: Base64 de pelo menos 32 bytes aleatórios. Os defaults são `JWT_ISSUER=phcauto`, `JWT_TTL_SECONDS=900` e `REFRESH_TOKEN_TTL_SECONDS=2592000` (30 dias). O JWT inclui a versão de segurança da conta e deixa de ser aceito após troca/redefinição de senha; os refresh tokens também são revogados. Com `MFA_ENABLED=true`, `POST /api/v1/autenticacao/login` só emite a sessão diretamente para dispositivo confiável, caso contrário retorna um desafio para `POST /api/v1/autenticacao/2fa/verificar`.
+# Login com Google
+
+O OAuth2 social usa Authorization Code no backend. O Google comprova a identidade e a
+aplicação emite seus próprios access e refresh tokens nos mesmos cookies HttpOnly do login local.
+Ative somente após cadastrar os callbacks nos provedores:
+
+```text
+http://localhost:8080/login/oauth2/code/google
+```
+
+Em produção, substitua a origem pela URL pública do backend e configure:
+
+```env
+OAUTH2_ENABLED=true
+OAUTH2_FRONTEND_URL=https://www.seudominio.com.br
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+```
+
+Cadastros novos recebem um ticket aleatório de uso curto armazenado no Redis por hash. Nome e
+e-mail vêm do provedor, e os demais dados obrigatórios e o aceite são concluídos no formulário.
+Uma conta local preexistente nunca é vinculada automaticamente apenas pela coincidência do e-mail.
+

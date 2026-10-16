@@ -343,7 +343,7 @@ Novas senhas usam BCrypt; hashes PBKDF2 existentes continuam aceitos até a troc
 
 Swagger e busca pública de anúncios são liberados. Usuário consulta/altera/exclui seu próprio cadastro; ADMIN também pode administrar cadastros. Criação de anúncio exige anuncianteId igual ao sujeito do JWT; alteração/exclusão exigem proprietário ou ADMIN. O CRUD de planos exige ADMIN; endpoints provisórios restantes são bloqueados.
 
-Configure JWT_SECRET com segredo aleatório Base64 de pelo menos 32 bytes (`openssl rand -base64 48`), mantido fora do Git. O Compose lê `.env`; pela IDE/Maven exporte a variável. JWT_ISSUER tem default phcauto e JWT_TTL_SECONDS tem default 900. Tokens validam assinatura HS256, emissor e validade. Não há refresh token nem revogação imediata: tokens emitidos permanecem válidos até expirar mesmo após mudança de senha/status ou exclusão. OAuth2 Google/Facebook continua pendente. No Swagger, use Authorize com o accessToken.
+Configure `JWT_SECRET` e `MFA_HMAC_SECRET` com segredos Base64 independentes de pelo menos 32 bytes (`openssl rand -base64 48`), mantidos fora do Git. A autenticação usa access token curto, refresh token opaco com rotação e versão de sessão para revogação imediata. Com `MFA_ENABLED=true`, logins em dispositivos não reconhecidos exigem código por e-mail enviado pela Brevo; configure também `BREVO_ENABLED=true`, chave, remetente e os três IDs de template. Troca ou redefinição de senha revoga refresh tokens e dispositivos confiáveis.
 
 ### Placa dos veículos
 
@@ -352,3 +352,8 @@ Carro, moto, caminhão e caminhonete recebem `placa` completa e `exibirPlacaComp
 ## Lojistas e fotos de perfil
 
 O frontend busca lojas PJ próximas ao endereço cadastrado ou à localização do navegador em `/#lojistas`, com página de anúncios de cada loja. A lista carrega 12 lojas inicialmente e até 24 adicionais por clique, em consultas de no máximo 12. PF e PJ podem enviar foto opcional no cadastro ou no perfil; os anúncios exibem a foto do anunciante ou um avatar genérico. A migration V31 adiciona a referência da imagem e índices de busca. Os arquivos usam a mesma raiz de uploads dos veículos, em `usuarios/{id}/perfil/`. Consulte [endpoints, limites e armazenamento](backend/docs/lojistas.md).
+
+
+### Catálogo FIPE local
+
+O formulário consulta o catálogo persistido no PostgreSQL, com cache Redis e preenchimento manual quando não houver referência. `FIPE_PERSISTENCE_AUTHORIZED` está habilitado por padrão a pedido do responsável; antes de operar com dados reais, confira se o plano contratado permite a persistência e o uso comercial. Sem `FIPE_PARALLELUM_TOKEN`, as consultas externas permanecem indisponíveis. Consulte [arquitetura, configuração, migrations e testes](backend/docs/fipe-catalogo-local.md). O roteiro de carga está em `backend/scripts/load/fipe.js`; ainda exige validação HTTP em homologação.

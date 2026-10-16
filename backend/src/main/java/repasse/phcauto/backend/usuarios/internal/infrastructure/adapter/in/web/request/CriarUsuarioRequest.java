@@ -18,6 +18,8 @@ public record CriarUsuarioRequest(
         @Pattern(regexp = "\\+?[1-9][0-9]{9,14}") String telefone,
         @NotBlank @Size(min = 8, max = 72)
         @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String senha,
+        @NotBlank @Size(min = 8, max = 72)
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String confirmacaoSenha,
         String cpf, LocalDate dataNascimento, String cnpj, String razaoSocial,
         @Valid EnderecoRequest endereco,
         Boolean aceitouTermos,
@@ -28,9 +30,22 @@ public record CriarUsuarioRequest(
             String senha, String cpf, LocalDate dataNascimento, String cnpj, String razaoSocial,
             EnderecoRequest endereco, Boolean aceitouTermos, Instant aceiteTermosEm,
             String versaoTermosUso, String versaoPoliticaPrivacidade) {
-        this(tipoPessoa, null, nome, email, telefone, senha, cpf, dataNascimento, cnpj,
+        this(tipoPessoa, null, nome, email, telefone, senha, senha, cpf, dataNascimento, cnpj,
                 razaoSocial, endereco, aceitouTermos, aceiteTermosEm,
                 versaoTermosUso, versaoPoliticaPrivacidade);
+    }
+    public CriarUsuarioRequest(TipoPessoa tipoPessoa, PapelUsuario papel, String nome, String email,
+            String telefone, String senha, String cpf, LocalDate dataNascimento, String cnpj,
+            String razaoSocial, EnderecoRequest endereco, Boolean aceitouTermos, Instant aceiteTermosEm,
+            String versaoTermosUso, String versaoPoliticaPrivacidade) {
+        this(tipoPessoa, papel, nome, email, telefone, senha, senha, cpf, dataNascimento, cnpj,
+                razaoSocial, endereco, aceitouTermos, aceiteTermosEm, versaoTermosUso,
+                versaoPoliticaPrivacidade);
+    }
+    public CriarUsuarioRequest {
+        if (!java.util.Objects.equals(senha, confirmacaoSenha)) {
+            throw new IllegalArgumentException("As senhas não coincidem");
+        }
     }
     @Override public String toString() { return "CriarUsuarioRequest[conteudo protegido]"; }
 }

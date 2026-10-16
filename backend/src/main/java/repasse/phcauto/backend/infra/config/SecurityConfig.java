@@ -17,6 +17,9 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenResolv
 import repasse.phcauto.backend.usuarios.internal.infrastructure.security.AuthCookieService;
 import repasse.phcauto.backend.infra.security.ratelimit.RateLimitFilter;
 import repasse.phcauto.backend.infra.security.csrf.CsrfCookieFilter;
+import repasse.phcauto.backend.usuarios.internal.infrastructure.security.SocialOAuthSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.beans.factory.ObjectProvider;
 
 @Configuration(proxyBeanMethods = false)
 @EnableMethodSecurity
@@ -56,6 +59,8 @@ public class SecurityConfig {
 
     @Bean SecurityFilterChain apiSecurity(HttpSecurity http, BearerTokenResolver bearerTokenResolver,
             RateLimitFilter rateLimitFilter,
+            ObjectProvider<ClientRegistrationRepository> socialClients,
+            ObjectProvider<SocialOAuthSuccessHandler> socialSuccessHandler,
             @Value("${AUTH_COOKIE_SECURE:false}") boolean secureCookies,
             @Value("${app.security.production:false}") boolean production) throws Exception {
         if (production && !secureCookies) {
@@ -74,19 +79,29 @@ public class SecurityConfig {
             boolean bearer = authorization != null && authorization.regionMatches(true, 0, "Bearer ", 0, 7);
             return !bearer && org.springframework.security.web.csrf.CsrfFilter.DEFAULT_CSRF_MATCHER.matches(request);
         };
-        return http.cors(org.springframework.security.config.Customizer.withDefaults())
+        http.cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(c -> c.csrfTokenRepository(csrfRepository)
                         .csrfTokenRequestHandler(csrfHandler)
                         .requireCsrfProtectionMatcher(csrfParaNavegador))
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(s -> s.sessionCreationPolicy(
+                        socialClients.getIfAvailable() == null ? SessionCreationPolicy.STATELESS : SessionCreationPolicy.IF_REQUIRED))
                 .requestCache(c -> c.disable())
                 .formLogin(c -> c.disable()).httpBasic(c -> c.disable()).logout(c -> c.disable())
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/error", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/registrar", "/api/v1/usuarios/login", "/api/v1/usuarios/refresh", "/api/v1/usuarios/logout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/login").denyAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/registrar", "/api/v1/usuarios/refresh", "/api/v1/usuarios/logout",
+                                "/api/v1/autenticacao/login", "/api/v1/autenticacao/2fa/verificar",
+                                "/api/v1/autenticacao/2fa/reenviar",
+                                "/api/v1/autenticacao/social/cadastro",
+                                "/api/v1/credenciais/redefinicoes", "/api/v1/credenciais/redefinicoes/autorizar",
+                                "/api/v1/credenciais/redefinicoes/confirmar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/autenticacao/social/cadastro/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/sessao").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").denyAll()
+                        .requestMatchers("/api/v1/autenticacao/**", "/api/v1/credenciais/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/localizacao/municipios/coordenadas").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/compliance/documentos-vigentes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/lojistas", "/api/v1/perfis/*", "/api/v1/perfis/*/foto").permitAll()
@@ -95,6 +110,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/anuncios/opcoes-cadastro").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/anuncios/*/fotos",
                                 "/api/v1/anuncios/*/fotos/*/arquivo").permitAll()
+                        .requestMatchers("/api/v1/fipe/importacoes", "/api/v1/fipe/importacoes/**").hasRole("DONO")
+                        .requestMatchers("/api/v1/fipe/**").authenticated()
                         .requestMatchers("/api/v1/assinaturas/planos", "/api/v1/assinaturas/planos/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/usuarios/**", "/api/v1/anuncios", "/api/v1/anuncios/**").authenticated()
                         .anyRequest().denyAll())
@@ -121,7 +138,12 @@ public class SecurityConfig {
                 .addFilterAfter(rateLimitFilter,
                         org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(new CsrfCookieFilter(), org.springframework.security.web.csrf.CsrfFilter.class)
-                .build();
+                ;
+        if (socialClients.getIfAvailable() != null) {
+            http.oauth2Login(o -> o.successHandler(socialSuccessHandler.getObject())
+                    .failureHandler(socialSuccessHandler.getObject()));
+        }
+        return http.build();
     }
 
     @Bean

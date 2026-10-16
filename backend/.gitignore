@@ -76,4 +76,7 @@ Desktop.ini
 
 # Artefatos locais de validação no navegador
 /.playwright-cli/
-/output/playwright/
+/output/
+
+# Arquivos locais de importação FIPE
+/data/fipe/

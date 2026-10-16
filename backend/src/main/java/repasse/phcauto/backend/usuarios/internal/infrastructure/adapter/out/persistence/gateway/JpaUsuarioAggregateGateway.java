@@ -14,6 +14,7 @@ import repasse.phcauto.backend.usuarios.internal.core.domain.UsuarioCompleto;
 import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroDuplicadoException;
 import repasse.phcauto.backend.usuarios.internal.core.exception.ExclusaoUsuarioBloqueadaException;
 import repasse.phcauto.backend.usuarios.internal.core.exception.UsuarioNaoEncontradoException;
+import repasse.phcauto.backend.usuarios.internal.core.exception.CadastroInvalidoException;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.AtualizarUsuarioGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.ConsultarUsuarioGateway;
 import repasse.phcauto.backend.usuarios.internal.core.gateway.ExcluirUsuarioGateway;
@@ -112,6 +113,9 @@ public class JpaUsuarioAggregateGateway implements ConsultarUsuarioGateway,
 
     @Override public TipoPessoa redefinir(UUID usuarioId, String senhaHash, Instant atualizadoEm) {
         var usuario = usuarios.findById(usuarioId).orElseThrow(UsuarioNaoEncontradoException::new);
+        if (!usuario.possuiSenhaLocal()) {
+            throw new CadastroInvalidoException("A conta autenticada pelo Google não possui senha local");
+        }
         usuario.redefinirSenha(senhaHash, atualizadoEm);
         usuarios.saveAndFlush(usuario);
         return usuario.getTipoPessoa();
@@ -128,6 +132,7 @@ public class JpaUsuarioAggregateGateway implements ConsultarUsuarioGateway,
                     .orElseThrow(() -> new IllegalStateException("Perfil PF obrigatório ausente"));
             return new UsuarioCompleto(usuario.getId(), usuario.getTipoPessoa(), usuario.getNome(),
                     usuario.getEmail(), usuario.getTelefone(), usuario.getAtivo(), usuario.getSenhaHash(),
+                    usuario.possuiSenhaLocal(),
                     perfil.getCpf(), perfil.getDataNascimento(), null, null, enderecoDados,
                     usuario.getCriadoEm(), usuario.getAtualizadoEm());
         }
@@ -135,6 +140,7 @@ public class JpaUsuarioAggregateGateway implements ConsultarUsuarioGateway,
                 .orElseThrow(() -> new IllegalStateException("Perfil PJ obrigatório ausente"));
         return new UsuarioCompleto(usuario.getId(), usuario.getTipoPessoa(), usuario.getNome(),
                 usuario.getEmail(), usuario.getTelefone(), usuario.getAtivo(), usuario.getSenhaHash(),
+                usuario.possuiSenhaLocal(),
                 null, null, perfil.getCnpj(), perfil.getRazaoSocial(), enderecoDados,
                 usuario.getCriadoEm(), usuario.getAtualizadoEm());
     }

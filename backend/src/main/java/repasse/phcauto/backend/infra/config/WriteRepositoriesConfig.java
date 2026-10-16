@@ -10,7 +10,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
                 "repasse.phcauto.backend.usuarios.internal.infrastructure.adapter.out.persistence.repository.write",
                 "repasse.phcauto.backend.anuncios.internal.infrastructure.adapter.out.persistence.repository.write",
                 "repasse.phcauto.backend.planos.internal.infrastructure.adapter.out.persistence.repository.write",
-                "repasse.phcauto.backend.compliance.internal.infrastructure.adapter.out.persistence.repository"},
+                "repasse.phcauto.backend.compliance.internal.infrastructure.adapter.out.persistence.repository",
+                "repasse.phcauto.backend.autenticacao.internal.persistence",
+                "repasse.phcauto.backend.credenciais.internal.persistence",
+                "repasse.phcauto.backend.fipe.internal.infrastructure.adapter.out.persistence.repository"},
         entityManagerFactoryRef = "writeEntityManagerFactory",
         transactionManagerRef = "writeTransactionManager")
 public class WriteRepositoriesConfig { }

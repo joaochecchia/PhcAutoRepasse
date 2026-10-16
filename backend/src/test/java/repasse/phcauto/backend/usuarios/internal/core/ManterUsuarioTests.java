@@ -29,7 +29,7 @@ class ManterUsuarioTests {
 
     private UsuarioCompleto pf() {
         return new UsuarioCompleto(ID, TipoPessoa.PF, "Nome", "email@example.com", "11999999999",
-                true, "hash", "52998224725", LocalDate.of(1990, 1, 1), null, null,
+                true, "hash", true, "52998224725", LocalDate.of(1990, 1, 1), null, null,
                 new EnderecoUsuarioDados("01001000", "São Paulo", "Sé", "Rua", "1", "apto", "SP"),
                 CLOCK.instant().minusSeconds(60), CLOCK.instant().minusSeconds(60));
     }

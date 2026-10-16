@@ -92,7 +92,8 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         veiculos.save(VeiculoEntity.criar(new VeiculoDados(veiculoId, c, agora)));
         salvarEspecializacao(veiculoId, c);
         enderecos.save(EnderecoAnuncioEntity.criar(new EnderecoDados(enderecoId, c.endereco())));
-        anuncios.save(AnuncioEntity.criar(new AnuncioDados(anuncioId, veiculoId, enderecoId, c, status, agora)));
+        // O serviço de consentimento usa JDBC na mesma transação e precisa enxergar o INSERT.
+        anuncios.saveAndFlush(AnuncioEntity.criar(new AnuncioDados(anuncioId, veiculoId, enderecoId, c, status, agora)));
     }
 
     private void salvarEspecializacao(UUID id, CriarAnuncioCommand c) {
@@ -114,6 +115,7 @@ class JpaCriarAnuncioGateway implements CriarAnuncioGateway {
         private final UUID id; private final CriarAnuncioCommand c; private final Instant agora;
         VeiculoDados(UUID id, CriarAnuncioCommand c, Instant agora) { this.id=id; this.c=c; this.agora=agora; }
         public UUID getId(){return id;} public UUID getProprietarioId(){return c.anuncianteId();}
+        public repasse.phcauto.backend.domain.model.catalogo.FipeVeiculo getFipe(){return c.fipe();}
         public TipoVeiculo getTipo(){return c.tipoVeiculo();} public String getFabricante(){return c.fabricante();}
         public String getModelo(){return c.modelo();} public String getVersao(){return c.versao();}
         public Integer getAnoFabricacao(){return c.anoFabricacao();} public Integer getAnoModelo(){return c.anoModelo();}

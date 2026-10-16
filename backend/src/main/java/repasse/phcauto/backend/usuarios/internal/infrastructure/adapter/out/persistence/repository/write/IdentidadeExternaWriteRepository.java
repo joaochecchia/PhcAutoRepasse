@@ -8,4 +8,5 @@ import repasse.phcauto.backend.domain.model.identidade.ProvedorAutenticacao;
 
 public interface IdentidadeExternaWriteRepository extends JpaRepository<IdentidadeExternaEntity, UUID> {
     Optional<IdentidadeExternaEntity> findByProvedorAndIdentificadorExterno(ProvedorAutenticacao provedor, String identificadorExterno);
+    boolean existsByUsuarioIdAndProvedor(UUID usuarioId, ProvedorAutenticacao provedor);
 }

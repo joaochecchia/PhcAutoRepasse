@@ -31,6 +31,7 @@ export type UserProfile = {
   nome: string;
   email: string;
   telefone: string;
+  possuiSenhaLocal: boolean;
   cpf?: string | null;
   dataNascimento?: string | null;
   cnpj?: string | null;

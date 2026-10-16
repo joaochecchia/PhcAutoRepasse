@@ -15,7 +15,18 @@ public record AnuncioResponse(UUID id, UUID veiculoId, UUID anuncianteId, TipoVe
         String tipoFreio, Boolean historicoLeilao, Boolean historicoSinistro,
         String titulo, String descricao, TipoPreco tipoPreco, Long precoCentavos,
         Boolean aceitaTroca, String cidade, StatusAnuncio status, DetalhesVeiculoResponse detalhes,
+        Instant criadoEm, Instant publicadoEm,
+        FipeAnuncioResponse fipe) {
+    public AnuncioResponse(UUID id, UUID veiculoId, UUID anuncianteId, TipoVeiculo tipoVeiculo,
+        String fabricante, String modelo, String versao, Integer anoFabricacao, Integer anoModelo,
+        String cor, repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao,
+        String tipoFreio, Boolean historicoLeilao, Boolean historicoSinistro,
+        String titulo, String descricao, TipoPreco tipoPreco, Long precoCentavos,
+        Boolean aceitaTroca, String cidade, StatusAnuncio status, DetalhesVeiculoResponse detalhes,
         Instant criadoEm, Instant publicadoEm) {
+        this(id, veiculoId, anuncianteId, tipoVeiculo, fabricante, modelo, versao, anoFabricacao, anoModelo, cor, condicao, tipoFreio, historicoLeilao, historicoSinistro, titulo, descricao, tipoPreco, precoCentavos, aceitaTroca, cidade, status, detalhes, criadoEm, publicadoEm, null);
+    }
+
 
     public sealed interface DetalhesVeiculoResponse permits CarroResponse, MotoResponse,
             CaminhaoResponse, CaminhoneteResponse, BarcoResponse, LinhaAmarelaResponse { }

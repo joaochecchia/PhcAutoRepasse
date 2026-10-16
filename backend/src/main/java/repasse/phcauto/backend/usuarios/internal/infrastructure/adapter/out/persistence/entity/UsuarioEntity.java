@@ -27,6 +27,9 @@ public class UsuarioEntity extends Usuario {
     @Column(name = "senha_hash", nullable = true, columnDefinition = "text")
     private String senhaHash;
 
+    @Column(name = "senha_local_habilitada", nullable = false)
+    private boolean senhaLocalHabilitada = true;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_pessoa", nullable = false, length = 32)
     private TipoPessoa tipoPessoa;
@@ -109,6 +112,8 @@ public class UsuarioEntity extends Usuario {
     @Override
     public String getSenhaHash() { return senhaHash; }
 
+    public boolean possuiSenhaLocal() { return senhaLocalHabilitada; }
+
     @Override
     public TipoPessoa getTipoPessoa() { return tipoPessoa; }
 
@@ -141,6 +146,12 @@ public class UsuarioEntity extends Usuario {
 
     public void redefinirSenha(String senhaHash, Instant atualizadoEm) {
         this.senhaHash = Objects.requireNonNull(senhaHash, "senhaHash");
+        this.atualizadoEm = Objects.requireNonNull(atualizadoEm, "atualizadoEm");
+        this.sessaoVersao++;
+    }
+
+    public void desabilitarSenhaLocal(Instant atualizadoEm) {
+        this.senhaLocalHabilitada = false;
         this.atualizadoEm = Objects.requireNonNull(atualizadoEm, "atualizadoEm");
         this.sessaoVersao++;
     }

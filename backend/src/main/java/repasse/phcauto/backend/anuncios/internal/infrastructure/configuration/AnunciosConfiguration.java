@@ -29,9 +29,17 @@ class AnunciosConfiguration {
             BuscarAnunciosPaginaInicialGateway gateway) {
         return new BuscarAnunciosPaginaInicial(gateway);
     }
+    @Bean repasse.phcauto.backend.anuncios.internal.core.usecase.VincularFipeVeiculoUseCase vincularFipeVeiculo(
+            repasse.phcauto.backend.anuncios.internal.core.gateway.ConsultarFipeGateway gateway) {
+        return new repasse.phcauto.backend.anuncios.internal.core.usecase.VincularFipeVeiculo(gateway);
+    }
+    @Bean repasse.phcauto.backend.anuncios.internal.core.usecase.ReconciliarFipeVeiculoUseCase reconciliarFipeVeiculo(
+            repasse.phcauto.backend.anuncios.internal.core.usecase.VincularFipeVeiculoUseCase vincular) {
+        return new repasse.phcauto.backend.anuncios.internal.core.usecase.ReconciliarFipeVeiculo(vincular);
+    }
     @Bean CriarAnuncioUseCase criarAnuncioUseCase(CriarAnuncioGateway gateway,
-            PublicarAnuncioCriadoGateway eventos, Clock applicationClock) {
-        return new CriarAnuncio(gateway, eventos, applicationClock);
+            PublicarAnuncioCriadoGateway eventos, Clock applicationClock, repasse.phcauto.backend.anuncios.internal.core.usecase.VincularFipeVeiculoUseCase fipe) {
+        return new CriarAnuncio(gateway, eventos, applicationClock, fipe);
     }
     @Bean AtualizarAnuncioUseCase atualizarAnuncioUseCase(AtualizarAnuncioGateway gateway,
             PublicarAlteracaoAnuncioGateway eventos, Clock applicationClock) {

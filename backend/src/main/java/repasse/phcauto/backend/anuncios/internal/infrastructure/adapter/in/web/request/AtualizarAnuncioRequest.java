@@ -11,8 +11,8 @@ import repasse.phcauto.backend.domain.model.catalogo.TipoPreco;
 /** Campos ausentes permanecem inalterados. O tipo e o anunciante do veículo não podem ser trocados. */
 public record AtualizarAnuncioRequest(
         @Size(min = 1, max = 100) String fabricante,
-        @Size(min = 1, max = 120) String modelo,
-        @Size(max = 180) String versao,
+        @Size(min = 1, max = 250) String modelo,
+        @Size(max = 250) String versao,
         @Positive Integer anoFabricacao,
         @Positive Integer anoModelo,
         @Size(max = 60) String cor,
@@ -33,7 +33,36 @@ public record AtualizarAnuncioRequest(
         @Valid CaminhaoPatchRequest caminhao,
         @Valid CaminhonetePatchRequest caminhonete,
         @Valid CriarAnuncioRequest.BarcoRequest barco,
-        @Valid CriarAnuncioRequest.LinhaAmarelaRequest linhaAmarela) {
+        @Valid CriarAnuncioRequest.LinhaAmarelaRequest linhaAmarela,
+        java.util.UUID fipeReferenciaId, Boolean removerFipe) {
+    public AtualizarAnuncioRequest(
+        String fabricante,
+        String modelo,
+        String versao,
+        Integer anoFabricacao,
+        Integer anoModelo,
+        String cor,
+        String identificadorPublico,
+        repasse.phcauto.backend.domain.model.catalogo.CondicaoVeiculo condicao,
+        String tipoFreio,
+        Boolean historicoLeilao,
+        Boolean historicoSinistro,
+        String titulo,
+        String descricao,
+        TipoPreco tipoPreco,
+        Long precoCentavos,
+        Boolean aceitaTroca,
+        Boolean publicarAgora,
+        EnderecoAnuncioPatchRequest endereco,
+        CarroPatchRequest carro,
+        MotoPatchRequest moto,
+        CaminhaoPatchRequest caminhao,
+        CaminhonetePatchRequest caminhonete,
+        CriarAnuncioRequest.BarcoRequest barco,
+        CriarAnuncioRequest.LinhaAmarelaRequest linhaAmarela) {
+        this(fabricante, modelo, versao, anoFabricacao, anoModelo, cor, identificadorPublico, condicao, tipoFreio, historicoLeilao, historicoSinistro, titulo, descricao, tipoPreco, precoCentavos, aceitaTroca, publicarAgora, endereco, carro, moto, caminhao, caminhonete, barco, linhaAmarela, null, null);
+    }
+
 
     public record CarroPatchRequest(@PositiveOrZero Integer quilometragem, @Size(max=60) String carroceria,
             @Size(max=60) String cambio, @Size(max=60) String combustivel, @Size(max=40) String tracao,
@@ -72,7 +101,7 @@ public record AtualizarAnuncioRequest(
     @jakarta.validation.constraints.AssertTrue(message = "Informe ao menos um campo para atualizar")
     @com.fasterxml.jackson.annotation.JsonIgnore
     public boolean isPossuiAlgumaAlteracao() {
-        return fabricante != null || modelo != null || versao != null || anoFabricacao != null
+        return fipeReferenciaId != null || Boolean.TRUE.equals(removerFipe) || fabricante != null || modelo != null || versao != null || anoFabricacao != null
                 || anoModelo != null || cor != null || identificadorPublico != null || condicao != null
                 || tipoFreio != null || historicoLeilao != null || historicoSinistro != null
                 || titulo != null || descricao != null || tipoPreco != null
