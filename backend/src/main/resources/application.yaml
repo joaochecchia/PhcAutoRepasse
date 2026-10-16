@@ -172,7 +172,8 @@ app:
     sync-delay: ${FIPE_SYNC_DELAY:5000}
     catalog-cache-ttl: ${FIPE_CATALOG_CACHE_TTL:PT10M}
     connect-timeout: ${FIPE_CONNECT_TIMEOUT:PT2S}
-    request-timeout: ${FIPE_REQUEST_TIMEOUT:PT10S}
+    request-timeout: ${FIPE_REQUEST_TIMEOUT:PT6S}
+    request-attempts: ${FIPE_REQUEST_ATTEMPTS:2}
     failure-cooldown: ${FIPE_FAILURE_COOLDOWN:PT10S}
     parallelum-token: ${FIPE_PARALLELUM_TOKEN:}
     daily-limit: ${FIPE_DAILY_LIMIT:900}

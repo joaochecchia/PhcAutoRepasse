@@ -22,6 +22,7 @@ Não se deduz motorização, câmbio ou potência pela descrição. A FIPE forne
 ## Migrations
 
 - V38 comum: `fipe.catalogo`, árvore normalizada de edição → marca → modelo/versão → ano/combustível, com IDs internos UUID e códigos externos separados; índices por escopo, nome e pai.
+- O formulário de anúncio segue marca → ano do modelo → modelo/versão. Além dos escopos marca → modelos → anos, a árvore aceita `{edição}:{tipo}:{marca}:anos` (anos/combustível da marca, pai = marca) e `{edição}:{tipo}:{marca}:ano:{anoId}` (modelos daquele ano/combustível, pai = item da lista de anos). Os combustíveis de um ano são carregados em paralelo e combinados no core (`ConsultarModelosAnoFipe`); o combustível só aparece no nome quando o mesmo modelo existe em mais de um. A consulta de preço aceita a combinação vinda de qualquer um dos dois caminhos. Não exige migration.
 - V39 write: unicidade `(escopo,codigo_externo)`, FK de hierarquia; `fipe.sincronizacoes`, fila persistente exclusiva do write com índice de pendências.
 - V40 comum: modelo/versão do veículo aceitam até 250 caracteres para preservar descrições completas.
 
@@ -34,7 +35,7 @@ Todos os endpoints FIPE exigem autenticação conforme a política existente; mu
 | Método e rota | Finalidade |
 |---|---|
 | GET `/api/v1/fipe/tipos` | Tipos suportados |
-| GET `/api/v1/fipe/catalogo/opcoes` | Edições/marcas/modelos/anos do catálogo; escopo ausente pode ser carregado sob demanda quando autorizado |
+| GET `/api/v1/fipe/catalogo/opcoes` | Edições/marcas/modelos/anos do catálogo; escopo ausente pode ser carregado sob demanda quando autorizado. `anos=true` lista os anos-modelo da marca (sem combustível; 32000 = "Zero km"); `ano=AAAA` lista os modelos da marca naquele ano, somando os combustíveis, cada um com `anoId` |
 | GET `/api/v1/fipe/catalogo/edicao-ativa?tipo=cars` | Última edição que já tem marcas carregadas para o tipo |
 | POST `/api/v1/fipe/consultas` | Resolve referência local; quando autorizado e ausente, consulta e salva o preço sob demanda |
 | GET `/api/v1/fipe/referencias` | Pesquisa referências já persistidas |
@@ -89,7 +90,8 @@ Prefixos: `phcauto:fipe:v1:pagina`, `phcauto:fipe:v1:preco`, geração por escop
 | `FIPE_DAILY_LIMIT` | `900`, intervalo permitido 1–1000 |
 | `FIPE_SYNC_DELAY` | `5000` ms |
 | `FIPE_CONNECT_TIMEOUT` | `PT2S` |
-| `FIPE_REQUEST_TIMEOUT` | `PT10S`, máximo 30s |
+| `FIPE_REQUEST_TIMEOUT` | `PT6S` por tentativa, máximo 30s |
+| `FIPE_REQUEST_ATTEMPTS` | `2`; timeout ou falha de rede repete o GET na hora com nova conexão, consumindo cota. Tentativas × timeout deve ficar abaixo dos 15s do axios no frontend |
 | `FIPE_FAILURE_COOLDOWN` | `PT10S`; pausa compartilhada após timeout/falha de rede (HTTP 5xx usa 60s e 429 respeita Retry-After) |
 | `FIPE_CATALOG_CACHE_TTL` | `PT10M` |
 | `REDIS_MAXMEMORY` | `256mb` no Compose |

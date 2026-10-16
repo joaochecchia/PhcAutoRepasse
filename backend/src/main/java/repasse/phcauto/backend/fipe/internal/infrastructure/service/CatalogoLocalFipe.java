@@ -27,6 +27,8 @@ public class CatalogoLocalFipe implements OpcoesFipeGateway {
     @Value("${app.fipe.models-cache-ttl:PT1H}") private Duration modelosTtl=Duration.ofHours(1);
     @Value("${app.fipe.years-cache-ttl:PT1H}") private Duration anosTtl=Duration.ofHours(1);
     private final java.util.concurrent.ConcurrentHashMap<String,java.util.concurrent.CompletableFuture<PaginaOpcoesFipe>> pendentes=new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.concurrent.ExecutorService paralelo=java.util.concurrent.Executors.newFixedThreadPool(4,r->{
+        var t=new Thread(r,"fipe-catalogo");t.setDaemon(true);return t;});
     public CatalogoLocalFipe(JpaOpcoesFipeGateway banco,StringRedisTemplate redis,ObjectMapper json,MeterRegistry metrics,
             @Value("${app.fipe.catalog-cache-ttl:PT10M}") Duration ttl) {
         this.banco=banco;this.redis=redis;this.json=json;this.metrics=metrics;this.ttl=ttl;
@@ -62,29 +64,8 @@ public class CatalogoLocalFipe implements OpcoesFipeGateway {
                     catch(RuntimeException e){break;}
                 }
             }
+            boolean pendente=garantirCarregado(c);
             var lista=banco.listar(c,c.pagina(),c.tamanho());
-            boolean pendente=false;
-            // Sob demanda: o escopo inteiro (todas as marcas, modelos ou anos) vem do fornecedor uma única vez
-            // por edição e fica no PostgreSQL; depois disso nenhuma consulta externa é feita para ele.
-            if(persistenciaAutorizada && fornecedor!=null && !banco.escopoCarregado(c)) {
-                try {
-                    var recebidas=fornecedor.opcoes(new ConsultaOpcoesFipe(c.tipo(),c.marcaId(),c.modeloId(),c.referencia(),"",0,50));
-                    if(recebidas.size()>10000 || recebidas.stream().map(OpcaoFipe::codigo).distinct().count()!=recebidas.size())
-                        throw new IllegalStateException("Catálogo FIPE externo inválido");
-                    for(int i=0;i<recebidas.size();i+=100)
-                        banco.salvar(c,recebidas.subList(i,Math.min(i+100,recebidas.size())));
-                    banco.marcarCarregado(c,recebidas.size());
-                    invalidar(c);
-                    lista=banco.listar(c,c.pagina(),c.tamanho());
-                    metrics.counter("phcauto.fipe.catalog.external","resultado","sucesso").increment();
-                } catch(RuntimeException erro) {
-                    pendente=true;
-                    org.slf4j.LoggerFactory.getLogger(getClass()).warn("event=fipe_catalog_miss_external_unavailable scope={} reason={}",
-                        EscopoCatalogoFipe.chave(c),erro instanceof repasse.phcauto.backend.fipe.internal.core.exception.FipeException f?f.motivo():erro.getClass().getSimpleName());
-                    metrics.counter("phcauto.fipe.catalog.external","resultado","falha").increment();
-                    agendar(c);
-                }
-            }
             boolean proxima=lista.size()==c.tamanho()&&!banco.listar(c,(c.pagina()+1)*c.tamanho(),1).isEmpty();
             var pagina=new PaginaOpcoesFipe(lista,c.pagina(),c.tamanho(),proxima,pendente);
             Duration validade=c.tipo()==null?ttl:c.marcaId()==null?marcasTtl:c.modeloId()==null?modelosTtl:anosTtl;
@@ -94,11 +75,47 @@ public class CatalogoLocalFipe implements OpcoesFipeGateway {
         } catch(RuntimeException e){futuro.completeExceptionally(e);throw e;}
         finally {pendentes.remove(chave,futuro);}
     }
+    /** Níveis independentes (ex.: os combustíveis de um ano) são garantidos em paralelo para não somar os tempos do fornecedor. */
+    @Override public List<CargaOpcoesFipe> carregar(List<ConsultaOpcoesFipe> consultas) {
+        if(consultas.size()<=1)return consultas.stream().map(this::cargaCompleta).toList();
+        var futuros=consultas.stream().map(c->java.util.concurrent.CompletableFuture.supplyAsync(()->cargaCompleta(c),paralelo)).toList();
+        try {return futuros.stream().map(java.util.concurrent.CompletableFuture::join).toList();}
+        catch(java.util.concurrent.CompletionException e){throw e.getCause() instanceof RuntimeException r?r:e;}
+    }
+    private CargaOpcoesFipe cargaCompleta(ConsultaOpcoesFipe c) {
+        boolean pendente=garantirCarregado(c);
+        return new CargaOpcoesFipe(banco.listar(c,0,10000),pendente);
+    }
+    /**
+     * Sob demanda: o escopo inteiro (todas as marcas, modelos ou anos) vem do fornecedor uma única vez por edição e fica
+     * no PostgreSQL; depois disso nenhuma consulta externa é feita para ele. Devolve true quando ficou pendente.
+     */
+    private boolean garantirCarregado(ConsultaOpcoesFipe c) {
+        if(!persistenciaAutorizada || fornecedor==null || banco.escopoCarregado(c))return false;
+        try {
+            var recebidas=fornecedor.opcoes(new ConsultaOpcoesFipe(c.tipo(),c.marcaId(),c.modeloId(),c.referencia(),"",0,50,c.anoId(),c.anosDaMarca()));
+            if(recebidas.size()>10000 || recebidas.stream().map(OpcaoFipe::codigo).distinct().count()!=recebidas.size())
+                throw new IllegalStateException("Catálogo FIPE externo inválido");
+            for(int i=0;i<recebidas.size();i+=100)
+                banco.salvar(c,recebidas.subList(i,Math.min(i+100,recebidas.size())));
+            banco.marcarCarregado(c,recebidas.size());
+            invalidar(c);
+            metrics.counter("phcauto.fipe.catalog.external","resultado","sucesso").increment();
+            return false;
+        } catch(RuntimeException erro) {
+            org.slf4j.LoggerFactory.getLogger(getClass()).warn("event=fipe_catalog_miss_external_unavailable scope={} reason={}",
+                EscopoCatalogoFipe.chave(c),erro instanceof repasse.phcauto.backend.fipe.internal.core.exception.FipeException f?f.motivo():erro.getClass().getSimpleName());
+            metrics.counter("phcauto.fipe.catalog.external","resultado","falha").increment();
+            agendar(c);
+            return true;
+        }
+    }
+    @jakarta.annotation.PreDestroy void encerrar(){paralelo.shutdownNow();}
     /** A fila conclui a carga em segundo plano quando o fornecedor falha durante a consulta do usuário. */
     private void agendar(ConsultaOpcoesFipe c) {
         if(fila==null)return;
         try {
-            var comando=new SincronizarFipeCommand(c.tipo(),c.marcaId(),c.modeloId(),null,c.referencia(),null);
+            var comando=SincronizarFipeCommand.opcoes(c);
             fila.enviar(comando.chave(),json.writeValueAsString(comando));
         } catch(RuntimeException e) {
             org.slf4j.LoggerFactory.getLogger(getClass()).warn("event=fipe_catalog_enqueue_failed scope={}",EscopoCatalogoFipe.chave(c));

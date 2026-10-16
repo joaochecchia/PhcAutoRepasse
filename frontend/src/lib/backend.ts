@@ -50,6 +50,8 @@ export type FipeOption = {
   codigo: string;
   nome: string;
   mesReferencia: string | null;
+  /** Ano/combustível FIPE (ex.: 2020-5); só nos modelos listados por ano, usado para consultar o preço. */
+  anoId?: string | null;
 };
 
 export type FipeReference = {
@@ -313,6 +315,10 @@ export async function getAdFormCatalog() {
 export type FipeOptionsQuery = {
   tipo?: "cars" | "motorcycles" | "trucks";
   marcaId?: string; modeloId?: string; referencia?: number; termo?: string; pagina?: number;
+  /** true: anos-modelo da marca. */
+  anos?: boolean;
+  /** Modelos da marca neste ano-modelo (32000 = zero km), somando os combustíveis. */
+  ano?: number;
 };
 const fipePages = new Map<string, { expires: number; page: FipeOptionsResponse }>();
 export async function getFipePage(params: FipeOptionsQuery, signal?: AbortSignal) {

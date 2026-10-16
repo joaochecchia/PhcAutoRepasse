@@ -106,8 +106,11 @@ export function AnnouncePage({
       ? { ...prev, tipoVeiculo: value, fabricante: "", modelo: "", versao: "", anoModelo: "", [`${prev.tipoVeiculo}.combustivel`]: "", [`${value}.combustivel`]: "" }
       : key === "fabricante"
         ? { ...prev, fabricante: value, modelo: "", versao: "", anoModelo: "", [`${prev.tipoVeiculo}.combustivel`]: "" }
+      : key === "anoModelo" && prev.tipoVeiculo in fipeVehicleTypes
+        // FIPE: marca → ano do modelo → modelo/versão; mudar o ano invalida o modelo escolhido.
+        ? { ...prev, anoModelo: value, modelo: "", versao: "", [`${prev.tipoVeiculo}.combustivel`]: "" }
       : key === "modelo" && prev.tipoVeiculo in fipeVehicleTypes
-        ? { ...prev, modelo: value, versao: value, anoModelo: "", [`${prev.tipoVeiculo}.combustivel`]: "" }
+        ? { ...prev, modelo: value, versao: value, [`${prev.tipoVeiculo}.combustivel`]: "" }
         : { ...prev, [key]: value });
   };
   const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")

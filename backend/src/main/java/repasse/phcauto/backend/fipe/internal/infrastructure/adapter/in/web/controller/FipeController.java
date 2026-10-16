@@ -9,6 +9,7 @@ import repasse.phcauto.backend.fipe.internal.core.exception.FipeException;
 import repasse.phcauto.backend.fipe.internal.core.usecase.*;
 import repasse.phcauto.backend.fipe.internal.infrastructure.adapter.in.web.request.*;
 import repasse.phcauto.backend.fipe.internal.infrastructure.adapter.in.web.response.*;
+import repasse.phcauto.backend.fipe.internal.core.domain.ConsultaModelosAnoFipe;
 import repasse.phcauto.backend.fipe.internal.core.domain.ConsultaOpcoesFipe;
 @RestController @RequestMapping("/api/v1/fipe")
 public class FipeController {
@@ -18,8 +19,14 @@ public class FipeController {
     private final ConsultarOpcoesFipeUseCase fornecedor;
     private final BuscarSugestoesFipeUseCase sugestoes;
     private final BuscarEdicaoAtivaFipeUseCase edicaoAtiva;
+    private final ConsultarAnosMarcaFipeUseCase anosMarca;
+    private final ConsultarModelosAnoFipeUseCase modelosAno;
     public FipeController(PesquisarFipeUseCase pesquisar,ResolverReferenciaFipeUseCase resolver,FipeFacade facade,
-            ConsultarOpcoesFipeUseCase fornecedor,BuscarSugestoesFipeUseCase sugestoes,BuscarEdicaoAtivaFipeUseCase edicaoAtiva){this.pesquisar=pesquisar;this.resolver=resolver;this.facade=facade;this.fornecedor=fornecedor;this.sugestoes=sugestoes;this.edicaoAtiva=edicaoAtiva;}
+            ConsultarOpcoesFipeUseCase fornecedor,BuscarSugestoesFipeUseCase sugestoes,BuscarEdicaoAtivaFipeUseCase edicaoAtiva,
+            ConsultarAnosMarcaFipeUseCase anosMarca,ConsultarModelosAnoFipeUseCase modelosAno){
+        this.pesquisar=pesquisar;this.resolver=resolver;this.facade=facade;this.fornecedor=fornecedor;this.sugestoes=sugestoes;this.edicaoAtiva=edicaoAtiva;
+        this.anosMarca=anosMarca;this.modelosAno=modelosAno;
+    }
     @GetMapping("/catalogo/edicao-ativa") public OpcoesFipeResponse.OpcaoResponse edicaoAtiva(@RequestParam String tipo){
         var o=edicaoAtiva.execute(tipo);return new OpcoesFipeResponse.OpcaoResponse(o.codigo(),o.nome(),o.mesReferencia());
     }
@@ -46,9 +53,14 @@ public class FipeController {
     public OpcoesFipeResponse opcoes(@RequestParam(required=false)String tipo,
             @RequestParam(required=false)String marcaId,@RequestParam(required=false)String modeloId,
             @RequestParam(required=false)Integer referencia,@RequestParam(defaultValue="")String termo,
-            @RequestParam(defaultValue="0")int pagina,@RequestParam(defaultValue="50")int tamanho){
-        var resultado=fornecedor.execute(new ConsultaOpcoesFipe(tipo,marcaId,modeloId,referencia,termo,pagina,tamanho));
-        return new OpcoesFipeResponse(resultado.opcoes().stream().map(o->new OpcoesFipeResponse.OpcaoResponse(o.codigo(),o.nome(),o.mesReferencia())).toList(),
-                resultado.pagina(),resultado.tamanho(),resultado.temProximaPagina(),resultado.catalogoPendente());
+            @RequestParam(defaultValue="0")int pagina,@RequestParam(defaultValue="50")int tamanho,
+            @RequestParam(defaultValue="false")boolean anos,@RequestParam(required=false)Integer ano){
+        // anos=true: anos-modelo da marca. ano: modelos da marca naquele ano (todos os combustíveis).
+        if(ano!=null) {
+            if(anos || modeloId!=null)throw new FipeException(FipeException.Motivo.INVALIDA,"Filtros do catálogo externo inválidos");
+            return OpcoesFipeResponse.de(modelosAno.execute(new ConsultaModelosAnoFipe(tipo,marcaId,ano,referencia,termo,pagina,tamanho)));
+        }
+        var consulta=new ConsultaOpcoesFipe(tipo,marcaId,modeloId,referencia,termo,pagina,tamanho,null,anos);
+        return OpcoesFipeResponse.de(anos?anosMarca.execute(consulta):fornecedor.execute(consulta));
     }
 }

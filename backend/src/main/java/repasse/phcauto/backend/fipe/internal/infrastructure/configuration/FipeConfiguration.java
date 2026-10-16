@@ -6,6 +6,8 @@ import repasse.phcauto.backend.fipe.internal.core.usecase.*;
 @Configuration(proxyBeanMethods=false)
 public class FipeConfiguration {
     @Bean ConsultarOpcoesFipeUseCase consultarOpcoesFipe(OpcoesFipeGateway gateway){return new ConsultarOpcoesFipe(gateway);}
+    @Bean ConsultarAnosMarcaFipeUseCase consultarAnosMarcaFipe(OpcoesFipeGateway gateway){return new ConsultarAnosMarcaFipe(gateway);}
+    @Bean ConsultarModelosAnoFipeUseCase consultarModelosAnoFipe(OpcoesFipeGateway gateway){return new ConsultarModelosAnoFipe(gateway);}
     @Bean BuscarEdicaoAtivaFipeUseCase buscarEdicaoAtivaFipe(EdicaoAtivaFipeGateway gateway){return new BuscarEdicaoAtivaFipeUseCase(gateway);}
     @Bean BuscarSugestoesFipeUseCase buscarSugestoesFipe(OpcoesFipeGateway gateway){return new BuscarSugestoesFipe(gateway);}
     @Bean ResolverReferenciaFipeUseCase resolverReferenciaFipe(CatalogoFipeGateway catalogo,ReferenciaSobDemandaFipeGateway sobDemanda){return new ResolverReferenciaFipe(catalogo,sobDemanda);}

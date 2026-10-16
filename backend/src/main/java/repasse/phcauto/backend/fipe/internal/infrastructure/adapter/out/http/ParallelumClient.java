@@ -42,6 +42,7 @@ public class ParallelumClient implements FornecedorFipeGateway, repasse.phcauto.
     private final int limite;
     private final HttpClient http;
     private Duration requestTimeout=Duration.ofSeconds(5);
+    @Value("${app.fipe.request-attempts:2}") private int tentativas=2;
     // Timeout ou falha de rede costuma ser lentidão momentânea: pausa curta para não travar todo o catálogo.
     @Value("${app.fipe.failure-cooldown:PT10S}") private Duration cooldownFalha=Duration.ofSeconds(10);
     @org.springframework.beans.factory.annotation.Autowired
@@ -49,7 +50,7 @@ public class ParallelumClient implements FornecedorFipeGateway, repasse.phcauto.
             @Value("${app.fipe.parallelum-token:}")String token,
             @Value("${app.fipe.daily-limit:900}")int limite,
             @Value("${app.fipe.connect-timeout:PT2S}")Duration connectTimeout,
-            @Value("${app.fipe.request-timeout:PT10S}")Duration requestTimeout) {
+            @Value("${app.fipe.request-timeout:PT6S}")Duration requestTimeout) {
         // HTTP/1.1: no HTTP/2 todas as consultas dividem uma conexão; se ela trava após um timeout, o cliente
         // continua reutilizando-a e toda chamada externa falha até o restart. No HTTP/1.1 a conexão com timeout é descartada.
         this(redis,json,metrics,clock,token,limite,HttpClient.newBuilder().connectTimeout(connectTimeout).version(HttpClient.Version.HTTP_1_1)
@@ -84,7 +85,7 @@ public class ParallelumClient implements FornecedorFipeGateway, repasse.phcauto.
                 n.path("modelYear").asInt(),n.path("fuel").asText(),mes,centavos);
     }
     @Override public List<OpcaoFipe> opcoes(ConsultaOpcoesFipe c) {
-        var resultado=opcoesJson(c.tipo(),c.marcaId(),c.modeloId(),c.referencia());
+        var resultado=opcoesJson(c);
         if(!resultado.isArray())throw new FipeException(INDISPONIVEL,"Catálogo externo inválido");
         var opcoes=new ArrayList<OpcaoFipe>();
         for(var n:resultado) {
@@ -103,13 +104,15 @@ public class ParallelumClient implements FornecedorFipeGateway, repasse.phcauto.
         }
         throw new IllegalArgumentException("Mês FIPE inválido");
     }
-    private JsonNode opcoesJson(String tipo,String marca,String modelo,Integer referencia) {
-        if(tipo==null) return obter("references");
-        if(!Set.of("cars","motorcycles","trucks").contains(tipo) || referencia==null || referencia<1
-                || (marca!=null&&!marca.matches("[0-9]{1,10}")) || (modelo!=null&&!modelo.matches("[0-9]{1,10}"))
-                || (modelo!=null&&marca==null))throw new FipeException(INVALIDA,"Filtros do catálogo externo inválidos");
-        String caminho=tipo+"/brands"+(marca==null?"":"/"+marca+"/models"+(modelo==null?"":"/"+modelo+"/years"));
-        return obter(caminho+"?reference="+referencia);
+    private JsonNode opcoesJson(ConsultaOpcoesFipe c) {
+        // ConsultaOpcoesFipe já validou tipo, códigos numéricos e a combinação dos filtros.
+        if(c.tipo()==null) return obter("references");
+        String marca=c.tipo()+"/brands"+(c.marcaId()==null?"":"/"+c.marcaId());
+        String caminho=c.marcaId()==null?marca
+            :c.anosDaMarca()?marca+"/years"
+            :c.anoId()!=null?marca+"/years/"+c.anoId()+"/models"
+            :marca+"/models"+(c.modeloId()==null?"":"/"+c.modeloId()+"/years");
+        return obter(caminho+"?reference="+c.referencia());
     }
     private JsonNode obter(String caminho) {
         if(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive())
@@ -138,9 +141,22 @@ public class ParallelumClient implements FornecedorFipeGateway, repasse.phcauto.
             if(!Long.valueOf(1).equals(permitido))throw new FipeException(LIMITE,"Cota diária FIPE atingida; use o catálogo local");
             var request=HttpRequest.newBuilder(URI.create("https://fipe.parallelum.com.br/api/v2/"+caminho))
                 .timeout(requestTimeout).header("X-Subscription-Token",token).header("Accept","application/json").GET().build();
-            var inicio=System.nanoTime();
-            var resposta=http.send(request,info->new RespostaLimitadaFipe(2_000_000));
-            metrics.timer("phcauto.fipe.http.duration").record(System.nanoTime()-inicio,java.util.concurrent.TimeUnit.NANOSECONDS);
+            HttpResponse<byte[]> resposta;
+            for(int tentativa=1;;tentativa++) {
+                var inicio=System.nanoTime();
+                try {
+                    resposta=http.send(request,info->new RespostaLimitadaFipe(2_000_000));
+                    metrics.timer("phcauto.fipe.http.duration").record(System.nanoTime()-inicio,java.util.concurrent.TimeUnit.NANOSECONDS);
+                    break;
+                } catch(java.io.IOException e) {
+                    // O fornecedor ocasionalmente deixa uma requisição sem resposta enquanto a seguinte responde em
+                    // milissegundos: repete o GET de imediato, consumindo cota, em vez de devolver o catálogo como pendente.
+                    if(tentativa>=tentativas || !Long.valueOf(1).equals(redis.execute(COTA,List.of(prefix+"cota"),
+                            Long.toString(clock.millis()),Integer.toString(limite),dono+":"+(tentativa+1))))throw e;
+                    LOG.info("event=fipe_external_retry attempt={} error={} path={}",tentativa+1,e.getClass().getSimpleName(),caminho.split("\\?")[0]);
+                    metrics.counter("phcauto.fipe.external","resultado","nova_tentativa").increment();
+                }
+            }
             int status=resposta.statusCode();
             metrics.counter("phcauto.fipe.external","resultado",Integer.toString(status)).increment();
             if(status==404){redis.opsForValue().set(cache,"404",Duration.ofMinutes(30));throw new FipeException(NAO_ENCONTRADA,"Referência não encontrada no fornecedor");}

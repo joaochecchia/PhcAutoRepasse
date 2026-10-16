@@ -1558,6 +1558,10 @@
   line-height: 1.55;
 }
 
+.fipe-model-field {
+  grid-column: 1 / -1;
+}
+
 .fipe-integrated-field small {
   display: block;
   margin-top: 5px;

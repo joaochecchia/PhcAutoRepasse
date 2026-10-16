@@ -4,11 +4,15 @@ import { apiErrorMessage, getFipeActiveEdition, getFipePage, resolveFipeReferenc
 export const fipeVehicleTypes = { CARRO: "cars", CAMINHONETE: "cars", MOTO: "motorcycles", CAMINHAO: "trucks" } as const;
 
 type Choice = FipeOption | undefined;
+// While the backend reports the catalog as pending it keeps loading it in the background; poll for ~1 minute.
+const PENDING_RETRY_MS = 6000;
+const MAX_PENDING_RETRIES = 10;
+const ZERO_KM = "32000";
 
-function CatalogInput({ label, value, query, onPick, onType, disabled, placeholder, required = true }: {
+function CatalogInput({ label, value, query, onPick, onType, disabled, placeholder, hint, className, numeric, required = true }: {
   label: string; value: string; query: FipeOptionsQuery | null;
   onPick: (choice: Choice) => void; onType: (value: string) => void;
-  disabled?: boolean; placeholder?: string; required?: boolean;
+  disabled?: boolean; placeholder?: string; hint?: string; className?: string; numeric?: boolean; required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<FipeOption[]>([]);
@@ -20,9 +24,8 @@ function CatalogInput({ label, value, query, onPick, onType, disabled, placehold
   const queryKey = JSON.stringify(query);
   useEffect(() => { setItems([]); setPending(false); autoRetries.current = 0; }, [queryKey]);
   useEffect(() => {
-    // The backend retries the provider in the background after a short cooldown; keep checking for ~1 minute.
-    if (!pending || !open || autoRetries.current >= 8) return;
-    const timer = window.setTimeout(() => { autoRetries.current += 1; setRetry((n) => n + 1); }, 8000);
+    if (!pending || !open || autoRetries.current >= MAX_PENDING_RETRIES) return;
+    const timer = window.setTimeout(() => { autoRetries.current += 1; setRetry((n) => n + 1); }, PENDING_RETRY_MS);
     return () => window.clearTimeout(timer);
   }, [pending, open, retry]);
   useEffect(() => {
@@ -38,26 +41,27 @@ function CatalogInput({ label, value, query, onPick, onType, disabled, placehold
     }, value ? 250 : 0);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [open, queryKey, value, disabled, retry]);
-  return <label className="fipe-integrated-field">
+  return <label className={`fipe-integrated-field${className ? ` ${className}` : ""}`}>
     {label} {required && <span className="required-mark" aria-hidden="true">*</span>}
     <div className="field-autocomplete">
       <input required={required} value={value} disabled={disabled} maxLength={100} autoComplete="off"
-        placeholder={placeholder || `Obrigatório — ${label.toLowerCase()}`}
+        placeholder={placeholder || `Obrigatório — ${label.toLowerCase()}`} inputMode={numeric ? "numeric" : undefined}
         role="combobox" aria-expanded={open} aria-autocomplete="list"
         onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
         onChange={(event) => { onType(event.target.value); setOpen(true); }} />
       {open && items.length > 0 && <div className="field-suggestions" role="listbox" aria-label={`Sugestões de ${label}`}>
-        {items.map((item) => <button key={item.codigo} type="button" role="option" aria-selected={item.nome === value}
+        {items.map((item) => <button key={`${item.codigo}:${item.anoId ?? ""}`} type="button" role="option" aria-selected={item.nome === value}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => { onPick(item); setOpen(false); }}>{item.nome}</button>)}
       </div>}
     </div>
-    {loading && <small role="status">Carregando sugestões…</small>}
+    {(loading || (pending && autoRetries.current < MAX_PENDING_RETRIES)) && open && items.length === 0
+      ? <small role="status">Buscando na tabela FIPE… Se preferir, digite manualmente.</small>
+      : loading && <small role="status">Carregando sugestões…</small>}
     {open && !loading && !error && query && items.length === 0 && (pending
-      ? <small role="status">{autoRetries.current < 8
-        ? "Fornecedor FIPE lento no momento; tentando novamente automaticamente. Você também pode digitar manualmente."
-        : "Fornecedor FIPE indisponível no momento. Digite manualmente ou tente novamente."} <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => setRetry((n) => n + 1)}>Tentar novamente</button></small>
+      ? autoRetries.current >= MAX_PENDING_RETRIES && <small role="status">Tabela FIPE indisponível no momento. Digite manualmente ou <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { autoRetries.current = 0; setRetry((n) => n + 1); }}>tente novamente</button>.</small>
       : <small>Nenhuma opção FIPE encontrada. Você pode digitar manualmente.</small>)}
+    {open && hint && !query && <small>{hint}</small>}
     {error && <small role="alert">{error} <button type="button" onClick={() => setRetry((n) => n + 1)}>Tentar novamente</button></small>}
   </label>;
 }
@@ -79,7 +83,8 @@ export function FipeVehicleFields({ vehicleType, fabricante, modelo, anoModelo, 
 }) {
   const [month, setMonth] = useState<Choice>();
   const [brand, setBrand] = useState<Choice>();
-  const [model, setModel] = useState<Choice>();
+  // Ano-modelo escolhido ou digitado (32000 = zero km); os modelos sugeridos dependem de marca + ano.
+  const [year, setYear] = useState<Choice>();
   const [error, setError] = useState("");
   const [editionLoading, setEditionLoading] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -99,13 +104,20 @@ export function FipeVehicleFields({ vehicleType, fabricante, modelo, anoModelo, 
   const clear = () => { pending.current?.abort(); setLoading(false); setError(""); onClear(); };
   const edition = month ? Number(month.codigo) : undefined;
   const query = { tipo: fipeVehicleTypes[vehicleType], referencia: edition };
-  async function selectYear(choice: Choice) {
+  const zeroKm = year?.codigo === ZERO_KM;
+  function pickYear(choice: Choice) {
+    clear(); setYear(choice);
+    // Zero km não tem ano civil na FIPE: o campo mostra "Zero km" e o ano do modelo fica para o usuário.
+    onChange("anoModelo", !choice || choice.codigo === ZERO_KM ? "" : choice.codigo);
+  }
+  async function selectModel(choice: Choice) {
     clear();
-    if (!choice || !brand || !model || !month?.mesReferencia) return;
+    onChange("modelo", choice?.nome.split(" — ")[0] || "");
+    if (!choice?.anoId || !brand || !month?.mesReferencia) return;
     const controller = new AbortController(); pending.current = controller; setLoading(true);
     try {
       const result = await resolveFipeReference({ tipo: fipeVehicleTypes[vehicleType], marcaId: brand.codigo,
-        modeloId: model.codigo, anoId: choice.codigo, referencia: Number(month.codigo), mesReferencia: month.mesReferencia }, controller.signal);
+        modeloId: choice.codigo, anoId: choice.anoId, referencia: Number(month.codigo), mesReferencia: month.mesReferencia }, controller.signal);
       if (!controller.signal.aborted) onResolved(result);
     } catch (reason) { if (!controller.signal.aborted) setError(apiErrorMessage(reason, "Referência indisponível. Continue o cadastro manualmente.")); }
     finally { if (!controller.signal.aborted) setLoading(false); }
@@ -113,17 +125,22 @@ export function FipeVehicleFields({ vehicleType, fabricante, modelo, anoModelo, 
   return <>
     <div className="page-form-grid">
       <CatalogInput label="Marca / fabricante" value={fabricante} query={edition ? query : null}
-        onType={(value) => { clear(); setBrand(undefined); setModel(undefined); onChange("fabricante", value); }}
-        onPick={(choice) => { clear(); setBrand(choice); setModel(undefined); onChange("fabricante", choice?.nome || ""); }} />
-      <CatalogInput label="Modelo / versão" value={modelo} query={brand ? { ...query, marcaId: brand.codigo } : null}
-        placeholder="Obrigatório — selecione ou digite modelo e versão"
-        onType={(value) => { clear(); setModel(undefined); onChange("modelo", value); }}
-        onPick={(choice) => { clear(); setModel(choice); onChange("modelo", choice?.nome || ""); }} />
-      <CatalogInput label="Ano do modelo" value={anoModelo}
-        query={model ? { ...query, marcaId: brand?.codigo, modeloId: model.codigo } : null}
-        placeholder="Obrigatório — selecione ano/combustível ou digite o ano"
-        onType={(value) => { clear(); onChange("anoModelo", value.replace(/[^0-9]/g, "")); }}
-        onPick={selectYear} />
+        onType={(value) => { clear(); setBrand(undefined); setYear(undefined); onChange("fabricante", value); }}
+        onPick={(choice) => { clear(); setBrand(choice); setYear(undefined); onChange("fabricante", choice?.nome || ""); }} />
+      <CatalogInput label="Ano do modelo" value={zeroKm ? "Zero km" : anoModelo} numeric={!zeroKm}
+        query={brand ? { ...query, marcaId: brand.codigo, anos: true } : null}
+        placeholder="Obrigatório — selecione ou digite o ano" hint="Escolha a marca para ver os anos disponíveis."
+        onType={(value) => {
+          const digits = value.replace(/[^0-9]/g, "").slice(0, 4);
+          clear(); setYear(digits.length === 4 ? { codigo: digits, nome: digits, mesReferencia: null } : undefined);
+          onChange("anoModelo", digits);
+        }}
+        onPick={pickYear} />
+      <CatalogInput label="Modelo / versão" value={modelo} className="fipe-model-field"
+        query={brand && year ? { ...query, marcaId: brand.codigo, ano: Number(year.codigo) } : null}
+        placeholder="Obrigatório — selecione ou digite modelo e versão" hint="Escolha a marca e o ano para ver os modelos daquele ano."
+        onType={(value) => { clear(); onChange("modelo", value); }}
+        onPick={selectModel} />
     </div>
     {loading && <p role="status">Consultando referência FIPE local…</p>}
     {!editionLoading && !month && !error && <p className="inline-notice">O catálogo FIPE ainda não está carregado. Preencha os dados manualmente.</p>}

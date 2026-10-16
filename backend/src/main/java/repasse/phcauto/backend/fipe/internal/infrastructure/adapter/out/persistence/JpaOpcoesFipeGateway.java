@@ -35,9 +35,12 @@ public class JpaOpcoesFipeGateway implements repasse.phcauto.backend.fipe.intern
             on conflict(escopo) do update set quantidade=excluded.quantidade,carregado_em=excluded.carregado_em
             """).setParameter("escopo",EscopoCatalogoFipe.chave(c)).setParameter("quantidade",quantidade).executeUpdate();
     }
+    /** A combinação precisa ter vindo do catálogo: ano listado para o modelo, ou modelo listado para a marca naquele ano. */
     public void validar(ConsultaExterna c) {
-        var consulta=new ConsultaOpcoesFipe(c.tipo(),c.marcaId(),c.modeloId(),c.referencia(),"",0,50);
-        if(repository.findByEscopoAndCodigoExterno(EscopoCatalogoFipe.chave(consulta),c.anoId()).isEmpty()
+        var anosDoModelo=new ConsultaOpcoesFipe(c.tipo(),c.marcaId(),c.modeloId(),c.referencia(),"",0,50);
+        var modelosDoAno=ConsultaOpcoesFipe.modelosDoAno(c.tipo(),c.marcaId(),c.anoId(),c.referencia());
+        if((repository.findByEscopoAndCodigoExterno(EscopoCatalogoFipe.chave(anosDoModelo),c.anoId()).isEmpty()
+                && repository.findByEscopoAndCodigoExterno(EscopoCatalogoFipe.chave(modelosDoAno),c.modeloId()).isEmpty())
             || repository.findByEscopoAndCodigoExterno("references",Integer.toString(c.referencia()))
                 .map(e->!c.mesReferencia().equals(e.opcao().mesReferencia())).orElse(true))
             throw new FipeException(FipeException.Motivo.INVALIDA,"Combinação de marca, modelo, ano e mês ausente no catálogo local");

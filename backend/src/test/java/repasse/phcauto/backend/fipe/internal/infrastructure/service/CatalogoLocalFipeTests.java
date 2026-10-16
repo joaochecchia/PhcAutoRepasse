@@ -48,7 +48,7 @@ class CatalogoLocalFipeTests {
         var fornecedor=mock(ParallelumClient.class);
         var completas=List.of(new OpcaoFipe("25","Honda"),new OpcaoFipe("31","Kia Motors"));
         when(fornecedor.opcoes(any())).thenReturn(completas);
-        when(banco.listar(consulta,0,50)).thenReturn(marcas,completas);
+        when(banco.listar(consulta,0,50)).thenReturn(completas);
         ReflectionTestUtils.setField(service,"fornecedor",fornecedor);
         ReflectionTestUtils.setField(service,"persistenciaAutorizada",true);
         var pagina=service.pagina(consulta);

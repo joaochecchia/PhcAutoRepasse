@@ -8,4 +8,8 @@ public interface OpcoesFipeGateway {
         int inicio=Math.min(c.pagina()*c.tamanho(),filtradas.size()),fim=Math.min(inicio+c.tamanho(),filtradas.size());
         return new PaginaOpcoesFipe(filtradas.subList(inicio,fim),c.pagina(),c.tamanho(),fim<filtradas.size());
     }
+    /** Garante cada nível completo (carregando-o quando preciso) e devolve todas as suas opções, na ordem das consultas. */
+    default List<CargaOpcoesFipe> carregar(List<ConsultaOpcoesFipe> consultas) {
+        return consultas.stream().map(c->new CargaOpcoesFipe(opcoes(c),false)).toList();
+    }
 }

@@ -51,6 +51,31 @@ class FipeHttpResilienceTests {
         verify(valores).set(endsWith("cooldown"),eq("1"),eq(Duration.ofSeconds(10)));
         verify(valores,never()).set(anyString(),eq("404"),any(Duration.class));
     }
+    @Test @SuppressWarnings("unchecked") void requisicaoSemRespostaRepeteNaHoraSemCooldown()throws Exception{
+        HttpResponse<byte[]> response=mock(HttpResponse.class);
+        when(response.statusCode()).thenReturn(200);
+        when(response.body()).thenReturn("[{\"code\":\"29\",\"name\":\"Jeep\"}]".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        when(http.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class)))
+            .thenThrow(new HttpTimeoutException("timeout")).thenReturn(response);
+        var opcoes=client.opcoes(new ConsultaOpcoesFipe("cars",null,null,338,"",0,50));
+        assertThat(opcoes).hasSize(1);
+        verify(http,times(2)).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+        verify(redis,times(2)).execute(any(RedisScript.class),anyList(),any(),any(),any());
+        verify(valores,never()).set(endsWith("cooldown"),anyString(),any(Duration.class));
+    }
+    @Test @SuppressWarnings("unchecked") void niveisPorAnoUsamOsEnderecosDeAnosDaMarca()throws Exception{
+        HttpResponse<byte[]> response=mock(HttpResponse.class);
+        when(response.statusCode()).thenReturn(200);
+        when(response.body()).thenReturn("[{\"code\":\"2020-5\",\"name\":\"2020 Flex\"}]".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        when(http.send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class))).thenReturn(response);
+        client.opcoes(ConsultaOpcoesFipe.anosDaMarca("cars","21",338));
+        client.opcoes(ConsultaOpcoesFipe.modelosDoAno("cars","21","2020-5",338));
+        var pedidos=org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+        verify(http,times(2)).send(pedidos.capture(),any(HttpResponse.BodyHandler.class));
+        assertThat(pedidos.getAllValues()).extracting(r->r.uri().toString()).containsExactly(
+            "https://fipe.parallelum.com.br/api/v2/cars/brands/21/years?reference=338",
+            "https://fipe.parallelum.com.br/api/v2/cars/brands/21/years/2020-5/models?reference=338");
+    }
     @Test void ausenciaConfirmadaEmCacheNaoConsomeCota(){
         when(valores.get(contains("cache:"))).thenReturn("404");
         assertThatThrownBy(()->client.consultar(consulta)).isInstanceOfSatisfying(FipeException.class,e->assertThat(e.motivo()).isEqualTo(FipeException.Motivo.NAO_ENCONTRADA));
